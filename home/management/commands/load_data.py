@@ -65,15 +65,6 @@ class Command(BaseCommand):
         # Need to edit these date time variables to include Time Zone for Postgresql
         df.rename(columns={'First Seen': 'first_seen'}, inplace=True)
         df.rename(columns={'Last Seen': 'last_seen'}, inplace=True)
-        # df.rename(columns={'Mail (Value) - IMAM Register': 'mail'}, inplace=True)
-        # # Mail (Value) - IMAM Register
-        # df.rename(columns={'Post_imp (Value) - IMAM Register': 'post'}, inplace=True)
-        # # Post_imp (Value) - IMAM Register
-
-
-        df.rename(columns = {'URN':'urn'}, inplace = True)
-        df.rename(columns = {'First Seen':'first_seen'}, inplace = True)
-        df.rename(columns = {'Last Seen':'last_seen'}, inplace = True)
         df.rename(columns = {'WeekNum (Value) - IMAM Program':'weeknum'}, inplace = True)
         df.rename(columns = {'Role (Value) - IMAM Program':'role'}, inplace = True)
         df.rename(columns={'Type (Value) - IMAM Program': 'type'}, inplace=True)
@@ -101,25 +92,13 @@ class Command(BaseCommand):
         df.rename(columns={'Tout_i (Value) - IMAM Program': 'type'}, inplace=True)
         df.rename(columns={'Confirm (Category) - IMAM Program': 'type'}, inplace=True)
 
-
+        # Create primary key for program data
         df['pk'] =df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)
-
-        columnsTitles = ['pk','urn', 'first_seen']
-        df2 = df.reindex(columns = columnsTitles)
-        df2.set_index(['pk'], inplace=True)
-
-
-
-
-
-
-        # Create the unique key
-        df['unique'] = df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)
 
         # Change the order (the index) of the columns
         columnsTitles = ['contact_uuid', 'urn', 'name', 'groups', 'siteid', 'first_seen', 'last_seen', 'unique']
         df2 = df.reindex(columns=columnsTitles)
-        df2.set_index('unique')
+        df2.set_index(['pk'], inplace=True)
 
         # engine = create_engine('postgresql://[user]:[pass]@[host]:[port]/[schema]')
         engine = create_engine(
