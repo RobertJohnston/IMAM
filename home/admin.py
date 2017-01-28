@@ -4,7 +4,7 @@ from .models import Registration
 
 # from .models import Registration, Program, Stock, Lga
 class RegistrationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'urn', 'siteid', 'mail')
+    list_display = ('name', 'urn', 'siteid', 'type', 'post', 'mail')
 
 admin.site.register(Registration, RegistrationAdmin )
 # admin.site.register(Program)
