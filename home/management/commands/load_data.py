@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from django.conf import settings
 
-# from polls.models import Question as Poll
+# to run python manage.py load_data
 
 class Command(BaseCommand):
     help = 'Loads data to SQL for IMAM website'
@@ -65,40 +65,45 @@ class Command(BaseCommand):
         # Need to edit these date time variables to include Time Zone for Postgresql
         df.rename(columns={'First Seen': 'first_seen'}, inplace=True)
         df.rename(columns={'Last Seen': 'last_seen'}, inplace=True)
-        df.rename(columns = {'WeekNum (Value) - IMAM Program':'weeknum'}, inplace = True)
-        df.rename(columns = {'Role (Value) - IMAM Program':'role'}, inplace = True)
+        df.rename(columns={'WeekNum (Value) - IMAM Program':'weeknum'}, inplace = True)
+        df.rename(columns={'Role (Value) - IMAM Program':'role'}, inplace = True)
         df.rename(columns={'Type (Value) - IMAM Program': 'type'}, inplace=True)
         df.rename(columns={'ProSiteID (Value) - IMAM Program': 'prositeid'}, inplace=True)
-
-        df.rename(columns={'ProType (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'age group (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Beg_o (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Amar_o (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Tin_o (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Dcur_o (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Dead_o (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'DefU_o (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Dmed_o (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Tout_o (Value) - IMAM Program': 'type'}, inplace=True)
+        df.rename(columns={'ProType (Value) - IMAM Program': 'protype'}, inplace=True)
+        df.rename(columns={'age group (Value) - IMAM Program': 'age_group'}, inplace=True)
+        # Outpatients admissions and exits
+        df.rename(columns={'Beg_o (Value) - IMAM Program': 'beg'}, inplace=True)
+        df.rename(columns={'Amar_o (Value) - IMAM Program': 'amar'}, inplace=True)
+        df.rename(columns={'Tin_o (Value) - IMAM Program': 'tin'}, inplace=True)
+        df.rename(columns={'Dcur_o (Value) - IMAM Program': 'dcur'}, inplace=True)
+        df.rename(columns={'Dead_o (Value) - IMAM Program': 'dead'}, inplace=True)
+        df.rename(columns={'DefU_o (Value) - IMAM Program': 'defu'}, inplace=True)
+        df.rename(columns={'Dmed_o (Value) - IMAM Program': 'dmed'}, inplace=True)
+        df.rename(columns={'Tout_o (Value) - IMAM Program': 'tout'}, inplace=True)
         # convert admissions and exits to one column a piece not duplicates for out / in patients
-        df.rename(columns={'Beg_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Amar_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Tin_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Dcur_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Dcur_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Dead_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'DefU_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Dmed_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Tout_i (Value) - IMAM Program': 'type'}, inplace=True)
-        df.rename(columns={'Confirm (Category) - IMAM Program': 'type'}, inplace=True)
+        # beg = beg_i if beg = Nan
+
+        # df['beg'] = df.apply(lambda x: x['beg'].replace('beg', x['Beg_o (Value) - IMAM Program']), axis=1)
+
+        # df.rename(columns={'Beg_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'Amar_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'Tin_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'Dcur_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'Dcur_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'Dead_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'DefU_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'Dmed_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # df.rename(columns={'Tout_i (Value) - IMAM Program': 'type'}, inplace=True)
+        # Confirmation of correct data entry
+        df.rename(columns={'Confirm (Category) - IMAM Program': 'confirm'}, inplace=True)
 
         # Create primary key for program data
-        df['pk'] =df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)
+        df['unique'] =df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)
 
         # Change the order (the index) of the columns
         columnsTitles = ['contact_uuid', 'urn', 'name', 'groups', 'siteid', 'first_seen', 'last_seen', 'unique']
         df2 = df.reindex(columns=columnsTitles)
-        df2.set_index(['pk'], inplace=True)
+        # df2.set_index(['unique'], inplace=True)
 
         # engine = create_engine('postgresql://[user]:[pass]@[host]:[port]/[schema]')
         engine = create_engine(
@@ -107,9 +112,13 @@ class Command(BaseCommand):
         try:
             df2.to_sql('program', engine, schema='public', if_exists='replace')
             with engine.connect() as con:
-                con.execute('ALTER TABLE program ADD PRIMARY KEY (contact_uuid);')
+                con.execute('ALTER TABLE program ADD PRIMARY KEY (urn, first_seen);')
                 # add time zones with same code
                 print("Program data added.")
+        # Imports data with no column names
+
+
+
         except KeyboardInterrupt:
             print("load of registration data failed - db exists already.")
             # when using if_exists='replace' then all column names are deleted
