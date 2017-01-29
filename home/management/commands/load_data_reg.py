@@ -14,7 +14,6 @@ class Command(BaseCommand):
         # Load Registration dataframe - note for contacts  - use 'Contacts' tab and not 'Runs'
         df = pd.ExcelFile('/home/robert/Downloads/reg.xlsx').parse('Contacts')
 
-
         # Change the order (the index) of the columns
         columnsTitles = ['contact_uuid', 'urn', 'name', 'groups', 'siteid', 'type', 'first_seen', 'last_seen', 'post',
                          'mail']
