@@ -14,19 +14,7 @@ class Command(BaseCommand):
         # Load Registration dataframe - note for contacts  - use 'Contacts' tab and not 'Runs'
         df = pd.ExcelFile('/home/robert/Downloads/reg.xlsx').parse('Contacts')
 
-        # edit the data in pandas
-        df.rename(columns={'Contact UUID': 'contact_uuid'}, inplace=True)
-        df.rename(columns={'URN': 'urn'}, inplace=True)
-        df.rename(columns={'Name': 'name'}, inplace=True)
-        df.rename(columns={'Groups': 'groups'}, inplace=True)
-        df.rename(columns={'SiteID': 'siteid'}, inplace=True)
-        df.rename(columns={'Type': 'type'}, inplace=True)
-        # Need to edit these date time variables to include Time Zone for Postgresql
-        df.rename(columns={'First Seen': 'first_seen'}, inplace=True)
-        df.rename(columns={'Last Seen': 'last_seen'}, inplace=True)
-        # change variable name of the following
-        df.rename(columns={'Mail (Value) - IMAM Register': 'mail'}, inplace=True)
-        df.rename(columns={'Post_imp (Value) - IMAM Register': 'post'}, inplace=True)
+
         # Change the order (the index) of the columns
         columnsTitles = ['contact_uuid', 'urn', 'name', 'groups', 'siteid', 'type', 'first_seen', 'last_seen', 'post',
                          'mail']
