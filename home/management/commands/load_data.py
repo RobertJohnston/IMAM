@@ -1,7 +1,7 @@
 # functions for data wrangling of imported dataframes.
 
-import pandas as pd
 import numpy as np
+
 
 def rename_cols(dataframe):
     # edit the data in pandas
@@ -21,27 +21,46 @@ def rename_cols(dataframe):
     dataframe.rename(columns={'Post_imp (Value) - IMAM Register': 'post'}, inplace=True)
 
     # Program database
-    dataframe.rename(columns={'WeekNum (Value) - IMAM Program': 'weeknum'}, inplace=True)
-    dataframe.rename(columns={'Role (Value) - IMAM Program': 'role'}, inplace=True)
-    dataframe.rename(columns={'Type (Category) - IMAM Program': 'type'}, inplace=True)
-    dataframe.rename(columns={'ProSiteID (Value) - IMAM Program': 'prositeid'}, inplace=True)
-    dataframe.rename(columns={'ProType (Value) - IMAM Program': 'protype'}, inplace=True)
-    dataframe.rename(columns={'age group (Value) - IMAM Program': 'age_group'}, inplace=True)
+    dataframe.rename(columns={'WeekNum (Value) - IMAM *': 'weeknum'}, inplace=True)
+    dataframe.rename(columns={'Role (Value) - IMAM *': 'role'}, inplace=True)
+    dataframe.rename(columns={'Type (Category) - IMAM *': 'type'}, inplace=True)
+    dataframe.rename(columns={'ProSiteID (Value) - IMAM *': 'prositeid'}, inplace=True)
+    dataframe.rename(columns={'ProType (Value) - IMAM *': 'protype'}, inplace=True)
+    dataframe.rename(columns={'age group (Value) - IMAM *': 'age_group'}, inplace=True)
     # Outpatients admissions and exits
-    dataframe.rename(columns={'Beg_o (Value) - IMAM Program': 'beg'}, inplace=True)
-    dataframe.rename(columns={'Amar_o (Value) - IMAM Program': 'amar'}, inplace=True)
-    dataframe.rename(columns={'Tin_o (Value) - IMAM Program': 'tin'}, inplace=True)
-    dataframe.rename(columns={'Dcur_o (Value) - IMAM Program': 'dcur'}, inplace=True)
-    dataframe.rename(columns={'Dead_o (Value) - IMAM Program': 'dead'}, inplace=True)
-    dataframe.rename(columns={'DefU_o (Value) - IMAM Program': 'defu'}, inplace=True)
-    dataframe.rename(columns={'Dmed_o (Value) - IMAM Program': 'dmed'}, inplace=True)
-    dataframe.rename(columns={'Tout_o (Value) - IMAM Program': 'tout'}, inplace=True)
+    dataframe.rename(columns={'Beg_o (Value) - IMAM *': 'beg'}, inplace=True)
+    dataframe.rename(columns={'Amar_o (Value) - IMAM *': 'amar'}, inplace=True)
+    dataframe.rename(columns={'Tin_o (Value) - IMAM *': 'tin'}, inplace=True)
+    dataframe.rename(columns={'Dcur_o (Value) - IMAM *': 'dcur'}, inplace=True)
+    dataframe.rename(columns={'Dead_o (Value) - IMAM *': 'dead'}, inplace=True)
+    dataframe.rename(columns={'DefU_o (Value) - IMAM *': 'defu'}, inplace=True)
+    dataframe.rename(columns={'Dmed_o (Value) - IMAM *': 'dmed'}, inplace=True)
+    dataframe.rename(columns={'Tout_o (Value) - IMAM *': 'tout'}, inplace=True)
     # confirm correct data entry
-    dataframe.rename(columns={'Confirm (Category) - IMAM Program': 'confirm'}, inplace=True)
+    dataframe.rename(columns={'Confirm (Category) - IMAM *': 'confirm'}, inplace=True)
+    # old var name
+    dataframe.rename(columns={'confirm (Category) - IMAM *': 'confirm'}, inplace=True)
 
     # Stock database
-
+    dataframe.rename(columns={'Self Report (Value) - IMAM Stock ': 'self_report'}, inplace=True)
+    dataframe.rename(columns={'StoSiteID (Value) - IMAM Stock ': 'sto_siteid'}, inplace=True)
+    dataframe.rename(columns={'StoType (Category) - IMAM Stock ': 'sto_type'}, inplace=True)
+    dataframe.rename(columns={'route_by_type (Category) - IMAM Stock ': 'type'}, inplace=True)
+    dataframe.rename(columns={'RUTF_in (Value) - IMAM *': 'rutf_in'}, inplace=True)
+    # Outpatients
+    dataframe.rename(columns={'RUTF_used_carton (Value) - IMAM *': 'rutf_used_carton'}, inplace=True)
+    dataframe.rename(columns={'RUTF_used_sachet (Value) - IMAM *': 'rutf_used_sachet'}, inplace=True)
+    dataframe.rename(columns={'RUTF_bal_carton (Value) - IMAM *': 'rutf_bal_carton'}, inplace=True)
+    dataframe.rename(columns={'RUTF_bal_sachet (Value) - IMAM *': 'rutf_bal_sachet'}, inplace=True)
+    # Inpatients
+    dataframe.rename(columns={'F75_bal_carton (Value) *': 'f75_bal_carton'}, inplace=True)
+    dataframe.rename(columns={'F75_bal_sachet (Value) *': 'f75_bal_sachet'}, inplace=True)
+    dataframe.rename(columns={'F100_bal_carton (Value) *': 'f100_bal_carton'}, inplace=True)
+    dataframe.rename(columns={'F100_bal_sachet (Value) *': 'f100_bal_sachet'}, inplace=True)
     # LGA database
+    dataframe.rename(columns={'RUTF_out (Value) - IMAM *': 'rutf_out'}, inplace=True)
+    dataframe.rename(columns={'RUTF_bal (Value) - IMAM *': 'rutf_bal'}, inplace=True)
+    # do not need stock alert variables as they are based on actual stocks
 
     return dataframe
 
