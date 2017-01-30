@@ -138,10 +138,6 @@ class Lga(models.Model):
         return "Lga {}".format(self.name)
 
 
-
-
 # how do we load the raw data once and then start to use the api after ?
 # this will be important as the database size increases
 
-# def load_database:
-#     Registration.contact_uuid = df.Contact_UUID
