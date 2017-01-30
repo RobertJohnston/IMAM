@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
 from sqlalchemy import create_engine
 from django.conf import settings
-from load_data import rename_cols
+from load_data import assign_state_lga_num
 
 # load_data_siteid
 
@@ -23,9 +23,12 @@ class Command(BaseCommand):
         # Load Site ID dataframe
         df = pd.ExcelFile('/home/robert/Downloads/all_siteid.xls').parse('Sheet1')
 
-        # Rename all the columns in the imported data
+        # Add state_num and lga_num
+        assign_state_lga_num(df)
 
         # Change the order (the index) of the columns
+        columnsTitles = ['siteid', 'state', 'state_num', 'lga', 'lga_num', 'ward', 'sitename', 'x_lat', 'y_long', 'notes']
+        df = df.reindex(columns=columnsTitles)
 
         # set primary key
         df.set_index('siteid')
