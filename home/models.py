@@ -138,6 +138,29 @@ class Lga(models.Model):
         return "Lga {}".format(self.name)
 
 
+# Site IDs
+class Siteid(models.Model):
+    contact_uuid = models.UUIDField(editable=False)
+    # problem to add phone number field to tools
+    # urn = models.PhoneNumberField()
+    urn = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=100)
+    groups = models.CharField(max_length=100)
+    siteid = models.IntegerField()
+    type = models.CharField(max_length=20)
+    first_seen = models.DateTimeField()
+    last_seen = models.DateTimeField()
+    post = models.CharField(max_length=30)
+    mail = models.EmailField()
+
+    class Meta:
+        db_table = 'siteid'
+        managed = False
+
+    def __str__(self):
+        return "Siteid {}".format(self.name)
+
+
 # how do we load the raw data once and then start to use the api after ?
 # this will be important as the database size increases
 
