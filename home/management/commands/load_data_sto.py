@@ -7,19 +7,17 @@ from load_data import rename_cols, merge_in_and_outpatients
 
 # to run python manage.py load_data
 
+# STOCKS data
+
 class Command(BaseCommand):
     help = 'Loads stock data to SQL for IMAM website'
 
     # A command must define handle
     def handle(self, *args, **options):
 
-        # Load PROGRAM dataframe
-        # note for PROGRAM- use 'Runs' tab and not 'Contacts'
+        # Load STOCKS dataframe
+        # note for STOCKS - use 'Runs' tab and not 'Contacts'
         df = pd.ExcelFile('/home/robert/Downloads/sto.xlsx').parse('Runs')
-
-        # to speed up testing take only first 30 lines
-        # changed to 1700 to check the stablization center data was merged correctly.
-        # df = df[1700:1743]
 
         # Rename all the columns in the imported data
         rename_cols(df)
@@ -36,29 +34,45 @@ class Command(BaseCommand):
                          'first_seen',
                          'last_seen',
                          'weeknum',
-                         'role',
+                         'self_report',
+                         'sto_siteid',
+                         'sto_type',
                          'type',
-                         'prositeid',
-                         'protype',
-                         'age_group',
-                         'beg',
-                         'amar',
-                         'tin',
-                         'dcur',
-                         'dead',
-                         'defu',
-                         'dmed',
-                         'tout',
+                         'rutf_in',
+                         'rutf_used_carton',
+                         'rutf_used_sachet',
+                         'rutf_bal_carton',
+                         'rutf_bal_sachet'
+                         'rutf_out',
+                         'rutf_bal',
+                         'f75_bal_carton',
+                         'f75_bal_sachet',
+                         'f100_bal_carton'
+                         'f100_bal_sachet'
+
                          'confirm',
                          'unique']
 
-        [u'Contact UUID',
-         u'URN',
-         u'Name',
-         u'Groups',
-         u'SiteID',
-         u'First Seen',
-         u'Last Seen',
+        dataframe.rename(columns={'Self Report (Value) - IMAM Stock ': 'self_report'}, inplace=True)
+        dataframe.rename(columns={'StoSiteID (Value) - IMAM Stock ': 'sto_siteid'}, inplace=True)
+        dataframe.rename(columns={'StoType (Category) - IMAM Stock ': 'sto_type'}, inplace=True)
+        dataframe.rename(columns={'route_by_type (Category) - IMAM Stock ': 'type'}, inplace=True)
+        dataframe.rename(columns={'RUTF_in (Value) - IMAM *': 'rutf_in'}, inplace=True)
+        # Outpatients
+        dataframe.rename(columns={'RUTF_used_carton (Value) - IMAM *': 'rutf_used_carton'}, inplace=True)
+        dataframe.rename(columns={'RUTF_used_sachet (Value) - IMAM *': 'rutf_used_sachet'}, inplace=True)
+        dataframe.rename(columns={'RUTF_bal_carton (Value) - IMAM *': 'rutf_bal_carton'}, inplace=True)
+        dataframe.rename(columns={'RUTF_bal_sachet (Value) - IMAM *': 'rutf_bal_sachet'}, inplace=True)
+        # Inpatients
+        dataframe.rename(columns={'F75_bal_carton (Value) *': 'f75_bal_carton'}, inplace=True)
+        dataframe.rename(columns={'F75_bal_sachet (Value) *': 'f75_bal_sachet'}, inplace=True)
+        dataframe.rename(columns={'F100_bal_carton (Value) *': 'f100_bal_carton'}, inplace=True)
+        dataframe.rename(columns={'F100_bal_sachet (Value) *': 'f100_bal_sachet'}, inplace=True)
+        # LGA database
+        dataframe.rename(columns={'RUTF_out (Value) - IMAM *': 'rutf_out'}, inplace=True)
+        dataframe.rename(columns={'RUTF_bal (Value) - IMAM *': 'rutf_bal'}, inplace=True)
+
+
          u'PostLevel (Category) - IMAM Stock ',
          u'PostLevel (Value) - IMAM Stock ',
          u'PostLevel (Text) - IMAM Stock ',
@@ -110,15 +124,7 @@ class Command(BaseCommand):
          u'F100_bal_sachet (Category) - IMAM Stock ',
          u'F100_bal_sachet (Value) - IMAM Stock ',
          u'F100_bal_sachet (Text) - IMAM Stock ',
-         u'RUTFStockAlert (Category) - IMAM Stock ',
-         u'RUTFStockAlert (Value) - IMAM Stock ',
-         u'RUTFStockAlert (Text) - IMAM Stock ',
-         u'F100StockAlert (Category) - IMAM Stock ',
-         u'F100StockAlert (Value) - IMAM Stock ',
-         u'F100StockAlert (Text) - IMAM Stock ',
-         u'F75StockAlert (Category) - IMAM Stock ',
-         u'F75StockAlert (Value) - IMAM Stock ',
-         u'F75StockAlert (Text) - IMAM Stock ']
+
 
 
 
@@ -130,7 +136,7 @@ class Command(BaseCommand):
             'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
 
         try:
-            df2.to_sql('program', engine, schema='public', if_exists='replace')
+            df2.to_sql('stock', engine, schema='public', if_exists='replace')
             with engine.connect() as con:
                 con.execute('ALTER TABLE stock ADD PRIMARY KEY (urn, first_seen);')
                 # add time zones with same code

@@ -32,36 +32,11 @@ class Command(BaseCommand):
                          'first_seen',
                          'last_seen',
                          'weeknum',
-                         'role',
-                         'type',
-
+                         'rutf_in',
+                         'rutf_out',
+                         'rutf_bal',
                          'confirm',
                          'unique']
-
-        u'URN',
-        u'Name',
-        u'Groups',
-        u'SiteID',
-        u'First Seen',
-        u'Last Seen',
-        u'WeekNum (Category) - IMAM LGA State Stocks',
-        u'WeekNum (Value) - IMAM LGA State Stocks',
-        u'WeekNum (Text) - IMAM LGA State Stocks',
-        u'RUTF_in (Category) - IMAM LGA State Stocks',
-        u'RUTF_in (Value) - IMAM LGA State Stocks',
-        u'RUTF_in (Text) - IMAM LGA State Stocks',
-        u'RUTF_out (Category) - IMAM LGA State Stocks',
-        u'RUTF_out (Value) - IMAM LGA State Stocks',
-        u'RUTF_out (Text) - IMAM LGA State Stocks',
-        u'RUTF_bal (Category) - IMAM LGA State Stocks',
-        u'RUTF_bal (Value) - IMAM LGA State Stocks',
-        u'RUTF_bal (Text) - IMAM LGA State Stocks',
-        u'confirm (Category) - IMAM LGA State Stocks',
-        u'confirm (Value) - IMAM LGA State Stocks',
-        u'confirm (Text) - IMAM LGA State Stocks',
-        u'Response 6 (Category) - IMAM LGA State Stocks',
-        u'Response 6 (Value) - IMAM LGA State Stocks',
-        u'Response 6 (Text) - IMAM LGA State Stocks']
 
         df2 = df.reindex(columns=columnsTitles)
         # df2.set_index(['unique'], inplace=True)
