@@ -23,7 +23,7 @@ def rename_cols(dataframe):
     # Program database
     dataframe.rename(columns={'WeekNum (Value) - IMAM Program': 'weeknum'}, inplace=True)
     dataframe.rename(columns={'Role (Value) - IMAM Program': 'role'}, inplace=True)
-    dataframe.rename(columns={'Type (Value) - IMAM Program': 'type'}, inplace=True)
+    dataframe.rename(columns={'Type (Category) - IMAM Program': 'type'}, inplace=True)
     dataframe.rename(columns={'ProSiteID (Value) - IMAM Program': 'prositeid'}, inplace=True)
     dataframe.rename(columns={'ProType (Value) - IMAM Program': 'protype'}, inplace=True)
     dataframe.rename(columns={'age group (Value) - IMAM Program': 'age_group'}, inplace=True)

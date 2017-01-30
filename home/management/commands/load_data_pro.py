@@ -8,7 +8,7 @@ from load_data import rename_cols, merge_in_and_outpatients
 # to run python manage.py load_data
 
 class Command(BaseCommand):
-    help = 'Loads data to SQL for IMAM website'
+    help = 'Loads program data to SQL for IMAM website'
 
     # A command must define handle
     def handle(self, *args, **options):
@@ -18,7 +18,8 @@ class Command(BaseCommand):
         df = pd.ExcelFile('/home/robert/Downloads/pro.xlsx').parse('Runs')
 
         # to speed up testing take only first 30 lines
-        df = df[1700:1743]
+        # changed to 1700 to check the stablization center data was merged correctly.
+        # df = df[1700:1743]
 
         # Rename all the columns in the imported data
         rename_cols(df)
@@ -67,14 +68,10 @@ class Command(BaseCommand):
                 con.execute('ALTER TABLE program ADD PRIMARY KEY (urn, first_seen);')
                 # add time zones with same code
                 print("Program data added.")
-        # Imports data with no column names
-
 
 
         except KeyboardInterrupt:
-            print("load of registration data failed - db exists already.")
-            # when using if_exists='replace' then all column names are deleted
-            # when using  if_exists='append' then all column names are maintained, but repeat migrations cause duplicates
+            print("Interrupted...")
 
         self.stdout.write("Completed")
 
