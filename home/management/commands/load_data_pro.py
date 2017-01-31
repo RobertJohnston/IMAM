@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 from django.conf import settings
-from load_data import rename_cols, merge_in_and_outpatients
+from load_data import rename_cols, merge_in_and_outpatients, create_unique_key
 
 # to run python manage.py load_data
 
@@ -27,8 +27,7 @@ class Command(BaseCommand):
         # Merge separate inpatients and outpatients variable into one variable / column
         merge_in_and_outpatients(df)
 
-        # Create primary key for program data
-        df['unique'] =df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)
+        create_unique_key(df)
 
         # Change the order (the index) of the columns
         columnsTitles = ['contact_uuid',

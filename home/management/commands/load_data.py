@@ -2,6 +2,10 @@
 
 import numpy as np
 
+def create_unique_key(dataframe):
+    # Create primary key for program data (phone number and timestamp when report started)
+    dataframe['unique'] = dataframe['urn'].astype(str) + " " + dataframe['first_seen'].astype(object).astype(str)
+
 
 def rename_cols(dataframe):
     # edit the data in pandas
@@ -17,8 +21,8 @@ def rename_cols(dataframe):
     dataframe.rename(columns={'First Seen': 'first_seen'}, inplace=True)
     dataframe.rename(columns={'Last Seen': 'last_seen'}, inplace=True)
     # change variable name of the following
-    dataframe.rename(columns={'Mail (Value) - IMAM Register': 'mail'}, inplace=True)
-    dataframe.rename(columns={'Post_imp (Value) - IMAM Register': 'post'}, inplace=True)
+    dataframe.rename(columns={'Mail (Value) - IMAM *': 'mail'}, inplace=True)
+    dataframe.rename(columns={'Post_imp (Value) - IMAM *': 'post'}, inplace=True)
 
     # Program database
     dataframe.rename(columns={'WeekNum (Value) - IMAM *': 'weeknum'}, inplace=True)
@@ -42,10 +46,10 @@ def rename_cols(dataframe):
     dataframe.rename(columns={'confirm (Category) - IMAM *': 'confirm'}, inplace=True)
 
     # Stock database
-    dataframe.rename(columns={'Self Report (Value) - IMAM Stock ': 'self_report'}, inplace=True)
-    dataframe.rename(columns={'StoSiteID (Value) - IMAM Stock ': 'sto_siteid'}, inplace=True)
-    dataframe.rename(columns={'StoType (Category) - IMAM Stock ': 'sto_type'}, inplace=True)
-    dataframe.rename(columns={'route_by_type (Category) - IMAM Stock ': 'type'}, inplace=True)
+    dataframe.rename(columns={'Self Report (Value) - IMAM * ': 'self_report'}, inplace=True)
+    dataframe.rename(columns={'StoSiteID (Value) - IMAM * ': 'sto_siteid'}, inplace=True)
+    dataframe.rename(columns={'StoType (Category) - IMAM * ': 'sto_type'}, inplace=True)
+    dataframe.rename(columns={'route_by_type (Category) - IMAM * ': 'type'}, inplace=True)
     dataframe.rename(columns={'RUTF_in (Value) - IMAM *': 'rutf_in'}, inplace=True)
     # Outpatients
     dataframe.rename(columns={'RUTF_used_carton (Value) - IMAM *': 'rutf_used_carton'}, inplace=True)
