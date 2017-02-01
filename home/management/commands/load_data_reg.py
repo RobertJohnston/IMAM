@@ -40,6 +40,9 @@ class Command(BaseCommand):
                          'post',
                          'mail']
         df2 = df.reindex(columns=columnsTitles)
+
+        # drop row if urn is null
+
         # set primary key
         df2.set_index('urn')
 
