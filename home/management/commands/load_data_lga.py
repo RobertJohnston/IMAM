@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 from django.conf import settings
-from load_data import rename_cols, merge_in_and_outpatients
+
+from load_data import rename_cols, merge_in_and_outpatients, create_unique_key
 
 # to run python manage.py load_data
 
@@ -19,6 +20,8 @@ class Command(BaseCommand):
 
         # Rename all the columns in the imported data
         rename_cols(df)
+
+        # create_unique_key(df)
 
         # Create primary key for lga data
         df['unique'] =df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)

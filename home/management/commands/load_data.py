@@ -22,8 +22,8 @@ def rename_cols(dataframe):
     dataframe.rename(columns={'First Seen': 'first_seen'}, inplace=True)
     dataframe.rename(columns={'Last Seen': 'last_seen'}, inplace=True)
     # change variable name of the following
-    dataframe.rename(columns={'Mail (Value) - IMAM *': 'mail'}, inplace=True)
-    dataframe.rename(columns={'Post_imp (Value) - IMAM *': 'post'}, inplace=True)
+    dataframe.rename(columns={'Mail (Value) - IMAM Program ': 'mail'}, inplace=True)
+    dataframe.rename(columns={'Post_imp (Value) - IMAM Program ': 'post'}, inplace=True)
 
     # Program database
     dataframe.rename(columns={'WeekNum (Value) - IMAM *': 'weeknum'}, inplace=True)
