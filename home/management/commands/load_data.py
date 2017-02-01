@@ -57,4 +57,9 @@ def merge_in_and_outpatients(dataframe):
     dataframe['dmed'] = np.where(dataframe['type'] == "SC", dataframe['Dmed_i (Value) - IMAM Program'], dataframe['dmed'])
     dataframe['tout'] = np.where(dataframe['type'] == "SC", dataframe['Tout_i (Value) - IMAM Program'], dataframe['tout'])
 
+    return
+
+def assign_state_lga_num(dataframe):
+    # create state num and lga num
+
     return dataframe

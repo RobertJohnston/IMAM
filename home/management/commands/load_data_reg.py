@@ -33,8 +33,6 @@ class Command(BaseCommand):
 
         df2 = df.reindex(columns=columnsTitles)
 
-        #df2 = df.dropna(subset=['urn'], inplace = True)
-
         # set primary key - should be urn
         df.set_index('urn')
 
