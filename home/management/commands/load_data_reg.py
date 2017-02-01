@@ -3,6 +3,8 @@ import pandas as pd
 from sqlalchemy import create_engine
 from django.conf import settings
 
+from load_data import rename_cols, merge_in_and_outpatients
+
 # to run python manage.py load_data
 
 class Command(BaseCommand):
@@ -14,12 +16,27 @@ class Command(BaseCommand):
         # Load Registration dataframe - note for contacts  - use 'Contacts' tab and not 'Runs'
         df = pd.ExcelFile('/home/robert/Downloads/reg.xlsx').parse('Contacts')
 
+        # Rename all the columns in the imported data
+        rename_cols(df)
+
         # Change the order (the index) of the columns
-        columnsTitles = ['contact_uuid', 'urn', 'name', 'groups', 'siteid', 'type', 'first_seen', 'last_seen', 'post',
+        columnsTitles = ['contact_uuid',
+                         'urn',
+                         'name',
+                         'groups',
+                         'siteid',
+                         'type',
+                         'first_seen',
+                         'last_seen',
+                         'post',
                          'mail']
+
         df2 = df.reindex(columns=columnsTitles)
-        # set primary key
-        df2.set_index('urn')
+
+        df2 = df.dropna(subset=['urn'], inplace = True)
+
+        # set primary key - should be urn
+        #df.set_index('urn')
 
         # engine = create_engine('postgresql://[user]:[pass]@[host]:[port]/[schema]')
         engine = create_engine(
@@ -27,8 +44,8 @@ class Command(BaseCommand):
 
         try:
             df2.to_sql('registration', engine, schema='public', if_exists='replace')
-            # when using if_exists='replace' then all column names are deleted
-            # when using  if_exists='append' then all column names are maintained, but repeat migrations cause duplicates
+
+            # Error with null values in URN col
             with engine.connect() as con:
                 con.execute('ALTER TABLE registration ADD PRIMARY KEY (urn);')
                 # add time zones with same code
