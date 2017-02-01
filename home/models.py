@@ -1,9 +1,5 @@
 from __future__ import unicode_literals
 
-import uuid
-# is this necessary if I am not calling uuid to create uuids?
-import datetime
-
 from django.db import models
 
 
@@ -140,18 +136,16 @@ class Lga(models.Model):
 
 # Site IDs
 class Siteid(models.Model):
-    contact_uuid = models.UUIDField(editable=False)
-    # problem to add phone number field to tools
-    # urn = models.PhoneNumberField()
-    urn = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=100)
-    groups = models.CharField(max_length=100)
-    siteid = models.IntegerField()
-    type = models.CharField(max_length=20)
-    first_seen = models.DateTimeField()
-    last_seen = models.DateTimeField()
-    post = models.CharField(max_length=30)
-    mail = models.EmailField()
+    siteid = models.IntegerField(primary_key=True)
+    state = models.CharField(max_length=100)
+    state_num  = models.IntegerField()
+    lga = models.CharField(max_length=100)
+    lga_num = = models.IntegerField()
+    ward = models.CharField(max_length=100)
+    sitename = models.CharField(max_length=120)
+    x_lat = models.DecimalField(max_digits=8, decimal_places=1,)
+    y_long = models.DecimalField(max_digits=8, decimal_places=1,)
+    notes = models.CharField(max_length=300)
 
     class Meta:
         db_table = 'siteid'

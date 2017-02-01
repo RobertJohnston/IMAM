@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def create_unique_key(dataframe):
     # Create primary key for program data (phone number and timestamp when report started)
     dataframe['unique'] = dataframe['urn'].astype(str) + " " + dataframe['first_seen'].astype(object).astype(str)

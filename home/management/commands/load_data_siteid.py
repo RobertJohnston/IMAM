@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from django.conf import settings
 from load_data import assign_state_lga_num
 
-# load_data_siteid
+# SITE IDs for the health care facilities in 12 Northern Nigerian states
 
 # to run python manage.py load_data
 
