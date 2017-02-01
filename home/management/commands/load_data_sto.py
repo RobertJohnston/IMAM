@@ -4,11 +4,11 @@ import numpy as np
 from sqlalchemy import create_engine
 from django.conf import settings
 
-from load_data import rename_cols, merge_in_and_outpatients
-
-# PROGRAM DATA
+from load_data import rename_cols
 
 # to run python manage.py load_data
+
+# STOCKS DATA
 
 class Command(BaseCommand):
     help = 'Loads data to SQL for IMAM website'
@@ -18,16 +18,10 @@ class Command(BaseCommand):
 
         # Load PROGRAM dataframe
         # note for PROGRAM- use 'Runs' tab and not 'Contacts'
-        df = pd.ExcelFile('/home/robert/Downloads/pro.xlsx').parse('Runs')
-
-        # to speed up testing take only first 30 lines
-        #df = df[0:30]
+        df = pd.ExcelFile('/home/robert/Downloads/sto.xlsx').parse('Runs')
 
         # Rename all the columns in the imported data
         rename_cols(df)
-
-        # Merge separate inpatients and outpatients variable into one variable / column
-        merge_in_and_outpatients(df)
 
         # Create primary key for program data
         df['unique'] =df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)
@@ -41,19 +35,22 @@ class Command(BaseCommand):
                          'first_seen',
                          'last_seen',
                          'weeknum',
-                         'role',
+                         'level',
+                         'self_report',
+                         'sto_siteid',
+                         'sto_type',
                          'type',
-                         'prositeid',
-                         'protype',
-                         'age_group',
-                         'beg',
-                         'amar',
-                         'tin',
-                         'dcur',
-                         'dead',
-                         'defu',
-                         'dmed',
-                         'tout',
+                         'rutf_in',
+                         'rutf_used_carton',
+                         'rutf_used_sachet',
+                         'rutf_bal_carton',
+                         'rutf_bal_sachet'
+                         'rutf_out',
+                         'rutf_bal',
+                         'f75_bal_carton',
+                         'f75_bal_sachet',
+                         'f100_bal_carton'
+                         'f100_bal_sachet'
                          'confirm',
                          'unique']
 
@@ -65,12 +62,11 @@ class Command(BaseCommand):
             'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
 
         try:
-            df2.to_sql('program', engine, schema='public', if_exists='replace')
+            df2.to_sql('stock', engine, schema='public', if_exists='replace')
             with engine.connect() as con:
-                con.execute('ALTER TABLE program ADD PRIMARY KEY (urn, first_seen);')
+                con.execute('ALTER TABLE stock ADD PRIMARY KEY (urn, first_seen);')
                 # add time zones with same code
-                print("Program data added.")
-        # Imports data with no column names
+                print("Stock data added.")
 
         except KeyboardInterrupt:
             print("Interrupted...")

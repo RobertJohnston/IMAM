@@ -6,7 +6,7 @@ from django.conf import settings
 
 from load_data import assign_state_lga_num
 
-# Site IDs for the health care facilities for 12 northern Nigerian states
+# Site IDs data for the health care facilities for 12 northern Nigerian states
 
 # to run python manage.py load_data
 

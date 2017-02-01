@@ -5,6 +5,8 @@ from django.conf import settings
 
 from load_data import rename_cols, merge_in_and_outpatients
 
+# Registration Data
+
 # to run python manage.py load_data
 
 class Command(BaseCommand):
@@ -51,6 +53,6 @@ class Command(BaseCommand):
 
         # KeyboardInterrupt - will likely never return an exception
         except KeyboardInterrupt:
-            print("load of registration data failed - db exists already.")
+            print("Interrupted...")
 
         self.stdout.write("Completed")
