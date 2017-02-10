@@ -6,25 +6,36 @@ import numpy as np
 import pandas_highcharts.core
 from sqlalchemy import create_engine
 
-# Read data into dataframe
 
-# This is the problem that crashes project.
 
-engine = create_engine('postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
-df = pd.read_sql_query("select * from program;", con=engine)
-
-# fake data in data frame to use
-# df = pd.DataFrame({'amar': np.random.randn(5)*100})
 
 
 def index(request):
 
-    # adm_by_week = df['amar'].groupby(df['weeknum']).mean()
-    adm_by_week = df
-    chart = pandas_highcharts.core.serialize(adm_by_week, render_to='my-chart',output_type='json')
+    # Read data into dataframe - at each function call
+
+    engine = create_engine(
+        'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
+    df = pd.read_sql_query("select * from program;", con=engine)
+
+    # Convert to float
+    df['amar'] = pd.to_numeric(df.amar, errors='coerce')
+    df['weeknum'] = pd.to_numeric(df.weeknum, errors='coerce')
+
+    df_filtered = df.query('weeknum==weeknum').query('0<weeknum<53')
+    df_filtered['weeknum'] = df_filtered.weeknum.astype('int')
+
+    df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
+    df_filtered['amar'] = df_filtered.amar.astype('int')
+
+    adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
+
+    chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart',output_type='json')
     # module object has no attribute serialize unless you specify pandas except with pandas_highcharts.core
 
-    return render(request, 'home/index.html')
+    return render(request, 'home/index.html', {
+        "chart": chart,
+    })
 
 # USING HTML.to_html
 

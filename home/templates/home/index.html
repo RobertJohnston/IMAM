@@ -3,12 +3,12 @@
 
 {% block content %}
 
-<div id="container" style="width:100%; height:350px;">
+
 
     <div id="my-chart">
         <p> Chart </p>
         <script>
-            new Highcharts.Chart({{chart|safe}};
+            new Highcharts.Chart({{chart|safe}});
         </script>
 
     </div>
@@ -27,12 +27,12 @@
             <!--}]-->
         <!--});-->
     <!--</script>-->
-
-</div>
-
-
-
 {% include "home/includes/htmlsnippet.html" %}
+
+
+
+
+
 <!--htmlsnippet could include an error message that is repeated on many different pages. -->
 
 {% endblock %}
