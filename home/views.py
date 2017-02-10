@@ -5,13 +5,9 @@ import pandas as pd
 import numpy as np
 import pandas_highcharts.core
 from sqlalchemy import create_engine
+from management.commands.load_data import assign_state_lga_num
 
-
-
-
-
-def index(request):
-
+def adm(request):
     # Read data into dataframe - at each function call
 
     engine = create_engine(
@@ -28,14 +24,27 @@ def index(request):
     df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
     df_filtered['amar'] = df_filtered.amar.astype('int')
 
-    adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
+    df_filtered = assign_state_lga_num(df_filtered)
+    df_filtered['state_num'] = pd.to_numeric(df_filtered.state_num, errors='coerce')
+    df_filtered = df_filtered.query('state_num==state_num').query('0<state_num<37')
+    df_filtered['state_num'] = df_filtered.state_num.astype('int')
+
+
+    if "state_number" in request.GET:
+        # TODO filter user input
+        state_number = request.GET["state_number"]
+        adm_by_week = df_filtered.query('state_num==%s' % state_number)['amar'].groupby(df_filtered['weeknum']).sum()
+    else:
+        adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
 
     chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart',output_type='json')
     # module object has no attribute serialize unless you specify pandas except with pandas_highcharts.core
 
-    return render(request, 'home/index.html', {
-        "chart": chart,
-    })
+    return HttpResponse(chart)
+
+
+def index(request):
+    return render(request, 'home/index.html')
 
 # USING HTML.to_html
 

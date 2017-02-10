@@ -3,12 +3,25 @@
 
 {% block content %}
 
-
+    <div>
+        <input type="text" id="filter-by-state-value">
+        <button type="button" id="filter-by-state">Filter by state</button>
+    </div>
 
     <div id="my-chart">
         <p> Chart </p>
         <script>
-            new Highcharts.Chart({{chart|safe}});
+            $.getJSON("/adm/").success(function(data) {
+                amarChart = new Highcharts.Chart(data);
+            });
+
+            $("#filter-by-state").click(function(event) {
+                var stateNumber = $("#filter-by-state-value").val();
+
+                $.getJSON("/adm/?state_number=" + stateNumber).success(function(data) {
+                    amarChart.update(data);
+                });
+            });
         </script>
 
     </div>
