@@ -6,6 +6,7 @@ import numpy as np
 import pandas_highcharts.core
 from sqlalchemy import create_engine
 from management.commands.load_data import assign_state_lga_num
+from models import Siteid
 
 def adm(request):
     # Read data into dataframe - at each function call
@@ -30,8 +31,9 @@ def adm(request):
     df_filtered['state_num'] = df_filtered.state_num.astype('int')
 
 
-    if "state_number" in request.GET:
-        # TODO filter user input
+    if request.GET.get("state_number"):
+        assert request.GET["state_number"].isdigit()
+
         state_number = request.GET["state_number"]
         adm_by_week = df_filtered.query('state_num==%s' % state_number)['amar'].groupby(df_filtered['weeknum']).sum()
     else:
@@ -44,7 +46,8 @@ def adm(request):
 
 
 def index(request):
-    return render(request, 'home/index.html')
+    state_list = sorted(Siteid.objects.all().values('state', 'state_num').distinct(), key=lambda x: int(x['state_num']))
+    return render(request, 'home/index.html', {"state_list": state_list})
 
 # USING HTML.to_html
 

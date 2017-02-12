@@ -4,7 +4,11 @@
 {% block content %}
 
     <div>
-        <input type="text" id="filter-by-state-value">
+        <select id="filter-by-state-value">
+            {% for siteid in state_list %}
+            <option value="{{ siteid.state_num }}">{{ siteid.state }}</option>
+            {% endfor %}
+        </select>
         <button type="button" id="filter-by-state">Filter by state</button>
     </div>
 
@@ -25,6 +29,14 @@
         </script>
 
     </div>
+
+    <!--<p>{{ state_list }}</p>-->
+
+    <!--<ul>-->
+        <!--{% for state in state_list %}-->
+        <!--<li>{{ state.state_num }}</li>-->
+        <!--{% endfor %}-->
+    <!--</ul>-->
 
     <!--FAKE CHART-->
     <!--<script>-->

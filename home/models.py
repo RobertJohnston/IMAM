@@ -135,23 +135,25 @@ class Lga(models.Model):
 
 # Site IDs
 class Siteid(models.Model):
-    siteid     = models.IntegerField(primary_key=True)
-    state      = models.CharField(max_length=100)
-    state_num  = models.IntegerField()
-    lga        = models.CharField(max_length=100)
-    lga_num    = models.IntegerField()
-    ward       = models.CharField(max_length=100)
-    sitename   = models.CharField(max_length=120)
-    x_lat      = models.DecimalField(max_digits=8, decimal_places=1,)
-    y_long     = models.DecimalField(max_digits=8, decimal_places=1,)
-    notes      = models.CharField(max_length=300)
+    index = models.BigIntegerField(blank=True, null=True)
+    siteid = models.BigIntegerField(primary_key=True)
+    state = models.TextField(blank=True, null=True)
+    state_num = models.TextField(blank=True, null=True)
+    lga = models.TextField(blank=True, null=True)
+    lga_num = models.TextField(blank=True, null=True)
+    ward = models.TextField(blank=True, null=True)
+    sitename = models.TextField(blank=True, null=True)
+    x_lat = models.FloatField(blank=True, null=True)
+    y_lat = models.FloatField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+
 
     class Meta:
-        db_table = 'siteid'
+        db_table = 'siteids'
         managed = False
 
-    def __str__(self):
-        return "Siteid {}".format(self.name)
+    def __unicode__(self):
+        return u"Siteid {}".format(self.sitename)
 
 
 # how do we load the raw data once and then start to use the api after ?
