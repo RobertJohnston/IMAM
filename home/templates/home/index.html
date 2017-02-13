@@ -12,6 +12,8 @@
         <button type="button" id="filter-by-state">Filter by state</button>
     </div>
 
+    <!--use autocomplete jquery ui here -->
+
     <div id="my-chart">
         <p> Chart </p>
         <script>
@@ -29,7 +31,7 @@
         </script>
     </div>
 
-    <div id='stock-chart'>
+    <div id='admissions-chart'>
         <script>
             Highcharts.chart('container', {
                 chart: {
@@ -79,7 +81,6 @@
                         style: {
                             color: Highcharts.getOptions().colors[1]
                         },
-
                     },
                     opposite: true
                 }],
@@ -100,13 +101,14 @@
                     type: 'column',
                     <!-- DO NOT DECLARE Y AXIS to put on left y axis,-->
                     data: [49, 71, 106, 129, 144, 176, 135, 148, 216, 194, 95, 54],
+                    color: '#ffcccc',
                     tooltip: {
                         valueSuffix: ' cases'
                     }
 
                 }, {
                     name: 'Default Rate',
-                    type: 'spline',
+                    type: 'line',
                     yAxis: 1,
                     data: [7.0, 6.9, 9.5, 14.5, 28.2, 11.5, 25.2, 6.5, 13.3, 10.3, 9.9, 9.6],
                     color: '#000000',
@@ -117,7 +119,7 @@
 
                 }, {
                     name: 'Transfer Rate',
-                    type: 'spline',
+                    type: 'line',
                     yAxis: 1,
                     data: [21.0, 21.9, 21.5, 21.5, 22, 22.5, 22.2, 22.5, 23.3, 21.3, 21.9, 20.6],
                     dashStyle: 'shortdot',
@@ -129,7 +131,7 @@
 
                 }, {
                     name: 'Non-recovered Rate',
-                    type: 'spline',
+                    type: 'line',
                     yAxis: 1,
                     data: [6.0, 4.9, 11.5, 7.5, 4, 2.5, 2.2, 12.5, 3.3, 6.3, 8.9, 7.6],
                     dashStyle: 'dash',
@@ -141,7 +143,7 @@
 
                 }, {
                     name: 'Death Rate',
-                    type: 'spline',
+                    type: 'line',
                     yAxis: 1,
                     data: [1.0, 1.9, 1.5, 1.5, 2, 2.5, 2.2, 2.5, 3.3, 1.3, 1.9, 0.6],
                     color: '#FF0000',
