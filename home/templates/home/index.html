@@ -27,36 +27,131 @@
                 });
             });
         </script>
-
     </div>
 
-    <!--<p>{{ state_list }}</p>-->
+    <div id='stock-chart'>
+        <script>
+            Highcharts.chart('container', {
+                chart: {
+                    zoomType: 'xy'
+                },
+                credits: {
+                    enabled: false
+                },
+                title: {
+                    text: 'Admissions and Performance Indicators'
+                },
+                subtitle: {
+                    text: 'IMAM data: DATE',
+                    text: 'IMAM data: DATE',
+                    align: 'right',
+                    x: -50,
+                    y: 340
+                },
+                xAxis: [{
+                    categories: [1,2,3,4,5,6,7,8,9,10,11,12],
+                    crosshair: true
+                }],
+                yAxis: [{ // Primary yAxis
+                    labels: {
+                        format: '{value}',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    },
+                    title: {
+                        text: 'Admissions',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    }
+                }, { // Secondary yAxis
+                    title: {
+                        text: 'Percentage',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    },
+                    labels: {
+                        format: '{value}',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    },
+                    opposite: true
+                }],
+                tooltip: {
+                    shared: true
+                },
+                legend: {
+                    layout: 'vertical',
+                    align: 'left',
+                    x: 100,
+                    verticalAlign: 'top',
+                    y: 20,
+                    floating: true,
+                    backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+                },
+                series: [{
+                    name: 'Admissions',
+                    type: 'column',
+                    <!-- DO NOT DECLARE Y AXIS to put on left y axis,-->
+                    data: [49, 71, 106, 129, 144, 176, 135, 148, 216, 194, 95, 54],
+                    tooltip: {
+                        valueSuffix: ' cases'
+                    }
 
-    <!--<ul>-->
-        <!--{% for state in state_list %}-->
-        <!--<li>{{ state.state_num }}</li>-->
-        <!--{% endfor %}-->
-    <!--</ul>-->
+                }, {
+                    name: 'Default Rate',
+                    type: 'spline',
+                    yAxis: 1,
+                    data: [7.0, 6.9, 9.5, 14.5, 28.2, 11.5, 25.2, 6.5, 13.3, 10.3, 9.9, 9.6],
+                    color: '#000000',
+                    marker: { enabled: false},
+                    tooltip: {
+                        valueSuffix: '%'
+                    }
 
-    <!--FAKE CHART-->
-    <!--<script>-->
-        <!--Highcharts.chart('container', {-->
-            <!--xAxis: {-->
-                <!--categories: ['50', '51', '52', '1', '2', '3',-->
-                    <!--'4', '5', '6', '7', '8', '9']-->
-            <!--},-->
+                }, {
+                    name: 'Transfer Rate',
+                    type: 'spline',
+                    yAxis: 1,
+                    data: [21.0, 21.9, 21.5, 21.5, 22, 22.5, 22.2, 22.5, 23.3, 21.3, 21.9, 20.6],
+                    dashStyle: 'shortdot',
+                    color: '#FFA500',
+                    marker: { enabled: false},
+                    tooltip: {
+                        valueSuffix: '%'
+                    }
 
-            <!--series: [{-->
-                <!--data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4],-->
-                <!--type: 'column'-->
-            <!--}]-->
-        <!--});-->
-    <!--</script>-->
+                }, {
+                    name: 'Non-recovered Rate',
+                    type: 'spline',
+                    yAxis: 1,
+                    data: [6.0, 4.9, 11.5, 7.5, 4, 2.5, 2.2, 12.5, 3.3, 6.3, 8.9, 7.6],
+                    dashStyle: 'dash',
+                    color: '#9370DB',
+                    marker: { enabled: false},
+                    tooltip: {
+                        valueSuffix: '%'
+                    }
+
+                }, {
+                    name: 'Death Rate',
+                    type: 'spline',
+                    yAxis: 1,
+                    data: [1.0, 1.9, 1.5, 1.5, 2, 2.5, 2.2, 2.5, 3.3, 1.3, 1.9, 0.6],
+                    color: '#FF0000',
+                    tooltip: {
+                        valueSuffix: '%'
+                    }
+                }]
+            });
+
+        </script>
+    </div>
+
 {% include "home/includes/htmlsnippet.html" %}
-
-
-
-
 
 <!--htmlsnippet could include an error message that is repeated on many different pages. -->
 

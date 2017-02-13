@@ -10,24 +10,28 @@ from models import Siteid
 
 def adm(request):
     # Read data into dataframe - at each function call
-
     engine = create_engine(
         'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
     df = pd.read_sql_query("select * from program;", con=engine)
 
+    # All data should be cleaned in advance.
+
+    # Assign state and LGA numbers to data frame
+    df = assign_state_lga_num(df)
+
     # Convert to float
     df['amar'] = pd.to_numeric(df.amar, errors='coerce')
     df['weeknum'] = pd.to_numeric(df.weeknum, errors='coerce')
+    df['state_num'] = pd.to_numeric(df.state_num, errors='coerce')
 
+    # Clean out of range data
     df_filtered = df.query('weeknum==weeknum').query('0<weeknum<53')
-    df_filtered['weeknum'] = df_filtered.weeknum.astype('int')
-
     df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
-    df_filtered['amar'] = df_filtered.amar.astype('int')
-
-    df_filtered = assign_state_lga_num(df_filtered)
-    df_filtered['state_num'] = pd.to_numeric(df_filtered.state_num, errors='coerce')
     df_filtered = df_filtered.query('state_num==state_num').query('0<state_num<37')
+
+    # Set to int - so that decimal points are not presented
+    df_filtered['weeknum'] = df_filtered.weeknum.astype('int')
+    df_filtered['amar'] = df_filtered.amar.astype('int')
     df_filtered['state_num'] = df_filtered.state_num.astype('int')
 
 
