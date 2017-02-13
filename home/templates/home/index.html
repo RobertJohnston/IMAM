@@ -66,6 +66,8 @@
                         }
                     }
                 }, { // Secondary yAxis
+                    min: 0,
+                    max: 100,
                     title: {
                         text: 'Percentage',
                         style: {
@@ -76,7 +78,8 @@
                         format: '{value}',
                         style: {
                             color: Highcharts.getOptions().colors[1]
-                        }
+                        },
+
                     },
                     opposite: true
                 }],
