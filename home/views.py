@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from management.commands.load_data import assign_state_lga_num
 from models import Siteid
 
+# Query database and create data for admissions graph
 def adm(request):
     # Read data into dataframe - at each function call
     engine = create_engine(
@@ -40,6 +41,7 @@ def adm(request):
 
         state_number = request.GET["state_number"]
         adm_by_week = df_filtered.query('state_num==%s' % state_number)['amar'].groupby(df_filtered['weeknum']).sum()
+
     else:
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
 

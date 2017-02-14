@@ -3,39 +3,9 @@
 
 {% block content %}
 
-    <div>
-        <select id="filter-by-state-value">
-            {% for siteid in state_list %}
-            <option value="{{ siteid.state_num }}">{{ siteid.state }}</option>
-            {% endfor %}
-        </select>
-        <button type="button" id="filter-by-state">Filter by state</button>
-    </div>
-
-    <!--add autocomplete jquery ui here -->
-
-    <div id="my-chart">
-        <p> Chart </p>
-        <script>
-            $.getJSON("/adm/").success(function(data) {
-                amarChart = new Highcharts.Chart(data);
-            });
-
-            $("#filter-by-state").click(function(event) {
-                var stateNumber = $("#filter-by-state-value").val();
-
-                $.getJSON("/adm/?state_number=" + stateNumber).success(function(data) {
-                    amarChart.update(data);
-                });
-            });
-        </script>
-    </div>
-
     <div id='admissions-chart'>
         <script>
-
-            <!--Remove commenting below to show chart-->
-            <!--Highcharts.chart('container', { -->
+            Highcharts.chart('container', {
                 chart: {
                     zoomType: 'xy'
                 },
@@ -158,13 +128,5 @@
 
         </script>
     </div>
-
-{% include "home/includes/htmlsnippet.html" %}
-
-<!--htmlsnippet could include an error message that is repeated on many different pages. -->
-
-{% endblock %}
-
-<!--see calazan.com - using highcharts with fjango 1.6 and bootstrap-->
 
 
