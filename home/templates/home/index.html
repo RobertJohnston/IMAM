@@ -4,13 +4,18 @@
 {% block content %}
 
     <div>
-        <select id="filter-by-state-value">
-            {% for siteid in state_list %}
-            <option value="{{ siteid.state_num }}">{{ siteid.state }}</option>
-            {% endfor %}
-        </select>
-        <button type="button" id="filter-by-state">Filter</button>
+        <script type="text/javascript">
+        $(document).ready(function() {
+            $(.js-example-basic-single").select2();
+        });
+        </script>
     </div>
+
+    <select class="js-example-basic-single" id="filter-by-state-value">
+        {% for siteid in state_list %}
+        <option value="{{ siteid.state_num }}">{{ siteid.state }}</option>
+        {% endfor %}
+    </select>
 
     <!--add autocomplete jquery ui here -->
 
