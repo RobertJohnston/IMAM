@@ -3,9 +3,18 @@
 
 {% block content %}
 
+    <div id="intro">
+        <h1> Hello </h1>
+
+        <p>{{ garbage }}</p>
+
+        <a href="/">Home</a>
+    </div>
+
+
     <div id='admissions-chart'>
         <script>
-            Highcharts.chart('container', {
+            Highcharts.chart('admissions-chart', {
                 chart: {
                     zoomType: 'xy'
                 },

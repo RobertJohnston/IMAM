@@ -9,6 +9,7 @@ from django.db import models
 
 # Registration
 class Registration(models.Model):
+    index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
@@ -25,7 +26,8 @@ class Registration(models.Model):
     # replaces reference home_registration
     class Meta:
         db_table = 'registration'
-        managed =  False
+        # if managed = False then will not rename following Django conventions
+        managed = False
 
     def __str__(self):
         return "Registration {}".format(self.name)
@@ -33,6 +35,7 @@ class Registration(models.Model):
 
 # Program data
 class Program(models.Model):
+    index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
@@ -63,6 +66,8 @@ class Program(models.Model):
     class Meta:
         db_table = 'program'
         managed = False
+        unique_together = (('urn', 'first_seen'),)
+
 
     def __str__(self):
         return "Program {}".format(self.name)
@@ -70,6 +75,7 @@ class Program(models.Model):
 
 # Stock data
 class Stock(models.Model):
+    index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
@@ -89,7 +95,7 @@ class Stock(models.Model):
     rutf_in = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_used_carton = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_used_sachet = models.DecimalField(max_digits=7, decimal_places=2,)
-    rutf_bal_cartons = models.DecimalField(max_digits=8, decimal_places=2,)
+    rutf_bal_carton = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_bal_sachet =  models.DecimalField(max_digits=7, decimal_places=2,)
     f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2,)
     f75_bal_sachet =   models.DecimalField(max_digits=7, decimal_places=2,)
@@ -107,10 +113,11 @@ class Stock(models.Model):
 
 # State and LGA Stock data
 class Lga(models.Model):
+    index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
-    urn = models.IntegerField(primary_key=True)
+    urn = models.IntegerField()
     name =   models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
     siteid = models.IntegerField()
@@ -118,11 +125,11 @@ class Lga(models.Model):
     last_seen =  models.DateTimeField('last seen')
     weeknum = models.IntegerField()
     rutf_in =          models.DecimalField(max_digits=8, decimal_places=2,)
-    rutf_out_carton =  models.DecimalField(max_digits=8, decimal_places=2,)
-    rutf_bal_cartons = models.DecimalField(max_digits=8, decimal_places=2,)
+    rutf_out =  models.DecimalField(max_digits=8, decimal_places=2,)
+    rutf_bal = models.DecimalField(max_digits=8, decimal_places=2,)
     # can add tracking of f75 and f100 later at LGA level
-    f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2,)
-    f100_bal_carton =  models.DecimalField(max_digits=7, decimal_places=2,)
+    # f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2,)
+    # f100_bal_carton =  models.DecimalField(max_digits=7, decimal_places=2,)
     confirm = models.CharField(max_length=20)
 
     class Meta:
@@ -135,7 +142,7 @@ class Lga(models.Model):
 
 # Site IDs
 class Siteid(models.Model):
-    index = models.BigIntegerField(blank=True, null=True)
+    index = models.BigIntegerField(primary_key=True)
     siteid = models.BigIntegerField(primary_key=True)
     state = models.TextField(blank=True, null=True)
     state_num = models.TextField(blank=True, null=True)

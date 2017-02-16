@@ -3,9 +3,10 @@ from django.http import HttpResponse
 
 # Create your views here.
 def map(request):
-    return render(request, 'map.html', )
+
+    adm_dict = {'garbage': "Pass the vulnuisbak, ASB"}
+
+    return render(request, 'map/map.html', context=adm_dict )
     #return render(request, 'map.html', {'content': ['Insert Map here']})
 
 
-# def contact(request):
-#     return render(request, 'personal/basic.html', {'content':[' If you would like to contact me, please email me at slogojojo@gojira,np']})

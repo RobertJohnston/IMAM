@@ -44,13 +44,14 @@ class Command(BaseCommand):
                          'rutf_used_carton',
                          'rutf_used_sachet',
                          'rutf_bal_carton',
-                         'rutf_bal_sachet'
+                         'rutf_bal_sachet',
+                         # rutf_out and rutf_bal were not entered into postgres.
                          'rutf_out',
                          'rutf_bal',
                          'f75_bal_carton',
                          'f75_bal_sachet',
-                         'f100_bal_carton'
-                         'f100_bal_sachet'
+                         'f100_bal_carton',
+                         'f100_bal_sachet',
                          'confirm',
                          'unique']
 
@@ -70,6 +71,10 @@ class Command(BaseCommand):
 
         except KeyboardInterrupt:
             print("Interrupted...")
+
+        # clean data
+
+        # insert cleaned data into postgresql
 
         self.stdout.write("Completed")
 
