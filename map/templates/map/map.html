@@ -3,17 +3,11 @@
 
 {% block content %}
 
-    <div id="intro">
-        <h1> Hello </h1>
-
-        <p>{{ garbage }}</p>
-
-        <a href="/">Home</a>
-    </div>
 
 
     <div id='admissions-chart'>
         <script>
+            <!--if you put the chart in the container -it fills all the container-->
             Highcharts.chart('admissions-chart', {
                 chart: {
                     zoomType: 'xy'
@@ -25,10 +19,11 @@
                     text: 'Admissions and Performance Indicators'
                 },
                 subtitle: {
-                    text: 'IMAM Nigeria: DATE',
+                    text: 'IMAM Nigeria  {{ date }}',
                     align: 'right',
+                    verticalAlign: 'bottom',
                     x: -50,
-                    y: 325
+                    y: 10
                 },
                 xAxis: [{
                     categories: [1,2,3,4,5,6,7,8,9,10,11,12],
