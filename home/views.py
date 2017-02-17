@@ -24,40 +24,53 @@ def adm(request):
     df['amar'] = pd.to_numeric(df.amar, errors='coerce')
     df['weeknum'] = pd.to_numeric(df.weeknum, errors='coerce')
     df['state_num'] = pd.to_numeric(df.state_num, errors='coerce')
+    df['lga_num'] = pd.to_numeric(df.lga_num, errors='coerce')
 
     # Clean out of range data
     df_filtered = df.query('weeknum==weeknum').query('0<weeknum<53')
     df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
     df_filtered = df_filtered.query('state_num==state_num').query('0<state_num<37')
+    df_filtered = df_filtered.query('lga_num==lga_num').query('101<lga_num<3799')
 
     # Set to int - so that decimal points are not presented
     df_filtered['weeknum'] = df_filtered.weeknum.astype('int')
     df_filtered['amar'] = df_filtered.amar.astype('int')
     df_filtered['state_num'] = df_filtered.state_num.astype('int')
+    df_filtered['lga_num'] = df_filtered.lga_num.astype('int')
 
-
-    if request.GET.get("state_number"):
-        assert request.GET["state_number"].isdigit()
-
-        state_number = request.GET["state_number"]
-        adm_by_week = df_filtered.query('state_num==%s' % state_number)['amar'].groupby(df_filtered['weeknum']).sum()
-
-    else:
+    # default or national level
+    if "state_number" not in request.GET or request.GET['state_number'] == "":
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
+        chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart', output_type='json')
+        return HttpResponse(chart)
+
+    # request format is: state-23 or lga-333
+    data_type, num = request.GET['state_number'].split('-', 1)
+
+    # sanitize input for security
+    # ideally we should is a django form here
+    assert num.isdigit()
+
+    if data_type == "state":
+        adm_by_week = df_filtered.query('state_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
+    elif data_type == "lga":
+        adm_by_week = df_filtered.query('lga_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
 
     chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart',output_type='json')
-    # module object has no attribute serialize unless you specify pandas except with pandas_highcharts.core
 
     return HttpResponse(chart)
 
 
-# def index(request):
-#     state_list = sorted(Siteid.objects.all().values('state', 'state_num').distinct(), key=lambda x: int(x['state_num']))
-#     return render(request, 'home/index.html', {"state_list": state_list})
-
 def index(request):
-    select_list = sorted(Siteid.objects.all().values('lga', 'lga_num').distinct(), key=lambda x: int(x['lga_num']))
-    return render(request, 'home/index.html', {"select_list": select_list})
+    state_list = sorted(Siteid.objects.all().values('state', 'state_num').distinct(), key=lambda x: int(x['state_num']))
+
+    lga_list = sorted(Siteid.objects.all().values('lga', 'lga_num').distinct(), key=lambda x: int(x['lga_num']))
+
+    return render(request, 'home/index.html', {"state_list": state_list, "lga_list": lga_list })
+
+# def index(request):
+#     select_list = sorted(Siteid.objects.all().values('lga', 'lga_num').distinct(), key=lambda x: int(x['lga_num']))
+#     return render(request, 'home/index.html', {"select_list": select_list})
 
 # USING HTML.to_html
 

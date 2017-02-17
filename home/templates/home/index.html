@@ -5,15 +5,20 @@
 
     <div>
         <script type="text/javascript">
+        // wait until page is loaded
         $(document).ready(function() {
-            $(.js-example-basic-single").select2();
+            $(".js-example-basic-single").select2();
         });
         </script>
     </div>
 
     <select class="js-example-basic-single" id="filter-by-state-value">
-        {% for siteid in select_list %}
-        <option value="{{ siteid.lga_num }}">{{ siteid.lga }}</option>
+        <option value="">National</option>
+        {% for siteid in state_list %}
+        <option value="state-{{ siteid.state_num }}">{{ siteid.state }}</option>
+        {% endfor %}
+        {% for siteid in lga_list %}
+        <option value="lga-{{ siteid.lga_num }}">{{ siteid.lga }}</option>
         {% endfor %}
     </select>
 
@@ -25,9 +30,8 @@
                 amarChart = new Highcharts.Chart(data);
             });
 
-            // $('#filter-by-state').select2();
-
-            $("#filter-by-state").click(function(event) {
+            // on select event - run code in {}
+            $("#filter-by-state-value").on("select2:select", function (e) {
                 var stateNumber = $("#filter-by-state-value").val();
 
                 $.getJSON("/adm/?state_number=" + stateNumber).success(function(data) {
@@ -44,6 +48,6 @@
 
 {% endblock %}
 
-<!--see calazan.com - using highcharts with fjango 1.6 and bootstrap-->
+<!--see calazan.com - using highcharts with django 1.6 and bootstrap-->
 
 
