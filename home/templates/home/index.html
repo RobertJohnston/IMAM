@@ -24,22 +24,36 @@
 
 
     <div id="my-chart">
-        <p> Chart </p>
-        <script>
-            $.getJSON("/adm/").success(function(data) {
-                amarChart = new Highcharts.Chart(data);
-            });
-
-            // on select event - run code in {}
-            $("#filter-by-state-value").on("select2:select", function (e) {
-                var stateNumber = $("#filter-by-state-value").val();
-
-                $.getJSON("/adm/?state_number=" + stateNumber).success(function(data) {
-                    amarChart.update(data);
-                });
-            });
-        </script>
+        <p>Chart</p>
     </div>
+
+    <script>
+        format_data = function(data) {
+            return {
+                "series":[{
+                    "data": data.adm_by_week,
+                    "name":"amar",
+                    "yAxis":0}],
+                "yAxis":[{}],
+                "chart":{"renderTo":"my-chart"},
+                "xAxis":{"title":{"text":"weeknum"}},
+                "legend":{"enabled":true},
+                "title": {text: data.title}
+            }
+        }
+        $.getJSON("/adm/").success(function(data) {
+            amarChart = new Highcharts.Chart(format_data(data));
+        });
+
+        // on select event - run code in {}
+        $("#filter-by-state-value").on("select2:select", function (e) {
+            var stateNumber = $("#filter-by-state-value").val();
+
+            $.getJSON("/adm/?state_number=" + stateNumber).success(function(data) {
+                amarChart.update(format_data(data));
+            });
+        });
+    </script>
 
 
 {% include "home/includes/htmlsnippet.html" %}

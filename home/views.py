@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
@@ -41,8 +43,12 @@ def adm(request):
     # default or national level
     if "state_number" not in request.GET or request.GET['state_number'] == "":
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
-        chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart', output_type='json')
-        return HttpResponse(chart)
+        # chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart', output_type='json')
+        data = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
+        return HttpResponse(json.dumps({
+            "adm_by_week": data,
+            "title": "Admissions by week at the national level",
+        }))
 
     # request format is: state-23 or lga-333
     data_type, num = request.GET['state_number'].split('-', 1)
@@ -56,9 +62,13 @@ def adm(request):
     elif data_type == "lga":
         adm_by_week = df_filtered.query('lga_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
 
-    chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart',output_type='json')
+    # chart = pandas_highcharts.core.serialize(adm_by_week.to_frame(), render_to='my-chart',output_type='json')
 
-    return HttpResponse(chart)
+    data = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
+    return HttpResponse(json.dumps({
+        "adm_by_week": data,
+        "title": "Admissions by week for %s number %s" % (data_type, num),
+    }))
 
 
 def index(request):
