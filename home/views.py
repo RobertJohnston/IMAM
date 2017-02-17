@@ -51,9 +51,13 @@ def adm(request):
     return HttpResponse(chart)
 
 
+# def index(request):
+#     state_list = sorted(Siteid.objects.all().values('state', 'state_num').distinct(), key=lambda x: int(x['state_num']))
+#     return render(request, 'home/index.html', {"state_list": state_list})
+
 def index(request):
-    state_list = sorted(Siteid.objects.all().values('state', 'state_num').distinct(), key=lambda x: int(x['state_num']))
-    return render(request, 'home/index.html', {"state_list": state_list})
+    select_list = sorted(Siteid.objects.all().values('lga', 'lga_num').distinct(), key=lambda x: int(x['lga_num']))
+    return render(request, 'home/index.html', {"select_list": select_list})
 
 # USING HTML.to_html
 

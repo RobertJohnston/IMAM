@@ -12,12 +12,11 @@
     </div>
 
     <select class="js-example-basic-single" id="filter-by-state-value">
-        {% for siteid in state_list %}
-        <option value="{{ siteid.state_num }}">{{ siteid.state }}</option>
+        {% for siteid in select_list %}
+        <option value="{{ siteid.lga_num }}">{{ siteid.lga }}</option>
         {% endfor %}
     </select>
 
-    <!--add autocomplete jquery ui here -->
 
     <div id="my-chart">
         <p> Chart </p>
