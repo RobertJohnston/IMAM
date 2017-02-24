@@ -29,7 +29,7 @@ class Registration(models.Model):
         # if managed = False then will not rename following Django conventions
         managed = False
 
-    def __str__(self):
+    def __unicode__(self): # Python 3: def __str__(self):
         return "Registration {}".format(self.name)
 
 
@@ -69,7 +69,7 @@ class Program(models.Model):
         unique_together = (('urn', 'first_seen'),)
 
 
-    def __str__(self):
+    def __unicode__(self):
         return "Program {}".format(self.name)
 
 
@@ -107,7 +107,7 @@ class Stock(models.Model):
         db_table = 'stock'
         managed = False
 
-    def __str__(self):
+    def __unicode__(self):
         return "Stock {}".format(self.name)
 
 
@@ -136,32 +136,55 @@ class Lga(models.Model):
         db_table = 'lga'
         managed = False
 
-    def __str__(self):
+    def __unicode__(self):
         return "Lga {}".format(self.name)
 
 
-# Site IDs
-class Siteid(models.Model):
-    index = models.BigIntegerField(primary_key=True)
-    siteid = models.BigIntegerField(primary_key=True)
+# First Admin IDs
+class First_admin(models.Model):
+    index = models.IntegerField()
     state = models.TextField(blank=True, null=True)
-    state_num = models.TextField(blank=True, null=True)
-    lga = models.TextField(blank=True, null=True)
-    lga_num = models.TextField(blank=True, null=True)
-    ward = models.TextField(blank=True, null=True)
-    sitename = models.TextField(blank=True, null=True)
-    x_lat = models.FloatField(blank=True, null=True)
-    y_lat = models.FloatField(blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
-
+    state_num = models.IntegerField(primary_key=True)
 
     class Meta:
-        db_table = 'siteids'
+        db_table = 'first_admin'
         managed = False
 
     def __unicode__(self):
-        return u"Siteid {}".format(self.sitename)
+        return "First_admin {}".format(self.state)
 
+# Second Admin IDs
+class Second_admin(models.Model):
+    index = models.BigIntegerField()
+    state_num = models.IntegerField(blank=True, null=True)
+    lga = models.TextField(blank=True, null=True)
+    lga_num = models.IntegerField(primary_key=True)
+
+    class Meta:
+        db_table = 'second_admin'
+        managed = False
+
+    def __unicode__(self):
+        return "Second_admin {}".format(self.lga)
+
+# Site IDs
+class Site(models.Model):
+    index = models.IntegerField()
+    siteid = models.BigIntegerField(primary_key=True)
+    sitename = models.TextField(blank=True, null=True)
+    state_num = models.IntegerField(blank=True, null=True)
+    lga_num = models.IntegerField(blank=True, null=True)
+    ward = models.TextField(blank=True, null=True)
+    x_long = models.IntegerField(blank=True, null=True)
+    y_lat = models.IntegerField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        # This is reference of DJango to Postgres
+        db_table = 'site'
+        managed = False
+
+    def __unicode__(self):
+        return "Site {}".format(self.sitename)
 
 # how do we load the raw data once and then start to use the api after ?
-# this will be important as the database size increases

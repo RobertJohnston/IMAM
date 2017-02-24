@@ -89,6 +89,7 @@ def assign_state_lga_num(dataframe):
     # Set siteid to str to measure length  - only works with strings
     dataframe['siteid_lgt'] = dataframe['siteid'].astype(str).str.len()
     dataframe['state_num'] = dataframe['siteid'].astype(str).str[:2]
+    # Conditional - Numpy
     dataframe['state_num'] = np.where(dataframe['siteid_lgt']==9, dataframe['siteid'].astype(str).str[:1], dataframe['state_num'])
     dataframe['lga_num'] = dataframe['siteid'].astype(str).str[:4]
     dataframe['lga_num'] = np.where(dataframe['siteid_lgt']==9, dataframe['siteid'].astype(str).str[:3], dataframe['lga_num'])

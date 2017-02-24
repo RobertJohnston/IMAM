@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
-import numpy as np
 from sqlalchemy import create_engine
 from django.conf import settings
 
@@ -11,13 +10,12 @@ from load_data import assign_state_lga_num
 # to run python manage.py load_data
 
 class Command(BaseCommand):
-    help = 'Loads data to SQL for IMAM website'
+    help = 'Loads sites data to SQL for IMAM website'
 
     # A command must define handle
     def handle(self, *args, **options):
 
         # Drop table if exists already
-        # engine.execute(""" DROP TABLE IF EXISTS "%s """ % (tablename))
 
         # Load SITE ID dataframe
         # note for PROGRAM- use 'Runs' tab and not 'Contacts'
@@ -25,21 +23,47 @@ class Command(BaseCommand):
 
         assign_state_lga_num(df)
 
-        columnsTitles = ['siteid', 'state', 'state_num', 'lga', 'lga_num', 'ward', 'sitename', 'x_lat', 'y_lat', 'notes']
-        df = df.reindex(columns=columnsTitles)
+        # First Admin
+        columnsTitles = ['state_num', 'state']
+        first_admin_df = df.reindex(columns=columnsTitles)
+        # drop all duplicates (keep first instance is default)
+        first_admin_df = first_admin_df.drop_duplicates(['state_num'], keep='first')
+        first_admin_df.state_num = first_admin_df.state_num.astype(int)
+        first_admin_df = first_admin_df.sort_values(by='state_num')
+        # in jupyter notebook - following line deletes 2nd index, here the 2nd old index is maintained.
+        first_admin_df.reset_index(drop=True)
 
-        #set primary key
-        df.set_index('siteid')
+        # Second Admin
+        columnsTitles = ['lga_num', 'lga', 'state_num']
+        second_admin_df = df.reindex(columns=columnsTitles)
+        second_admin_df = second_admin_df.drop_duplicates(['lga_num'], keep='first')
+        second_admin_df.lga_num = second_admin_df.lga_num.astype(int)
+        second_admin_df = second_admin_df.sort_values(by='lga_num')
+        second_admin_df.reset_index(drop=True)
+
+        # Implementation Sites
+        columnsTitles = ['siteid', 'sitename', 'state_num', 'lga_num', 'ward',  'x_long', 'y_lat', 'notes']
+        site_df = df.reindex(columns=columnsTitles)
 
         # engine = create_engine('postgresql://[user]:[pass]@[host]:[port]/[schema]')
         engine = create_engine(
             'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
 
         try:
-            df.to_sql('siteids', engine, schema='public', if_exists='replace')
+            first_admin_df.to_sql('first_admin', engine, schema='public', if_exists='replace')
             with engine.connect() as con:
-                con.execute('ALTER TABLE siteids ADD PRIMARY KEY (siteid);')
-                print("SiteID data added.")
+                con.execute('ALTER TABLE first_admin ADD PRIMARY KEY (state_num);')
+                print("First admin data added.")
+
+            second_admin_df.to_sql('second_admin', engine, schema='public', if_exists='replace')
+            with engine.connect() as con:
+                con.execute('ALTER TABLE second_admin ADD PRIMARY KEY (lga_num);')
+                print("Second admin data added.")
+
+            site_df.to_sql('site', engine, schema='public', if_exists='replace')
+            with engine.connect() as con:
+                con.execute('ALTER TABLE site ADD PRIMARY KEY (siteid);')
+                print("Site data added.")
 
         except KeyboardInterrupt:
             print("Interrupted...")

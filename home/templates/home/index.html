@@ -4,27 +4,42 @@
 {% block content %}
 
     <div>
+
         <script type="text/javascript">
         // wait until page is loaded
+
         $(document).ready(function() {
             $(".js-example-basic-single").select2();
+            $("#filter-by-site").val("").trigger("change");
+            // must trigger event for select2 to update display
+
         });
         </script>
     </div>
 
-    <select class="js-example-basic-single" id="filter-by-state-value">
-        <option value="">National</option>
-        {% for siteid in state_list %}
-        <option value="state-{{ siteid.state_num }}">{{ siteid.state }}</option>
+    <select class="js-example-basic-single" id="filter-by-site">
+        <option value="" selected="selected">National</option>
+        {% for site in state_list %}
+        <option value="state-{{ site.state_num }}">{{ site.state }}</option>
         {% endfor %}
-        {% for siteid in lga_list %}
-        <option value="lga-{{ siteid.lga_num }}">{{ siteid.lga }}</option>
+        {% for site in lga_list %}
+        <option value="lga-{{ site.lga_num }}">{{ site.lga }}</option>
+        {% endfor %}
+        {% for site in site_list %}
+        <option value="site-{{ site.siteid }}">{{ site.sitename }}</option>
         {% endfor %}
     </select>
 
 
+        <!--{% for siteid in lga_list %}-->
+        <!--<option value="lga-{{ siteid.lga_num }}">{{ siteid.lga }}</option>-->
+        <!--{% endfor %}-->
+
+
     <div id="my-chart">
         <p>Chart</p>
+
+
     </div>
 
     <script>
@@ -38,7 +53,8 @@
                 "chart":{"renderTo":"my-chart"},
                 "xAxis":{"title":{"text":"weeknum"}},
                 "legend":{"enabled":true},
-                "title": {text: data.title}
+                "title": {text: data.title},
+                "subtitle": {text: "Admissions and Performance Indicators by Week"}
             }
         }
         $.getJSON("/adm/").success(function(data) {
@@ -46,10 +62,10 @@
         });
 
         // on select event - run code in {}
-        $("#filter-by-state-value").on("select2:select", function (e) {
-            var stateNumber = $("#filter-by-state-value").val();
+        $("#filter-by-site").on("select2:select", function (e) {
+            var siteFilter = $("#filter-by-site").val();
 
-            $.getJSON("/adm/?state_number=" + stateNumber).success(function(data) {
+            $.getJSON("/adm/?site_filter=" + siteFilter).success(function(data) {
                 amarChart.update(format_data(data));
             });
         });
