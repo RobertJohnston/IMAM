@@ -47,8 +47,19 @@
             return {
                 "series":[{
                     "data": data.adm_by_week,
-                    "name":"amar",
-                    "yAxis":0}],
+                    "name":"adm_by_week",
+                    "yAxis":0
+                 }, {
+                    name: 'Default Rate',
+                    type: 'line',
+                    // yAxis: 1,
+                    data: data.def_rate_by_week,
+                    color: '#000000',
+                    marker: { enabled: false},
+                    tooltip: {
+                        valueSuffix: '%'
+                    }
+                }],
                 "yAxis":[{}],
                 "chart":{"renderTo":"my-chart"},
                 "xAxis":{"title":{"text":"weeknum"}},

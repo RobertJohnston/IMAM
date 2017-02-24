@@ -156,7 +156,7 @@ class First_admin(models.Model):
 # Second Admin IDs
 class Second_admin(models.Model):
     index = models.BigIntegerField()
-    state_num = models.IntegerField(blank=True, null=True)
+    state_num = models.ForeignKey(First_admin, db_column="state_num")
     lga = models.TextField(blank=True, null=True)
     lga_num = models.IntegerField(primary_key=True)
 
@@ -172,8 +172,8 @@ class Site(models.Model):
     index = models.IntegerField()
     siteid = models.BigIntegerField(primary_key=True)
     sitename = models.TextField(blank=True, null=True)
-    state_num = models.IntegerField(blank=True, null=True)
-    lga_num = models.IntegerField(blank=True, null=True)
+    state_num = models.ForeignKey(First_admin, db_column="state_num")
+    lga_num = models.ForeignKey(Second_admin, db_column="lga_num")
     ward = models.TextField(blank=True, null=True)
     x_long = models.IntegerField(blank=True, null=True)
     y_lat = models.IntegerField(blank=True, null=True)

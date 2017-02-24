@@ -33,6 +33,7 @@ def adm(request):
     # Clean out of range data
     df_filtered = df.query('weeknum==weeknum').query('0<weeknum<53')
     df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
+    # line below deletes entire row where a NaN is found - see all queries
     df_filtered = df_filtered.query('state_num==state_num').query('0<state_num<37')
     df_filtered = df_filtered.query('lga_num==lga_num').query('101<lga_num<3799')
     df_filtered = df_filtered.query('siteid==siteid').query('101110001<siteid<3999999999')
@@ -44,46 +45,65 @@ def adm(request):
     df_filtered['lga_num'] = df_filtered.lga_num.astype('int')
     df_filtered['siteid'] = df_filtered.siteid.astype('int')
 
+    # Data cleaning for exit rates
+    for i in ('dcur', 'dead', 'defu', 'dmed', 'tout'):
+        df_filtered[i] = pd.to_numeric(df_filtered[i], errors='coerce')
+        # line below deletes entire row where a NaN is found
+        df_filtered = df_filtered.query('%s==%s' % (i, i)).query('0<=%s' % i)
+        df_filtered[i] = df_filtered.dcur.astype(int)
+
+    df_filtered['total_exits'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed + df_filtered.tout
+    df_filtered['default_rate'] = df_filtered.defu / df_filtered.total_exits
+    df_filtered.default_rate[df_filtered.default_rate != df_filtered.default_rate] = 0
 
     # default or national level
     if "site_filter" not in request.GET or request.GET['site_filter'] == "":
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
+        adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
+        def_rate_by_week = df_filtered['default_rate'].groupby(df_filtered['weeknum']).sum()
+        def_rate_by_week = list(zip(def_rate_by_week.index, def_rate_by_week.values.tolist()))
+        title = "National Level"
 
-        data = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
-        return HttpResponse(json.dumps({
-            "adm_by_week": data,
-            "title": "National Level",
-        }))
+    else:
+        # request format is: state-23, lga-333, siteid 101110001
+        # Last input on split - only allow one split on request.GET to ensure dangerous user input
+        data_type, num = request.GET['site_filter'].split('-', 1)
+        # add name to datatype here
 
-    # request format is: state-23, lga-333, siteid 101110001
-    # Last input on split - only allow one split on request.GET to ensure dangerous user input
-    data_type, num = request.GET['site_filter'].split('-', 1)
-    # add name to datatype here
+        # Always sanitize input for security
+        # ideally we should is a django form here
+        assert num.isdigit()
 
-    # Always sanitize input for security
-    # ideally we should is a django form here
-    assert num.isdigit()
+        if data_type == "state":
+            adm_by_week = df_filtered.query('state_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
+            # in line below, django expects only one = to get value.
+            first_admin = First_admin.objects.get(state_num=num)
+            def_rate_by_week = df_filtered.query('state_num==%s' % num)['default_rate'].groupby(df_filtered['weeknum']).sum()
+            title = "%s %s" % (first_admin.state, data_type)
 
-    if data_type == "state":
-        adm_by_week = df_filtered.query('state_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
-        # in line below, django expects only one = to get value.
-        first_admin = First_admin.objects.get(state_num=num)
-        title = "%s %s" % (first_admin.state, data_type)
+        elif data_type == "lga":
+            adm_by_week = df_filtered.query('lga_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
+            second_admin = Second_admin.objects.get(lga_num=num)
+            def_rate_by_week = df_filtered.query('lga_num==%s' % num)['default_rate'].groupby(df_filtered['weeknum']).sum()
+            title = "%s %s %s" % (second_admin.lga, data_type, second_admin.state_num.state)
 
-    elif data_type == "lga":
-        adm_by_week = df_filtered.query('lga_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
-        second_admin = Second_admin.objects.get(lga_num=num)
-        title = "%s %s" % (second_admin.lga, data_type)
+        elif data_type == "site":
+            adm_by_week = df_filtered.query('siteid==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
+            site_level = Site.objects.get(siteid=num)
+            def_rate_by_week = df_filtered.query('siteid==%s' % num)['default_rate'].groupby(df_filtered['weeknum']).sum()
+            title = "%s %s -LGA %s -State" % (site_level.sitename.capitalize(),
+                                              site_level.lga_num.lga.capitalize(),
+                                              site_level.state_num.state.capitalize())
 
-    elif data_type == "site":
-        adm_by_week = df_filtered.query('siteid==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
-        site_level = Site.objects.get(siteid=num)
-        title = "%s %s" % (site_level.sitename, data_type)
+        else:
+            raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
 
-    data = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
+        adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
+        def_rate_by_week = list(zip(def_rate_by_week.index, def_rate_by_week.values.tolist()))
 
     return HttpResponse(json.dumps({
-        "adm_by_week": data,
+        "adm_by_week": adm_by_week,
+        "def_rate_by_week": def_rate_by_week,
         "title": title,
     }))
 
