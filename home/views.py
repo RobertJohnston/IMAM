@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 import pandas as pd
+import time
 import numpy as np
 
 from sqlalchemy import create_engine
@@ -101,11 +102,17 @@ def adm(request):
         adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
         def_rate_by_week = list(zip(def_rate_by_week.index, def_rate_by_week.values.tolist()))
 
+        date = {'date': time.strftime("%d/%m/%y")}
+
     return HttpResponse(json.dumps({
         "adm_by_week": adm_by_week,
         "def_rate_by_week": def_rate_by_week,
         "title": title,
+        # "date": date,
+        #   Cannot pass data through because of json dumps?
     }))
+
+
 
 
 def index(request):
