@@ -54,22 +54,28 @@ def adm(request):
         df_filtered[i] = pd.to_numeric(df_filtered[i], errors='coerce')
         # line below deletes entire row where a NaN is found
         # THIS IS ERROR IN DATA CLEANING - should leave in NaN
+        # This does not remove all NaN
         df_filtered = df_filtered.query('%s==%s' % (i, i)).query('0<=%s' % i)
         df_filtered[i] = df_filtered[i].astype(int)
 
-    # total exits = exits from program - not including the internal transfers - tout
-    df_filtered['total_exits'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
-    # cout = total discharges from site
-    df_filtered['cout'] = df_filtered.dcur + df_filtered.tout
+
+    # For all calculations see Final Report Consensus Meeting on M&E IMAM December 2010
+
+    # Total Discharges from program
+    df_filtered['total_discharges'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
+
+    # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
+    df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
+
 
     # DCUR
-    df_filtered['dcur_rate'] = df_filtered.dcur / df_filtered.total_exits
+    df_filtered['dcur_rate'] = df_filtered.dcur / df_filtered.total_discharges
     # DEAD
-    df_filtered['dead_rate'] = df_filtered.dead / df_filtered.total_exits
+    df_filtered['dead_rate'] = df_filtered.dead / df_filtered.total_discharges
     # DEFU
-    df_filtered['defu_rate'] = df_filtered.defu / df_filtered.total_exits
+    df_filtered['defu_rate'] = df_filtered.defu / df_filtered.total_discharges
     # DMED
-    df_filtered['dmed_rate'] = df_filtered.dmed / df_filtered.total_exits
+    df_filtered['dmed_rate'] = df_filtered.dmed / df_filtered.total_discharges
     # TOUT
     df_filtered['tout_rate'] = df_filtered.tout / df_filtered.cout
 
@@ -83,6 +89,13 @@ def adm(request):
 
         defu_rate_by_week = df_filtered['defu_rate'].groupby(df_filtered['weeknum']).sum()
         defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
+
+        dmed_rate_by_week = df_filtered['dmed_rate'].groupby(df_filtered['weeknum']).sum()
+        dmed_rate_by_week = list(zip(dmed_rate_by_week.index, dmed_rate_by_week.values.tolist()))
+
+        tout_rate_by_week = df_filtered['tout_rate'].groupby(df_filtered['weeknum']).sum()
+        tout_rate_by_week = list(zip(tout_rate_by_week.index, tout_rate_by_week.values.tolist()))
+
         title = "National Level"
 
     else:
@@ -99,10 +112,11 @@ def adm(request):
             adm_by_week = df_filtered.query('state_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             # in line below, django expects only one = to get value.
             first_admin = First_admin.objects.get(state_num=num)
-
             dead_rate_by_week = df_filtered.query('state_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
-
             defu_rate_by_week = df_filtered.query('state_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
+            dmed_rate_by_week = df_filtered.query('state_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
+            tout_rate_by_week = df_filtered.query('state_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
+
             title = "%s %s" % (first_admin.state, data_type.capitalize())
 
         elif data_type == "lga":
@@ -110,6 +124,9 @@ def adm(request):
             second_admin = Second_admin.objects.get(lga_num=num)
             dead_rate_by_week = df_filtered.query('lga_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
             defu_rate_by_week = df_filtered.query('lga_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
+            dmed_rate_by_week = df_filtered.query('lga_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
+            tout_rate_by_week = df_filtered.query('lga_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
+
             title = "%s-LGA - %s" % (second_admin.lga, second_admin.state_num.state)
 
         elif data_type == "site":
@@ -117,6 +134,9 @@ def adm(request):
             site_level = Site.objects.get(siteid=num)
             dead_rate_by_week = df_filtered.query('siteid==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
             defu_rate_by_week = df_filtered.query('siteid==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
+            dmed_rate_by_week = df_filtered.query('siteid==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
+            tout_rate_by_week = df_filtered.query('siteid==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
+
             title = "%s %s-LGA %s " % (site_level.sitename.capitalize(),
                                               site_level.lga_num.lga.capitalize(),
                                               site_level.state_num.state.capitalize())
@@ -127,13 +147,16 @@ def adm(request):
         adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
         dead_rate_by_week = list(zip(dead_rate_by_week.index, dead_rate_by_week.values.tolist()))
         defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
-
+        dmed_rate_by_week = list(zip(dmed_rate_by_week.index, dmed_rate_by_week.values.tolist()))
+        tout_rate_by_week = list(zip(tout_rate_by_week.index, tout_rate_by_week.values.tolist()))
         date = {'date': time.strftime("%d/%m/%y")}
 
     return HttpResponse(json.dumps({
         "adm_by_week": adm_by_week,
         "dead_rate_by_week": dead_rate_by_week,
         "defu_rate_by_week": defu_rate_by_week,
+        "dmed_rate_by_week": dmed_rate_by_week,
+        "tout_rate_by_week": tout_rate_by_week,
         "title": title,
         # "date": date,
         #   Cannot pass data through because of json dumps?
@@ -155,13 +178,6 @@ def index(request):
                                                })
 
 
-# USING HTML.to_html
 
-#def index(request):
-#    return render_to_response('home/index.html', {'html.table': html_table}, RequestContext(request))
-
-# create table to show in HTML
-#crosstab = pd.crosstab(df['post'],df['type'],margins=True)
-#html_table = crosstab.to_html(index=False)
 
 
