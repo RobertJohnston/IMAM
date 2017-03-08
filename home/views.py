@@ -42,14 +42,15 @@ def adm(request):
 
     # It is appropriate to delete the entire row of data if there is no ID or week number
     # line below deletes entire row where a NaN is found - see all queries
-    df_filtered = df_filtered.query('weeknum==weeknum').query('0<weeknum<53')
-    df_filtered = df_filtered.query('state_num==state_num').query('0<state_num<37')
-    df_filtered = df_filtered.query('lga_num==lga_num').query('101<lga_num<3799')
-    df_filtered = df_filtered.query('siteid==siteid').query('101110001<siteid<3799999999')
+    df_filtered = df_filtered.query('0<weeknum<53')
+    df_filtered = df_filtered.query('0<state_num<37')
+    df_filtered = df_filtered.query('101<lga_num<3799')
+    df_filtered = df_filtered.query('101110001<siteid<3799999999')
 
     # Data cleaning for admissions
     df_filtered = df_filtered.query('amar<99999')
 
+    # Convert from float to int
     for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
         df_filtered[i] = df_filtered[i].astype(int)
 
@@ -82,16 +83,17 @@ def adm(request):
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
         adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
 
-        dead_rate_by_week = df_filtered['dead_rate'].groupby(df_filtered['weeknum']).sum()
+        # This method is almost correct - should be sum of deaths by week over total discharges by week
+        dead_rate_by_week = df_filtered['dead'].groupby(df_filtered['weeknum']).sum() / df_filtered['total_discharges'].groupby(df_filtered['weeknum']).sum()
         dead_rate_by_week = list(zip(dead_rate_by_week.index, dead_rate_by_week.values.tolist()))
 
-        defu_rate_by_week = df_filtered['defu_rate'].groupby(df_filtered['weeknum']).sum()
+        defu_rate_by_week = df_filtered['defu'].groupby(df_filtered['weeknum']).sum() / df_filtered['total_discharges'].groupby(df_filtered['weeknum']).sum()
         defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
 
-        dmed_rate_by_week = df_filtered['dmed_rate'].groupby(df_filtered['weeknum']).sum()
+        dmed_rate_by_week = df_filtered['dmed'].groupby(df_filtered['weeknum']).sum() / df_filtered['total_discharges'].groupby(df_filtered['weeknum']).sum()
         dmed_rate_by_week = list(zip(dmed_rate_by_week.index, dmed_rate_by_week.values.tolist()))
 
-        tout_rate_by_week = df_filtered['tout_rate'].groupby(df_filtered['weeknum']).sum()
+        tout_rate_by_week = df_filtered['tout'].groupby(df_filtered['weeknum']).sum() / df_filtered['total_discharges'].groupby(df_filtered['weeknum']).sum()
         tout_rate_by_week = list(zip(tout_rate_by_week.index, tout_rate_by_week.values.tolist()))
 
         title = "National Level"
@@ -110,20 +112,21 @@ def adm(request):
             adm_by_week = df_filtered.query('state_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             # in line below, django expects only one = to get value.
             first_admin = First_admin.objects.get(state_num=num)
-            dead_rate_by_week = df_filtered.query('state_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
-            defu_rate_by_week = df_filtered.query('state_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
-            dmed_rate_by_week = df_filtered.query('state_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
-            tout_rate_by_week = df_filtered.query('state_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
+            # mean in equation below is not correct - as probably takes unweighted mean of sites
+            dead_rate_by_week = df_filtered.query('state_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).mean()
+            defu_rate_by_week = df_filtered.query('state_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).mean()
+            dmed_rate_by_week = df_filtered.query('state_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).mean()
+            tout_rate_by_week = df_filtered.query('state_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).mean()
 
             title = "%s %s" % (first_admin.state, data_type.capitalize())
 
         elif data_type == "lga":
             adm_by_week = df_filtered.query('lga_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             second_admin = Second_admin.objects.get(lga_num=num)
-            dead_rate_by_week = df_filtered.query('lga_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
-            defu_rate_by_week = df_filtered.query('lga_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
-            dmed_rate_by_week = df_filtered.query('lga_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
-            tout_rate_by_week = df_filtered.query('lga_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
+            dead_rate_by_week = df_filtered.query('lga_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).mean()
+            defu_rate_by_week = df_filtered.query('lga_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).mean()
+            dmed_rate_by_week = df_filtered.query('lga_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).mean()
+            tout_rate_by_week = df_filtered.query('lga_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).mean()
 
             title = "%s-LGA %s" % (second_admin.lga.title(),
                                    second_admin.state_num.state.title())
@@ -131,10 +134,10 @@ def adm(request):
         elif data_type == "site":
             adm_by_week = df_filtered.query('siteid==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             site_level = Site.objects.get(siteid=num)
-            dead_rate_by_week = df_filtered.query('siteid==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
-            defu_rate_by_week = df_filtered.query('siteid==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
-            dmed_rate_by_week = df_filtered.query('siteid==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
-            tout_rate_by_week = df_filtered.query('siteid==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
+            dead_rate_by_week = df_filtered.query('siteid==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).mean()
+            defu_rate_by_week = df_filtered.query('siteid==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).mean()
+            dmed_rate_by_week = df_filtered.query('siteid==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).mean()
+            tout_rate_by_week = df_filtered.query('siteid==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).mean()
 
             title = "%s,  %s-LGA %s " % (site_level.sitename.title(),
                                         site_level.lga_num.lga.title(),
