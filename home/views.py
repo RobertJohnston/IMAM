@@ -34,6 +34,12 @@ def adm(request):
         df_filtered[i] = pd.to_numeric(df_filtered[i], errors='coerce')
 
     # Clean out of range identification data
+    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
+        df_filtered = df_filtered.query('%s==%s' % (i, i)).query('%s>=0' % i)
+        # line below deletes entire row where a NaN is found
+        # THIS IS ERROR IN DATA CLEANING - should leave in NaN
+        # This does not remove all NaN
+
     # It is appropriate to delete the entire row of data if there is no ID or week number
     # line below deletes entire row where a NaN is found - see all queries
     df_filtered = df_filtered.query('weeknum==weeknum').query('0<weeknum<53')
@@ -42,14 +48,7 @@ def adm(request):
     df_filtered = df_filtered.query('siteid==siteid').query('101110001<siteid<3799999999')
 
     # Data cleaning for admissions
-    df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
-
-    # Data cleaning for exit rates
-    for i in ('dcur', 'dead', 'defu', 'dmed', 'tout'):
-        # line below deletes entire row where a NaN is found
-        # THIS IS ERROR IN DATA CLEANING - should leave in NaN
-        # This does not remove all NaN
-        df_filtered = df_filtered.query('%s==%s' % (i, i)).query('0<=%s' % i)
+    df_filtered = df_filtered.query('amar<99999')
 
     for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
         df_filtered[i] = df_filtered[i].astype(int)
@@ -126,8 +125,8 @@ def adm(request):
             dmed_rate_by_week = df_filtered.query('lga_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
             tout_rate_by_week = df_filtered.query('lga_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
 
-            title = "%s-LGA %s" % (second_admin.lga.capitalize(),
-                                   second_admin.state_num.state.capitalize())
+            title = "%s-LGA %s" % (second_admin.lga.title(),
+                                   second_admin.state_num.state.title())
 
         elif data_type == "site":
             adm_by_week = df_filtered.query('siteid==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
@@ -137,9 +136,9 @@ def adm(request):
             dmed_rate_by_week = df_filtered.query('siteid==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
             tout_rate_by_week = df_filtered.query('siteid==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
 
-            title = "%s %s-LGA %s " % (site_level.sitename.capitalize(),
-                                        site_level.lga_num.lga.capitalize(),
-                                        site_level.state_num.state.capitalize())
+            title = "%s,  %s-LGA %s " % (site_level.sitename.title(),
+                                        site_level.lga_num.lga.title(),
+                                        site_level.state_num.state.title())
 
         else:
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
