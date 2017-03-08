@@ -22,51 +22,50 @@ def adm(request):
     # All data should be cleaned in advance.
 
     # Assign state and LGA numbers to data frame
-    df = assign_state_lga_num(df)
+    df_filtered = assign_state_lga_num(df)
+
+    # Follow following order for cleaning data for graph
+    #  - convert from string to float
+    #  - filter out incorrect data with query
+    #  - convert from float to int
 
     # Convert from string to float
-    df['amar'] = pd.to_numeric(df.amar, errors='coerce')
-    df['weeknum'] = pd.to_numeric(df.weeknum, errors='coerce')
-    df['state_num'] = pd.to_numeric(df.state_num, errors='coerce')
-    df['lga_num'] = pd.to_numeric(df.lga_num, errors='coerce')
-    df['siteid'] = pd.to_numeric(df.siteid, errors='coerce')
+    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
+        df_filtered[i] = pd.to_numeric(df_filtered[i], errors='coerce')
 
-    # Clean out of range data
+    # Clean out of range identification data
     # It is appropriate to delete the entire row of data if there is no ID or week number
     # line below deletes entire row where a NaN is found - see all queries
-    df_filtered = df.query('weeknum==weeknum').query('0<weeknum<53')
+    df_filtered = df_filtered.query('weeknum==weeknum').query('0<weeknum<53')
     df_filtered = df_filtered.query('state_num==state_num').query('0<state_num<37')
     df_filtered = df_filtered.query('lga_num==lga_num').query('101<lga_num<3799')
-    df_filtered = df_filtered.query('siteid==siteid').query('101110001<siteid<3999999999')
-
-    # Set to int - so that decimal points are not presented
-    df_filtered['weeknum'] = df_filtered.weeknum.astype('int')
-    df_filtered['state_num'] = df_filtered.state_num.astype('int')
-    df_filtered['lga_num'] = df_filtered.lga_num.astype('int')
-    df_filtered['siteid'] = df_filtered.siteid.astype('int')
+    df_filtered = df_filtered.query('siteid==siteid').query('101110001<siteid<3799999999')
 
     # Data cleaning for admissions
     df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
-    df_filtered['amar'] = df_filtered.amar.astype('int')
 
     # Data cleaning for exit rates
     for i in ('dcur', 'dead', 'defu', 'dmed', 'tout'):
-        df_filtered[i] = pd.to_numeric(df_filtered[i], errors='coerce')
         # line below deletes entire row where a NaN is found
         # THIS IS ERROR IN DATA CLEANING - should leave in NaN
         # This does not remove all NaN
         df_filtered = df_filtered.query('%s==%s' % (i, i)).query('0<=%s' % i)
+
+    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
         df_filtered[i] = df_filtered[i].astype(int)
 
+    # For all exit rate calculations see Final Report Consensus Meeting on M&E IMAM December 2010
 
-    # For all calculations see Final Report Consensus Meeting on M&E IMAM December 2010
+    #####
+    # Exit rates at national level are not correct
+    # other exit rates at lower level are not correct as denominator is only at national level.
+    #####
 
     # Total Discharges from program
     df_filtered['total_discharges'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
 
     # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
-
 
     # DCUR
     df_filtered['dcur_rate'] = df_filtered.dcur / df_filtered.total_discharges
@@ -127,7 +126,8 @@ def adm(request):
             dmed_rate_by_week = df_filtered.query('lga_num==%s' % num)['dmed_rate'].groupby(df_filtered['weeknum']).sum()
             tout_rate_by_week = df_filtered.query('lga_num==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
 
-            title = "%s-LGA - %s" % (second_admin.lga, second_admin.state_num.state)
+            title = "%s-LGA %s" % (second_admin.lga.capitalize(),
+                                   second_admin.state_num.state.capitalize())
 
         elif data_type == "site":
             adm_by_week = df_filtered.query('siteid==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
@@ -138,8 +138,8 @@ def adm(request):
             tout_rate_by_week = df_filtered.query('siteid==%s' % num)['tout_rate'].groupby(df_filtered['weeknum']).sum()
 
             title = "%s %s-LGA %s " % (site_level.sitename.capitalize(),
-                                              site_level.lga_num.lga.capitalize(),
-                                              site_level.state_num.state.capitalize())
+                                        site_level.lga_num.lga.capitalize(),
+                                        site_level.state_num.state.capitalize())
 
         else:
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
