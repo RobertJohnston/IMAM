@@ -24,7 +24,7 @@ def adm(request):
     # Assign state and LGA numbers to data frame
     df = assign_state_lga_num(df)
 
-    # Convert to float
+    # Convert from string to float
     df['amar'] = pd.to_numeric(df.amar, errors='coerce')
     df['weeknum'] = pd.to_numeric(df.weeknum, errors='coerce')
     df['state_num'] = pd.to_numeric(df.state_num, errors='coerce')
@@ -32,28 +32,36 @@ def adm(request):
     df['siteid'] = pd.to_numeric(df.siteid, errors='coerce')
 
     # Clean out of range data
-    df_filtered = df.query('weeknum==weeknum').query('0<weeknum<53')
-    df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
+    # It is appropriate to delete the entire row of data if there is no ID or week number
     # line below deletes entire row where a NaN is found - see all queries
+    df_filtered = df.query('weeknum==weeknum').query('0<weeknum<53')
     df_filtered = df_filtered.query('state_num==state_num').query('0<state_num<37')
     df_filtered = df_filtered.query('lga_num==lga_num').query('101<lga_num<3799')
     df_filtered = df_filtered.query('siteid==siteid').query('101110001<siteid<3999999999')
 
     # Set to int - so that decimal points are not presented
     df_filtered['weeknum'] = df_filtered.weeknum.astype('int')
-    df_filtered['amar'] = df_filtered.amar.astype('int')
     df_filtered['state_num'] = df_filtered.state_num.astype('int')
     df_filtered['lga_num'] = df_filtered.lga_num.astype('int')
     df_filtered['siteid'] = df_filtered.siteid.astype('int')
+
+    # Data cleaning for admissions
+    df_filtered = df_filtered.query('amar==amar').query('0<amar<99999')
+    df_filtered['amar'] = df_filtered.amar.astype('int')
 
     # Data cleaning for exit rates
     for i in ('dcur', 'dead', 'defu', 'dmed', 'tout'):
         df_filtered[i] = pd.to_numeric(df_filtered[i], errors='coerce')
         # line below deletes entire row where a NaN is found
+        # THIS IS ERROR IN DATA CLEANING - should leave in NaN
         df_filtered = df_filtered.query('%s==%s' % (i, i)).query('0<=%s' % i)
-        df_filtered[i] = df_filtered.dcur.astype(int)
+        df_filtered[i] = df_filtered[i].astype(int)
 
-    df_filtered['total_exits'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed + df_filtered.tout
+    # total exits = exits from program - not including the internal transfers - tout
+    df_filtered['total_exits'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
+    # cout = total discharges from site
+    df_filtered['cout'] = df_filtered.dcur + df_filtered.tout
+
     df_filtered['default_rate'] = df_filtered.defu / df_filtered.total_exits
     df_filtered.default_rate[df_filtered.default_rate != df_filtered.default_rate] = 0
 
