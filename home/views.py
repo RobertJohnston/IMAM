@@ -99,20 +99,25 @@ def adm(request):
             adm_by_week = df_filtered.query('state_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             # in line below, django expects only one = to get value.
             first_admin = First_admin.objects.get(state_num=num)
+
+            dead_rate_by_week = df_filtered.query('state_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
+
             defu_rate_by_week = df_filtered.query('state_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
-            title = "%s %s" % (first_admin.state, data_type)
+            title = "%s %s" % (first_admin.state, data_type.capitalize())
 
         elif data_type == "lga":
             adm_by_week = df_filtered.query('lga_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             second_admin = Second_admin.objects.get(lga_num=num)
+            dead_rate_by_week = df_filtered.query('lga_num==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
             defu_rate_by_week = df_filtered.query('lga_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
-            title = "%s %s %s" % (second_admin.lga, data_type, second_admin.state_num.state)
+            title = "%s-LGA - %s" % (second_admin.lga, second_admin.state_num.state)
 
         elif data_type == "site":
             adm_by_week = df_filtered.query('siteid==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             site_level = Site.objects.get(siteid=num)
+            dead_rate_by_week = df_filtered.query('siteid==%s' % num)['dead_rate'].groupby(df_filtered['weeknum']).sum()
             defu_rate_by_week = df_filtered.query('siteid==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
-            title = "%s %s -LGA %s -State" % (site_level.sitename.capitalize(),
+            title = "%s %s-LGA %s " % (site_level.sitename.capitalize(),
                                               site_level.lga_num.lga.capitalize(),
                                               site_level.state_num.state.capitalize())
 
@@ -120,6 +125,7 @@ def adm(request):
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
 
         adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
+        dead_rate_by_week = list(zip(dead_rate_by_week.index, dead_rate_by_week.values.tolist()))
         defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
 
         date = {'date': time.strftime("%d/%m/%y")}
