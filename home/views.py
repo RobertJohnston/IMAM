@@ -62,15 +62,27 @@ def adm(request):
     # cout = total discharges from site
     df_filtered['cout'] = df_filtered.dcur + df_filtered.tout
 
-    df_filtered['default_rate'] = df_filtered.defu / df_filtered.total_exits
-    df_filtered.default_rate[df_filtered.default_rate != df_filtered.default_rate] = 0
+    # DCUR
+    df_filtered['dcur_rate'] = df_filtered.dcur / df_filtered.total_exits
+    # DEAD
+    df_filtered['dead_rate'] = df_filtered.dead / df_filtered.total_exits
+    # DEFU
+    df_filtered['defu_rate'] = df_filtered.defu / df_filtered.total_exits
+    # DMED
+    df_filtered['dmed_rate'] = df_filtered.dmed / df_filtered.total_exits
+    # TOUT
+    df_filtered['tout_rate'] = df_filtered.tout / df_filtered.cout
 
     # default or national level
     if "site_filter" not in request.GET or request.GET['site_filter'] == "":
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
         adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
-        def_rate_by_week = df_filtered['default_rate'].groupby(df_filtered['weeknum']).sum()
-        def_rate_by_week = list(zip(def_rate_by_week.index, def_rate_by_week.values.tolist()))
+
+        dead_rate_by_week = df_filtered['dead_rate'].groupby(df_filtered['weeknum']).sum()
+        dead_rate_by_week = list(zip(dead_rate_by_week.index, dead_rate_by_week.values.tolist()))
+
+        defu_rate_by_week = df_filtered['defu_rate'].groupby(df_filtered['weeknum']).sum()
+        defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
         title = "National Level"
 
     else:
@@ -87,19 +99,19 @@ def adm(request):
             adm_by_week = df_filtered.query('state_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             # in line below, django expects only one = to get value.
             first_admin = First_admin.objects.get(state_num=num)
-            def_rate_by_week = df_filtered.query('state_num==%s' % num)['default_rate'].groupby(df_filtered['weeknum']).sum()
+            defu_rate_by_week = df_filtered.query('state_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
             title = "%s %s" % (first_admin.state, data_type)
 
         elif data_type == "lga":
             adm_by_week = df_filtered.query('lga_num==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             second_admin = Second_admin.objects.get(lga_num=num)
-            def_rate_by_week = df_filtered.query('lga_num==%s' % num)['default_rate'].groupby(df_filtered['weeknum']).sum()
+            defu_rate_by_week = df_filtered.query('lga_num==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
             title = "%s %s %s" % (second_admin.lga, data_type, second_admin.state_num.state)
 
         elif data_type == "site":
             adm_by_week = df_filtered.query('siteid==%s' % num)['amar'].groupby(df_filtered['weeknum']).sum()
             site_level = Site.objects.get(siteid=num)
-            def_rate_by_week = df_filtered.query('siteid==%s' % num)['default_rate'].groupby(df_filtered['weeknum']).sum()
+            defu_rate_by_week = df_filtered.query('siteid==%s' % num)['defu_rate'].groupby(df_filtered['weeknum']).sum()
             title = "%s %s -LGA %s -State" % (site_level.sitename.capitalize(),
                                               site_level.lga_num.lga.capitalize(),
                                               site_level.state_num.state.capitalize())
@@ -108,13 +120,14 @@ def adm(request):
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
 
         adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
-        def_rate_by_week = list(zip(def_rate_by_week.index, def_rate_by_week.values.tolist()))
+        defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
 
         date = {'date': time.strftime("%d/%m/%y")}
 
     return HttpResponse(json.dumps({
         "adm_by_week": adm_by_week,
-        "def_rate_by_week": def_rate_by_week,
+        "dead_rate_by_week": dead_rate_by_week,
+        "defu_rate_by_week": defu_rate_by_week,
         "title": title,
         # "date": date,
         #   Cannot pass data through because of json dumps?
