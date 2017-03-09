@@ -137,6 +137,8 @@
                     color: '#000000',
                     marker: { enabled: false},
                     tooltip: {
+                        <!--pointFormat: "Default Rate: {point.y:,.1f} %"-->
+                        yDecimals: 1,
                         valueSuffix: '%'
                     }
                                 }, {
@@ -148,7 +150,8 @@
                     color: '#FFA500',
                     marker: { enabled: false},
                     tooltip: {
-                        valueSuffix: '%'
+                        pointFormat: "Transfer Rate: {point.y:,.1f} %"
+                        <!--valueSuffix: '%'-->
                     }
 
                 }, {
@@ -160,7 +163,8 @@
                     color: '#9370DB',
                     marker: { enabled: false},
                     tooltip: {
-                        valueSuffix: '%'
+                        pointFormat: "Non-recovered Rate: {point.y:,.1f} %"
+                        <!--valueSuffix: '%'-->
                     }
 
                 }, {
@@ -170,12 +174,10 @@
                     data: data.dead_rate_by_week,
                     color: '#FF0000',
                     tooltip: {
-                        valueSuffix: '%'
+                        pointFormat: "Death Rate: {point.y:,.1f} %"
+                        <!--valueSuffix: '%'-->
                     }
                 }],
-
-                //"yAxis":[{}],
-                // commenting out above allowed 2nd axis - still problem with 2nd y axis lines
 
                 "chart":{"renderTo":"admissions-chart"},
             }
