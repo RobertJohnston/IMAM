@@ -24,6 +24,11 @@ def rate_by_week(df_filtered, kind, num):
     dmed_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dmed'].groupby(df_filtered['weeknum']).sum() / filter_discharge * 100
     tout_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['tout'].groupby(df_filtered['weeknum']).sum() / filter_cout * 100
 
+    dead_rate_by_week = dead_rate_by_week.dropna()
+    defu_rate_by_week = defu_rate_by_week.dropna()
+    dmed_rate_by_week = dmed_rate_by_week.dropna()
+    tout_rate_by_week = tout_rate_by_week.dropna()
+    
     return adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week
 
 
