@@ -21,8 +21,14 @@ def adm(request):
 
     # All data should be cleaned in advance.
 
+    # Remove duplicates from database
+    # Reverse sort data by last seen
+    df = df.sort_values(by='last_seen', ascending=False)
+    # Filter out duplicates - should have one data entry for each siteid by type and weeknum
+    df_filtered = df.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
+
     # Assign state and LGA numbers to data frame
-    df_filtered = assign_state_lga_num(df)
+    df_filtered = assign_state_lga_num(df_filtered)
 
     # Follow following order for cleaning data for graph
     #  - convert from string to float
