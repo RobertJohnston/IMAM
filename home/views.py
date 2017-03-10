@@ -87,20 +87,12 @@ def adm(request):
     # default or national level
     if "site_filter" not in request.GET or request.GET['site_filter'] == "":
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
-        adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
 
         # This method is almost correct - should be sum of deaths by week over total discharges by week *100
         dead_rate_by_week = df_filtered['dead'].groupby(df_filtered['weeknum']).sum() / df_filtered['total_discharges'].groupby(df_filtered['weeknum']).sum() *100
-        dead_rate_by_week = list(zip(dead_rate_by_week.index, dead_rate_by_week.values.tolist()))
-
         defu_rate_by_week = df_filtered['defu'].groupby(df_filtered['weeknum']).sum() / df_filtered['total_discharges'].groupby(df_filtered['weeknum']).sum() *100
-        defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
-
         dmed_rate_by_week = df_filtered['dmed'].groupby(df_filtered['weeknum']).sum() / df_filtered['total_discharges'].groupby(df_filtered['weeknum']).sum() *100
-        dmed_rate_by_week = list(zip(dmed_rate_by_week.index, dmed_rate_by_week.values.tolist()))
-
         tout_rate_by_week = df_filtered['tout'].groupby(df_filtered['weeknum']).sum() / df_filtered['cout'].groupby(df_filtered['weeknum']).sum() *100
-        tout_rate_by_week = list(zip(tout_rate_by_week.index, tout_rate_by_week.values.tolist()))
 
         title = "National Level"
 
@@ -163,12 +155,13 @@ def adm(request):
         else:
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
 
-        adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
-        dead_rate_by_week = list(zip(dead_rate_by_week.index, dead_rate_by_week.values.tolist()))
-        defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
-        dmed_rate_by_week = list(zip(dmed_rate_by_week.index, dmed_rate_by_week.values.tolist()))
-        tout_rate_by_week = list(zip(tout_rate_by_week.index, tout_rate_by_week.values.tolist()))
-        date = {'date': time.strftime("%d/%m/%y")}
+    adm_by_week = list(zip(adm_by_week.index, adm_by_week.values.tolist()))
+
+    dead_rate_by_week = list(zip(dead_rate_by_week.index, dead_rate_by_week.values.tolist()))
+    defu_rate_by_week = list(zip(defu_rate_by_week.index, defu_rate_by_week.values.tolist()))
+    dmed_rate_by_week = list(zip(dmed_rate_by_week.index, dmed_rate_by_week.values.tolist()))
+    tout_rate_by_week = list(zip(tout_rate_by_week.index, tout_rate_by_week.values.tolist()))
+
 
     return HttpResponse(json.dumps({
         "adm_by_week": adm_by_week,
