@@ -12,6 +12,21 @@ from management.commands.load_data import assign_state_lga_num
 
 from models import First_admin, Second_admin, Site
 
+
+def rate_by_week(df_filtered, kind, num):
+    adm_by_week = df_filtered.query('%s==%s' % (kind, num))['amar'].groupby(df_filtered['weeknum']).sum()
+
+    filter_discharge = df_filtered.query('%s==%s' % (kind, num))['total_discharges'].groupby(df_filtered['weeknum']).sum()
+    filter_cout = df_filtered.query('%s==%s' % (kind, num))['cout'].groupby(df_filtered['weeknum']).sum()
+
+    dead_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dead'].groupby(df_filtered['weeknum']).sum() / filter_discharge * 100
+    defu_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['defu'].groupby(df_filtered['weeknum']).sum() / filter_discharge * 100
+    dmed_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dmed'].groupby(df_filtered['weeknum']).sum() / filter_discharge * 100
+    tout_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['tout'].groupby(df_filtered['weeknum']).sum() / filter_cout * 100
+
+    return adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week
+
+
 # Query database and create data for admissions graph
 def adm(request):
     # Read data into dataframe - at each function call
@@ -44,7 +59,7 @@ def adm(request):
         df_filtered = df_filtered.query('%s==%s' % (i, i)).query('%s>=0' % i)
         # line below deletes entire row where a NaN is found
         # THIS IS ERROR IN DATA CLEANING - should leave in NaN
-        # This does not remove all NaN
+        # This does not remove all NaN ???
 
     # It is appropriate to delete the entire row of data if there is no ID or week number
     # line below deletes entire row where a NaN is found - see all queries
@@ -73,16 +88,7 @@ def adm(request):
     # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
 
-    # DCUR
-    # df_filtered['dcur_rate'] = df_filtered.dcur / df_filtered.total_discharges
-    # # DEAD
-    # df_filtered['dead_rate'] = df_filtered.dead / df_filtered.total_discharges
-    # # DEFU
-    # df_filtered['defu_rate'] = df_filtered.defu / df_filtered.total_discharges
-    # # DMED
-    # df_filtered['dmed_rate'] = df_filtered.dmed / df_filtered.total_discharges
-    # # TOUT
-    # df_filtered['tout_rate'] = df_filtered.tout / df_filtered.cout
+    result = {}
 
     # default or national level
     if "site_filter" not in request.GET or request.GET['site_filter'] == "":
@@ -108,15 +114,7 @@ def adm(request):
 
         if data_type == "state":
             kind = "state_num"
-            adm_by_week = df_filtered.query('%s==%s' % (kind, num))['amar'].groupby(df_filtered['weeknum']).sum()
-
-            filter_discharge = df_filtered.query('%s==%s' % (kind, num))['total_discharges'].groupby(df_filtered['weeknum']).sum()
-            filter_cout = df_filtered.query('%s==%s' % (kind, num))['cout'].groupby(df_filtered['weeknum']).sum()
-
-            dead_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dead'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            defu_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['defu'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            dmed_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dmed'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            tout_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['tout'].groupby(df_filtered['weeknum']).sum() / filter_cout *100
+            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered, kind, num)
 
             # in line below, django expects only one = to get value.
             first_admin = First_admin.objects.get(state_num=num)
@@ -125,15 +123,7 @@ def adm(request):
 
         elif data_type == "lga":
             kind = "lga_num"
-            adm_by_week = df_filtered.query('%s==%s' % (kind, num))['amar'].groupby(df_filtered['weeknum']).sum()
-
-            filter_discharge = df_filtered.query('%s==%s' % (kind, num))['total_discharges'].groupby(df_filtered['weeknum']).sum()
-            filter_cout = df_filtered.query('%s==%s' % (kind, num))['cout'].groupby(df_filtered['weeknum']).sum()
-
-            dead_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dead'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            defu_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['defu'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            dmed_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dmed'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            tout_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['tout'].groupby(df_filtered['weeknum']).sum() / filter_cout *100
+            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered, kind, num)
 
             second_admin = Second_admin.objects.get(lga_num=num)
             title = "%s-LGA %s" % (second_admin.lga.title(),
@@ -142,16 +132,7 @@ def adm(request):
         elif data_type == "site":
             # result = rate_by_week(result, df_filtered, 'siteid')
             kind = "siteid"
-            adm_by_week = df_filtered.query('%s==%s' % (kind, num))['amar'].groupby(df_filtered['weeknum']).sum()
-
-
-            filter_discharge = df_filtered.query('%s==%s' % (kind, num))['total_discharges'].groupby(df_filtered['weeknum']).sum()
-            filter_cout = df_filtered.query('%s==%s' % (kind, num))['cout'].groupby(df_filtered['weeknum']).sum()
-
-            dead_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dead'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            defu_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['defu'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            dmed_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['dmed'].groupby(df_filtered['weeknum']).sum() / filter_discharge *100
-            tout_rate_by_week = df_filtered.query('%s==%s' % (kind, num))['tout'].groupby(df_filtered['weeknum']).sum() / filter_cout *100
+            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered, kind, num)
 
             site_level = Site.objects.get(siteid=num)
             title = "%s,  %s-LGA %s " % (site_level.sitename.title(),
@@ -168,6 +149,9 @@ def adm(request):
     dmed_rate_by_week = list(zip(dmed_rate_by_week.index, dmed_rate_by_week.values.tolist()))
     tout_rate_by_week = list(zip(tout_rate_by_week.index, tout_rate_by_week.values.tolist()))
 
+    date = {'date': time.strftime("%d/%m/%y")}
+
+    # return HttpResponse(json.dumps(result)
 
     return HttpResponse(json.dumps({
         "adm_by_week": adm_by_week,
