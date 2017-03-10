@@ -43,6 +43,19 @@
     </div>
 
     <script>
+        function ISO8601_week_no(dt) {
+            var tdt = new Date(dt.valueOf());
+            var dayn = (dt.getDay() + 6) % 7;
+            tdt.setDate(tdt.getDate() - dayn + 3);
+            var firstThursday = tdt.valueOf();
+            tdt.setMonth(0, 1);
+            if (tdt.getDay() !== 4) {
+                tdt.setMonth(0, 1 + ((4 - tdt.getDay()) + 7) % 7);
+            }
+            return 1 + Math.ceil((firstThursday - tdt) / 604800000);
+        }
+
+
         format_data = function(data) {
             return {
                 title: {text: data.title},
@@ -54,7 +67,7 @@
                 },
 
                 subtitle: {
-                    text: 'IMAM Nigeria  {{ data.date }}',
+                    text: 'IMAM Nigeria ' + data.date,
                     align: 'right',
                     verticalAlign: 'bottom',
                     x: -50,
@@ -64,6 +77,14 @@
 
                     // categories: data.adm_by_week,
                     // highcharts automatically knows the first of 2 # in series is x axis.
+                    labels: {
+                        formatter: function() {
+                            var a = new Date(0);
+                            a.setUTCMilliseconds(this.value);
+                            return a.getFullYear() + ' ' + ISO8601_week_no(a);
+                        }
+                    },
+                    type: 'datetime',
 
                     crosshair: true,
                     title: {
@@ -123,7 +144,7 @@
                     "name":"Admissions",
                     type: 'column',
                     "data": data.adm_by_week,
-                    "yAxis":0,
+                    "yAxis": 0,
                     color: '#ffcccc',
                     tooltip: {
                         valueSuffix: ' cases'
@@ -137,9 +158,9 @@
                     color: '#000000',
                     marker: { enabled: false},
                     tooltip: {
-                        yDecimals: 1
+                        pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
-                                }, {
+                }, {
                     name: 'Transfer Rate',
                     type: 'line',
                     yAxis: 1,
@@ -148,10 +169,8 @@
                     color: '#FFA500',
                     marker: { enabled: false},
                     tooltip: {
-                        pointFormat: "Transfer Rate: {point.y:,.1f} %"
-                        <!--valueSuffix: '%'-->
+                        pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
-
                 }, {
                     name: 'Non-recovered Rate',
                     type: 'line',
@@ -161,8 +180,7 @@
                     color: '#9370DB',
                     marker: { enabled: false},
                     tooltip: {
-                        pointFormat: "Non-recovered Rate: {point.y:,.1f} %"
-                        <!--valueSuffix: '%'-->
+                        pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
 
                 }, {
@@ -172,8 +190,7 @@
                     data: data.dead_rate_by_week,
                     color: '#FF0000',
                     tooltip: {
-                        pointFormat: "Death Rate: {point.y:,.1f} %"
-                        <!--valueSuffix: '%'-->
+                        pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
                 }],
 
