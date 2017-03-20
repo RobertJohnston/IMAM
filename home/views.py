@@ -216,6 +216,33 @@ def index(request):
                                                })
 
 
+# filling select2 options
+def search(request):
+    result = []
 
+    if 'q' in request.GET:
+        ajax_query = request.GET['q']
+        page_number = int(request.GET['page']) if 'page' in request.GET else 1
 
+        for i in Site.objects.filter(sitename__icontains=ajax_query)[20 * (page_number - 1):20 * page_number]:
+            # double underscore Django convention
+            # https://docs.djangoproject.com/en/1.10/topics/db/queries/#field-lookups
 
+            # Select2 wants the data in this format
+            # var data = [{id: 0, text: 'enhancement'}, ];
+
+            # ADD STATE
+
+            # ADD LGA
+
+            # value="site-{{ site.siteid }}">{{ site.sitename }}
+            result.append({"id": "site-%s" % i.siteid, "text": i.sitename})
+
+    else:
+        # result = []
+        pass
+
+    return HttpResponse(json.dumps({
+        "items": result,
+        "total_count": Site.objects.filter(sitename__icontains=ajax_query).count(),
+    }))

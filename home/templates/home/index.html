@@ -13,27 +13,47 @@
             $("#filter-by-site").val("").trigger("change");
             // must trigger event for select2 to update display
 
+
+            $(".js-data-example-ajax").select2({
+              ajax: {
+                url: "/search/",
+                delay: 250,
+                dataType: 'json',
+                processResults: function (data, params) {
+                    params.page = params.page || 1;
+                    return {
+                        results: data.items,
+                        pagination: {
+                          more: (params.page * 20) < data.total_count
+                        }
+                    };
+                }
+              }
+            });
         });
         </script>
     </div>
 
-    <select class="js-example-basic-single" id="filter-by-site">
-        <option value="" selected="selected">National</option>
-        {% for site in state_list %}
-        <option value="state-{{ site.state_num }}">{{ site.state }}</option>
-        {% endfor %}
-        {% for site in lga_list %}
-        <option value="lga-{{ site.lga_num }}">{{ site.lga }}</option>
-        {% endfor %}
-        {% for site in site_list %}
-        <option value="site-{{ site.siteid }}">{{ site.sitename }}</option>
-        {% endfor %}
-    </select>
 
+    <!--OLD SELECT2-->
 
-        <!--{% for siteid in lga_list %}-->
-        <!--<option value="lga-{{ siteid.lga_num }}">{{ siteid.lga }}</option>-->
+   <!--<select class="js-example-basic-single" id="filter-by-site">-->
+        <!--<option value="" selected="selected">National</option>-->
+        <!--{% for site in state_list %}-->
+        <!--<option value="state-{{ site.state_num }}">{{ site.state }}</option>-->
         <!--{% endfor %}-->
+        <!--{% for site in lga_list %}-->
+        <!--<option value="lga-{{ site.lga_num }}">{{ site.lga }}</option>-->
+        <!--{% endfor %}-->
+        <!--{% for site in site_list %}-->
+        <!--<option value="site-{{ site.siteid }}">{{ site.sitename }}</option>-->
+        <!--{% endfor %}-->
+    <!--</select>-->
+
+
+    <select class="js-data-example-ajax" id="filter-by-site" style="min-width: 300px">
+        <!--No need to specify the contents of the filter cell. Handled by Select2-->
+    </select>
 
 
     <div id="admissions-chart">
