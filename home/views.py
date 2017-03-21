@@ -8,7 +8,6 @@ import time
 import numpy as np
 
 from datetime import date, timedelta
-
 from sqlalchemy import create_engine
 from management.commands.load_data import assign_state_lga_num
 
@@ -29,7 +28,7 @@ def iso_to_gregorian(iso_year, iso_week, iso_day=1):
 
 
 def rate_by_week(df_filtered, kind=None, num=None):
-    # this is nationnal level, no need for query
+    # this is national level, no need for query
     if kind is None:
         df_queried = df_filtered
     else:
@@ -121,6 +120,7 @@ def adm(request):
         [(df_filtered['year'] < today_year) | ((df_filtered['year'] == today_year) & (df_filtered['weeknum'] <= today_weeknum))]
 
     # For all exit rate calculations see Final Report Consensus Meeting on M&E IMAM December 2010
+    # UNICEF WCARO - Dakar Senegal
 
     # Total Discharges from program
     df_filtered['total_discharges'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
@@ -197,7 +197,6 @@ def adm(request):
         "tout_rate_by_week": tout_rate_by_week,
         "title": title,
         "date": date.today().strftime("%d/%m/%Y"),
-        #   Cannot pass data through because of json dumps?
     }))
 
 
