@@ -39,7 +39,6 @@ def rename_cols(dataframe):
     # confirm correct data entry
     dataframe.rename(columns={'Confirm (Category) - IMAM Program': 'confirm'}, inplace=True)
 
-
     # Stock database
     dataframe.rename(columns={'PostLevel (Value) - IMAM Stock ': 'level'}, inplace=True)
     dataframe.rename(columns={'WeekNum (Value) - IMAM Stock ': 'weeknum'}, inplace=True)
@@ -89,9 +88,18 @@ def assign_state_lga_num(dataframe):
     # Set siteid to str to measure length  - only works with strings
     dataframe['siteid_lgt'] = dataframe['siteid'].astype(str).str.len()
     dataframe['state_num'] = dataframe['siteid'].astype(str).str[:2]
-    # Conditional - Numpy
-    dataframe['state_num'] = np.where(dataframe['siteid_lgt']==9, dataframe['siteid'].astype(str).str[:1], dataframe['state_num'])
     dataframe['lga_num'] = dataframe['siteid'].astype(str).str[:4]
+
+    # Conditional - Numpy - if site id < 10 digits then take first 1 for state or 3 for LGA
+    dataframe['state_num'] = np.where(dataframe['siteid_lgt']==9, dataframe['siteid'].astype(str).str[:1], dataframe['state_num'])
     dataframe['lga_num'] = np.where(dataframe['siteid_lgt']==9, dataframe['siteid'].astype(str).str[:3], dataframe['lga_num'])
 
     return dataframe
+
+
+
+
+
+
+
+
