@@ -180,8 +180,9 @@ class Site(models.Model):
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        # This is reference of DJango to Postgres
+        # This is reference of Django to Postgres
         db_table = 'site'
+        # do not automatically update
         managed = False
 
     def __unicode__(self):

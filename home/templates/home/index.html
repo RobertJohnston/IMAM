@@ -8,7 +8,10 @@
         // wait until page is loaded
 
         $(document).ready(function() {
-            $(".js-example-basic-single").select2();
+            $("#filter-by-year").select2();
+
+            $("#filter-by-year").val("2017").trigger("change");
+
             $("#filter-by-site").val("").trigger("change");
             // must trigger event for select2 to update display
 
@@ -38,6 +41,16 @@
         <!--No need to specify the contents of the filter cell. Handled by Select2-->
     </select>
 
+    <select class="" id="filter-by-type" style="min-width: 80px">
+        <option value="All" selected="selected">All</option>
+        <option value="OTP" selected="selected">OTP</option>
+        <option value="SC" selected="selected">SC</option>
+    </select>
+
+    <select class="" id="filter-by-year" style="min-width: 80px">
+        <option value="2017" selected="selected">2017</option>
+        <option value="2016" selected="selected">2016</option>
+    </select>
 
     <div id="admissions-chart">
         <p>Chart</p>
@@ -205,13 +218,17 @@
 
         // on select event - run code in {} below
 
-        $("#filter-by-site").on("select2:select", function (e) {
+        updateGraph = function (e) {
             var siteFilter = $("#filter-by-site").val();
+            var yearFilter = $("#filter-by-year").val();
 
-            $.getJSON("/adm/?site_filter=" + siteFilter).success(function(data) {
+            $.getJSON("/adm/?site_filter=" + siteFilter + "&year=" + yearFilter).success(function(data) {
                 amarChart.update(format_data(data));
             });
-        });
+        }
+
+        $("#filter-by-site").on("select2:select", updateGraph);
+        $("#filter-by-year").on("select2:select", updateGraph);
     </script>
 
 

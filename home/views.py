@@ -20,7 +20,7 @@ def iso_year_start(iso_year):
     delta = timedelta(fourth_jan.isoweekday() - 1)
     return fourth_jan - delta
 
-
+# There is an error with this as week 52 of 2016 is presented as 2017 (first week of year)
 def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = iso_year_start(iso_year)
@@ -62,15 +62,15 @@ def adm(request):
     # All data should be cleaned in advance.
 
     # Remove duplicates from database
-    # Reverse sort data by last seen
+    # first, reverse sort data by variable last seen
     df = df.sort_values(by='last_seen', ascending=False)
-    # Filter out duplicates - should have one data entry for each siteid by type and weeknum
+    # second, filter out duplicates - should have one data entry for each siteid by type and weeknum
     df_filtered = df.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
 
     # Assign state and LGA numbers to data frame
     df_filtered = assign_state_lga_num(df_filtered)
 
-    # Follow following order for cleaning data for graph
+    # Follow order for cleaning data for graph
     #  - convert from string to float
     #  - filter out incorrect data with query
     #  - convert from float to int
@@ -85,12 +85,16 @@ def adm(request):
         # line above deletes entire row where a NaN is found
 
     # the change below changes the integrity of data - do not export.
+    # This is problematic if the graph shows zero when the data is Null / NaN
+    # can you see a zero - look in tooltips
+    # no data would be evident from the reporting rate (complete reporting)
+    # keep data integrity in postgres db - change Null to zero in working df
     for i in ( 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
         df_filtered[i] = df_filtered[i].fillna(0)
 
 
     # It is appropriate to delete the entire row of data if there is no ID or week number
-    # line below deletes entire row where a NaN is found - see all queries
+    # lines below deletes entire row where a NaN is found - see all queries
     df_filtered = df_filtered.query('0<weeknum<53')
     df_filtered = df_filtered.query('0<state_num<37')
     df_filtered = df_filtered.query('101<lga_num<3799')
@@ -105,6 +109,7 @@ def adm(request):
 
     # Introducing Year for X axis
     df_filtered['year'] = df_filtered['last_seen'].map(lambda x: x.year)
+
     # double check if the week number below is ISO standard
     df_filtered['last_seen_weeknum'] = df_filtered['last_seen'].map(lambda x: x.week)
 
@@ -128,10 +133,12 @@ def adm(request):
     # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
 
+    df_filtered = df_filtered.query("year==%s" % request.GET.get("year", "2017"))
+
     result = {}
 
     # default or national level
-    if "site_filter" not in request.GET or request.GET['site_filter'] == "":
+    if "site_filter" not in request.GET or request.GET['site_filter'] in ("", "null"):
         adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
 
         adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered)
@@ -218,10 +225,25 @@ def index(request):
 # filling select2 options
 def search(request):
     result = []
+    total_count = 0
+    page_number = int(request.GET['page']) if 'page' in request.GET else 1
 
     if 'q' in request.GET:
         ajax_query = request.GET['q']
-        page_number = int(request.GET['page']) if 'page' in request.GET else 1
+
+        # the real total count should be the addition of the count of states, lga and sites
+        total_count = Site.objects.filter(sitename__icontains=ajax_query).count()
+
+        if page_number == 1 and ajax_query.lower() in "National".lower():
+            result = [
+                {"id": "", "text": "National"},
+            ]
+
+        for state in First_admin.objects.filter(state__icontains=ajax_query)[20 * (page_number - 1):20 * page_number]:
+            result.append({"id": "state-%s" % state.state_num, "text": state.state.title()})
+
+        for lga in Second_admin.objects.filter(lga__icontains=ajax_query)[20 * (page_number - 1):20 * page_number]:
+            result.append({"id": "lga-%s" % lga.lga_num, "text": "[lga] %s" % lga.lga})
 
         for i in Site.objects.filter(sitename__icontains=ajax_query)[20 * (page_number - 1):20 * page_number]:
             # double underscore Django convention
@@ -235,13 +257,26 @@ def search(request):
             # ADD LGA
 
             # value="site-{{ site.siteid }}">{{ site.sitename }}
-            result.append({"id": "site-%s" % i.siteid, "text": i.sitename})
+            result.append({"id": "site-%s" % i.siteid, "text": "[site] %s" % i.sitename})
 
     else:
-        # result = []
-        pass
+        total_count = Site.objects.all().count()
+
+        if page_number == 1:
+            result = [
+                {"id": "", "text": "National"},
+            ]
+
+            for state in First_admin.objects.all():
+                result.append({"id": "state-%s" % state.state_num, "text": state.state})
+
+        for lga in Second_admin.objects.all()[20 * (page_number - 1):20 * page_number]:
+            result.append({"id": "lga-%s" % lga.lga_num, "text": "[lga] %s" % lga.lga})
+
+        for i in Site.objects.all()[20 * (page_number - 1):20 * page_number]:
+            result.append({"id": "site-%s" % i.siteid, "text": "[site] %s" % i.sitename})
 
     return HttpResponse(json.dumps({
         "items": result,
-        "total_count": Site.objects.filter(sitename__icontains=ajax_query).count(),
+        "total_count": total_count,
     }))
