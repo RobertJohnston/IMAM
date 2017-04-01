@@ -12,6 +12,10 @@
 
             $("#filter-by-year").val("2017").trigger("change");
 
+            $("#filter-by-type").select2();
+
+            $("#filter-by-type").val("All").trigger("change");
+
             $("#filter-by-site").val("").trigger("change");
             // must trigger event for select2 to update display
 
@@ -37,17 +41,17 @@
 
 
     <select class="js-data-example-ajax" id="filter-by-site" style="min-width: 300px">
-        <!--If there is only one select form then probably do not need to change CSS "style" above-->
-        <!--No need to specify the contents of the filter cell. Handled by Select2-->
+        <!--adjust CSS for phones versus computers-->
     </select>
 
-    <select class="" id="filter-by-type" style="min-width: 80px">
+    <select class="" id="filter-by-type" style="min-width: 40px">
         <option value="All" selected="selected">All</option>
         <option value="OTP" selected="selected">OTP</option>
         <option value="SC" selected="selected">SC</option>
     </select>
 
-    <select class="" id="filter-by-year" style="min-width: 80px">
+    <select class="" id="filter-by-year" style="min-width: 40px">
+        <!--make this section generic to select years in database-->
         <option value="2017" selected="selected">2017</option>
         <option value="2016" selected="selected">2016</option>
     </select>
@@ -75,7 +79,7 @@
             return {
                 title: {text: data.title},
 
-                // subtitle not working
+                // subtitle not working - Why? Remove?
                 subtitle: {
                     text: "Admissions and Performance Indicators by Week",
                     floating: true,
@@ -220,6 +224,10 @@
 
         updateGraph = function (e) {
             var siteFilter = $("#filter-by-site").val();
+
+            //var siteFilter = $("#filter-by-type").val();
+            // This line breaks the ajax
+
             var yearFilter = $("#filter-by-year").val();
 
             $.getJSON("/adm/?site_filter=" + siteFilter + "&year=" + yearFilter).success(function(data) {
@@ -228,6 +236,9 @@
         }
 
         $("#filter-by-site").on("select2:select", updateGraph);
+
+        //$("#filter-by-type").on("select2:select", updateGraph);
+
         $("#filter-by-year").on("select2:select", updateGraph);
     </script>
 

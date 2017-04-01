@@ -21,6 +21,7 @@ def iso_year_start(iso_year):
     return fourth_jan - delta
 
 # There is an error with this as week 52 of 2016 is presented as 2017 (first week of year)
+# This appears to be a highcharts presentation problem and not an error
 def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = iso_year_start(iso_year)
@@ -39,6 +40,7 @@ def rate_by_week(df_filtered, kind=None, num=None):
     filter_discharge = df_queried['total_discharges'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum()
     filter_cout = df_queried['cout'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum()
 
+    # Was year added into groupby here ?
     dead_rate_by_week = df_queried['dead'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_discharge * 100
     defu_rate_by_week = df_queried['defu'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_discharge * 100
     dmed_rate_by_week = df_queried['dmed'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_discharge * 100
@@ -60,6 +62,8 @@ def adm(request):
     df = pd.read_sql_query("select * from program;", con=engine)
 
     # All data should be cleaned in advance.
+
+    # CLEAN FUTURE AND DISTANT PAST ENTRIES BEFORE DROPPING DUPLICATES
 
     # Remove duplicates from database
     # first, reverse sort data by variable last seen
@@ -119,7 +123,7 @@ def adm(request):
     today_year = date.today().year
     today_weeknum = date.today().isocalendar()[1]
 
-    # df_filtered = df_filtered.sort_values(['year', 'weeknum'])\
+    # df_filtered = df_filtered.sort_values(['year', 'weeknum'])
     df_filtered = df_filtered\
         [(df_filtered['year'] >= 2017) | ((df_filtered['year'] == 2016) & (df_filtered['weeknum'] >= 22))]\
         [(df_filtered['year'] < today_year) | ((df_filtered['year'] == today_year) & (df_filtered['weeknum'] <= today_weeknum))]
@@ -133,7 +137,11 @@ def adm(request):
     # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
 
+    # Filter by Year
     df_filtered = df_filtered.query("year==%s" % request.GET.get("year", "2017"))
+
+    # Filter by Type (all, outpatients OTP, inpatients IPF or SC)
+    #df_filtered = df_filtered.query("type==%s" % request.GET.get("type", "All"))
 
     result = {}
 
@@ -179,8 +187,8 @@ def adm(request):
 
             site_level = Site.objects.get(siteid=num)
             title = "%s,  %s-LGA %s " % (site_level.sitename.title(),
-                                        site_level.lga_num.lga.title(),
-                                        site_level.state_num.state.title())
+                                         site_level.lga_num.lga.title(),
+                                         site_level.state_num.state)
 
         else:
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
@@ -192,10 +200,7 @@ def adm(request):
     dmed_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dmed_rate_by_week.index], dmed_rate_by_week.values.tolist()))
     tout_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in tout_rate_by_week.index], tout_rate_by_week.values.tolist()))
 
-    # date = {'date': time.strftime("%d/%m/%y")}
-
     # return HttpResponse(json.dumps(result)
-
     return HttpResponse(json.dumps({
         "adm_by_week": adm_by_week,
         "dead_rate_by_week": dead_rate_by_week,
@@ -203,7 +208,7 @@ def adm(request):
         "dmed_rate_by_week": dmed_rate_by_week,
         "tout_rate_by_week": tout_rate_by_week,
         "title": title,
-        "date": date.today().strftime("%d/%m/%Y"),
+        "date": date.today().strftime("%d-%m-%Y"),
     }))
 
 
@@ -222,7 +227,7 @@ def index(request):
                                                })
 
 
-# filling select2 options
+# filling select2 options - Query to fill options in select box
 def search(request):
     result = []
     total_count = 0
@@ -243,7 +248,7 @@ def search(request):
             result.append({"id": "state-%s" % state.state_num, "text": state.state.title()})
 
         for lga in Second_admin.objects.filter(lga__icontains=ajax_query)[20 * (page_number - 1):20 * page_number]:
-            result.append({"id": "lga-%s" % lga.lga_num, "text": "[lga] %s" % lga.lga})
+            result.append({"id": "lga-%s" % lga.lga_num, "text": "%s LGA" % lga.lga})
 
         for i in Site.objects.filter(sitename__icontains=ajax_query)[20 * (page_number - 1):20 * page_number]:
             # double underscore Django convention
@@ -257,7 +262,7 @@ def search(request):
             # ADD LGA
 
             # value="site-{{ site.siteid }}">{{ site.sitename }}
-            result.append({"id": "site-%s" % i.siteid, "text": "[site] %s" % i.sitename})
+            result.append({"id": "site-%s" % i.siteid, "text": i.sitename})
 
     else:
         total_count = Site.objects.all().count()
@@ -271,10 +276,10 @@ def search(request):
                 result.append({"id": "state-%s" % state.state_num, "text": state.state})
 
         for lga in Second_admin.objects.all()[20 * (page_number - 1):20 * page_number]:
-            result.append({"id": "lga-%s" % lga.lga_num, "text": "[lga] %s" % lga.lga})
+            result.append({"id": "lga-%s" % lga.lga_num, "text": "%s LGA" % lga.lga})
 
         for i in Site.objects.all()[20 * (page_number - 1):20 * page_number]:
-            result.append({"id": "site-%s" % i.siteid, "text": "[site] %s" % i.sitename})
+            result.append({"id": "site-%s" % i.siteid, "text": i.sitename})
 
     return HttpResponse(json.dumps({
         "items": result,
