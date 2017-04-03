@@ -12,9 +12,9 @@
 
             $("#filter-by-year").val("2017").trigger("change");
 
-            $("#filter-by-type").select2();
+            $("#filter-by-site-type").select2();
 
-            $("#filter-by-type").val("All").trigger("change");
+            $("#filter-by-site-type").val("All").trigger("change");
 
             $("#filter-by-site").val("").trigger("change");
             // must trigger event for select2 to update display
@@ -44,7 +44,7 @@
         <!--adjust CSS for phones versus computers-->
     </select>
 
-    <select class="" id="filter-by-type" style="min-width: 40px">
+    <select class="" id="filter-by-site-type" style="min-width: 40px">
         <option value="All" selected="selected">All</option>
         <option value="OTP" selected="selected">OTP</option>
         <option value="SC" selected="selected">SC</option>
@@ -60,6 +60,11 @@
         <p>Chart</p>
         <!--style="width:100%;height:314px"-->
     </div>
+
+    <p>Reporting rate: <span id="reporting-rate"></span> %</p>
+
+    <p>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></p>
+
 
     <script>
         function ISO8601_week_no(dt) {
@@ -147,6 +152,7 @@
                 }],
                 tooltip: {
                     shared: true
+
                 },
 
                 legend: {
@@ -157,6 +163,7 @@
                     y: 20,
                     floating: true,
                     backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+                    // Change Highcharts code if the legend overlaps the columns
                 },
 
                 "series":[{
@@ -218,6 +225,10 @@
         }
         $.getJSON("/adm/").success(function(data) {
             amarChart = new Highcharts.Chart(format_data(data));
+            $("#reporting-rate").html(data.report_rate);
+
+            $("#latest_stock_report").html(data.latest_stock_report);
+            $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
         });
 
         // on select event - run code in {} below
@@ -225,19 +236,22 @@
         updateGraph = function (e) {
             var siteFilter = $("#filter-by-site").val();
 
-            //var siteFilter = $("#filter-by-type").val();
-            // This line breaks the ajax
+            var site_typeFilter = $("#filter-by-site-type").val();
 
             var yearFilter = $("#filter-by-year").val();
 
-            $.getJSON("/adm/?site_filter=" + siteFilter + "&year=" + yearFilter).success(function(data) {
+            $.getJSON("/adm/?site_filter=" + siteFilter + "&site_type=" + site_typeFilter + "&year=" + yearFilter).success(function(data) {
                 amarChart.update(format_data(data));
+                $("#reporting-rate").html(data.report_rate);
+
+                $("#latest_stock_report").html(data.latest_stock_report);
+                $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
             });
         }
 
         $("#filter-by-site").on("select2:select", updateGraph);
 
-        //$("#filter-by-type").on("select2:select", updateGraph);
+        $("#filter-by-site-type").on("select2:select", updateGraph);
 
         $("#filter-by-year").on("select2:select", updateGraph);
     </script>

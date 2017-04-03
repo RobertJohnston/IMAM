@@ -6,6 +6,7 @@ from django.conf import settings
 import pandas as pd
 import time
 import numpy as np
+from isoweek import Week
 
 from datetime import date, timedelta
 from sqlalchemy import create_engine
@@ -28,14 +29,174 @@ def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     return int((year_start + timedelta(days=iso_day - 1, weeks=iso_week - 1)).strftime('%s') + '000')
 
 
-def rate_by_week(df_filtered, kind=None, num=None):
+def data_cleaning_and_preparation(df, df_stock):
+    # CLEAN FUTURE AND DISTANT PAST ENTRIES BEFORE DROPPING DUPLICATES
+
+
+
+    # Assign state and LGA numbers to data frame
+    df = assign_state_lga_num(df)
+
+    # Follow order for cleaning data for graph
+    #  - convert from string to float
+    #  - filter out incorrect data with query
+    #  - convert from float to int
+
+    # Convert from string to float
+    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
+        df[i] = pd.to_numeric(df[i], errors='coerce')
+
+    # Clean out of range identification data
+    for i in ('weeknum', 'state_num', 'lga_num', 'siteid'):
+        df = df.query('%s==%s' % (i, i)).query('%s>=0' % i)
+        # line above deletes entire row where a NaN is found
+
+    # the change below changes the integrity of data - do not export.
+    # This is problematic if the graph shows zero when the data is Null / NaN
+    # can you see a zero - look in tooltips
+    # no data would be evident from the reporting rate (complete reporting)
+    # keep data integrity in postgres db - change Null to zero in working df
+    for i in ( 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
+        df[i] = df[i].fillna(0)
+
+
+    # It is appropriate to delete the entire row of data if there is no ID or week number
+    # lines below deletes entire row where a NaN is found - see all queries
+    df = df.query('0<weeknum<53')
+    df = df.query('0<state_num<37')
+    df = df.query('101<lga_num<3799')
+    df = df.query('101110001<siteid<3799999999')
+
+    # Data cleaning for admissions
+    df = df.query('amar<99999')
+
+    # Convert from float to int
+    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
+        df[i] = df[i].astype(int)
+
+
+    # Introducing Year for X axis
+    df['year'] = df['last_seen'].map(lambda x: x.year)
+
+    # double check if the week number below is ISO standard
+    df['last_seen_weeknum'] = df['last_seen'].map(lambda x: x.week)
+
+    df['year'] = np.where(df['last_seen_weeknum'] < df['weeknum'],
+                                        df['year'] - 1, df['year'])
+
+    today_year = date.today().year
+    today_weeknum = date.today().isocalendar()[1]
+
+    # df = df.sort_values(['year', 'weeknum'])
+    df = df\
+        [(df['year'] >= 2017) | ((df['year'] == 2016) & (df['weeknum'] >= 22))]\
+        [(df['year'] < today_year) | ((df['year'] == today_year) & (df['weeknum'] <= today_weeknum))]
+
+
+    # Reporting rates
+    df['rep_year_wn'] = df['last_seen'].map(lambda x: x.isocalendar())
+    # double check if the week number below is ISO standard
+    # I don't know the reference for week below, but appears to be ISO week
+    df['rep_weeknum'] = df['last_seen'].map(lambda x: x.to_pydatetime().isocalendar()[1])
+
+    # delete all future reporting -before 10 am on the first day of the report week.
+    df['last_seen_dotw'] = df['last_seen'].map(lambda x: x.to_pydatetime().isocalendar()[2])
+    df['last_seen_hour'] = df['last_seen'].map(lambda x: x.to_pydatetime().hour)
+    # df.query('last_seen_dotw==1').query('last_seen_hour<10').query('rep_weeknum==weeknum')['name'].groupby(df['name']).count().plot(kind='bar', rot=90)
+    too_early = df.query('last_seen_dotw==1').query('last_seen_hour<10').query('rep_weeknum==weeknum').index.tolist()
+    df = df[~df.index.isin(too_early)]
+
+    df['year_weeknum'] = zip(df['year'], df['weeknum'])
+    df['iso_rep_year_wn'] = df['rep_year_wn'].map(lambda x: Week(x[0], x[1]))
+    df['iso_year_weeknum'] = df['year_weeknum'].map(lambda x: Week(x[0], x[1]))
+    # Remove all reports for dates in the future.
+    future_report = df.query('rep_year_wn<year_weeknum').index.tolist()
+    df = df[~df.index.isin(future_report)]
+
+    df['iso_diff'] = (df['iso_year_weeknum'] - df['iso_rep_year_wn'])
+    # remove reports for 8 weeks prior to report date
+    df = df.query('iso_diff>=-8')
+
+    year, week, dotw = date.today().isocalendar()
+    current_week = Week(year, week)
+
+    # since how many week this report is about
+    df['since_x_weeks'] = df['iso_year_weeknum'].map(lambda x: current_week - x)
+
+    # Drop duplicates from database
+    # first, reverse sort data by variable last seen
+    df = df.sort_values(by='last_seen', ascending=False)
+    # second, filter out duplicates - should have one data entry for each siteid by type and weeknum
+    df = df.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
+
+    df_stock['siteid'] = pd.to_numeric(df_stock.siteid, errors='coerce')
+    df_stock['weeknum'] = pd.to_numeric(df_stock.weeknum, errors='coerce')
+    df_stock['rutf_bal_carton'] = pd.to_numeric(df_stock.rutf_bal_carton, errors='coerce')
+    df_stock['rutf_bal_sachet'] = pd.to_numeric(df_stock.rutf_bal_sachet, errors='coerce')
+
+    df_stock = df_stock.query('siteid==siteid').query('0<siteid<3999990999')
+    # 2015 had 53 weeks
+    # 2016 had 52 weeks - current data is only for weeknumbers from 22-2016 to present
+    df_stock = df_stock.query('weeknum==weeknum').query('0.99<weeknum<53')
+    df_stock = df_stock.query('rutf_bal_carton==rutf_bal_carton').query('0<=rutf_bal_carton<9999')
+    df_stock = df_stock.query('rutf_bal_sachet==rutf_bal_sachet').query('0<=rutf_bal_sachet<9999')
+
+    df_stock['siteid'] = df_stock.siteid.astype('int')
+    df_stock['weeknum'] = df_stock.weeknum.astype('int')
+    df_stock['rutf_bal_carton'] = df_stock.rutf_bal_carton.astype('int')
+    df_stock['rutf_bal_sachet'] = df_stock.rutf_bal_sachet.astype('int')
+
+    # Drop unvalidated data
+    df_stock = df_stock.query('confirm=="Yes"')
+    # Before filter - Sort data
+    df_stock = df_stock.sort_values(by='last_seen', ascending=False)
+    df_stock = df_stock.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
+
+    df_stock['year'] = df_stock['last_seen'].map(lambda x: x.year)
+    df_stock['last_seen_weeknum'] = df_stock['last_seen'].map(lambda x: x.week)
+    df_stock['year'] = np.where(df_stock['last_seen_weeknum'] < df_stock['weeknum'],
+                          df_stock['year'] - 1, df_stock['year'])
+
+    
+    return df, df_stock
+
+
+def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     # this is national level, no need for query
     if kind is None:
         df_queried = df_filtered
+
     else:
         df_queried = df_filtered.query('%s==%s' % (kind, num))
 
+    report_rate = df_queried.query('since_x_weeks<=8').groupby(df_queried['siteid'])[
+        'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
+
+
+    if kind == 'siteid':
+        latest_stock_report = df_stock.query('year==2017').query('siteid==%s' % num).sort_values(by='weeknum', ascending=False).drop_duplicates(
+            ['siteid'], keep='first')['rutf_bal_carton'].tolist()
+
+        latest_stock_report = latest_stock_report[0] if len(latest_stock_report) != 0 else None
+
+        latest_stock_report_weeknum = df_stock.query('year==2017').query('siteid==%s' % num).sort_values(by='weeknum', ascending=False).drop_duplicates(
+            ['siteid'], keep='first')['weeknum'].tolist()
+
+        latest_stock_report_weeknum = latest_stock_report_weeknum[0] if len(latest_stock_report_weeknum) != 0 else None
+
+    # for National, State, and LGA level
+    else:
+        latest_stock_report = None
+        latest_stock_report_weeknum = None
+
+    print(kind, latest_stock_report, latest_stock_report_weeknum)
+
     adm_by_week = df_queried['amar'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum()
+
+    # filter by one site
+    # percentage of complete reporting for one site
+    # ATTENTION
+    # denominator is the number of sites that have at least one person registered with IMAM program
 
     filter_discharge = df_queried['total_discharges'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum()
     filter_cout = df_queried['cout'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum()
@@ -51,7 +212,7 @@ def rate_by_week(df_filtered, kind=None, num=None):
     dmed_rate_by_week = dmed_rate_by_week.dropna()
     tout_rate_by_week = tout_rate_by_week.dropna()
     
-    return adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week
+    return adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum
 
 
 # Query database and create data for admissions graph
@@ -60,76 +221,29 @@ def adm(request):
     engine = create_engine(
         'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
     df = pd.read_sql_query("select * from program;", con=engine)
+    df_stock = pd.read_sql_query("select * from stock;", con=engine)
 
     # All data should be cleaned in advance.
-
-    # CLEAN FUTURE AND DISTANT PAST ENTRIES BEFORE DROPPING DUPLICATES
-
-    # Remove duplicates from database
-    # first, reverse sort data by variable last seen
-    df = df.sort_values(by='last_seen', ascending=False)
-    # second, filter out duplicates - should have one data entry for each siteid by type and weeknum
-    df_filtered = df.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
-
-    # Assign state and LGA numbers to data frame
-    df_filtered = assign_state_lga_num(df_filtered)
-
-    # Follow order for cleaning data for graph
-    #  - convert from string to float
-    #  - filter out incorrect data with query
-    #  - convert from float to int
-
-    # Convert from string to float
-    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
-        df_filtered[i] = pd.to_numeric(df_filtered[i], errors='coerce')
-
-    # Clean out of range identification data
-    for i in ('weeknum', 'state_num', 'lga_num', 'siteid'):
-        df_filtered = df_filtered.query('%s==%s' % (i, i)).query('%s>=0' % i)
-        # line above deletes entire row where a NaN is found
-
-    # the change below changes the integrity of data - do not export.
-    # This is problematic if the graph shows zero when the data is Null / NaN
-    # can you see a zero - look in tooltips
-    # no data would be evident from the reporting rate (complete reporting)
-    # keep data integrity in postgres db - change Null to zero in working df
-    for i in ( 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
-        df_filtered[i] = df_filtered[i].fillna(0)
-
-
-    # It is appropriate to delete the entire row of data if there is no ID or week number
-    # lines below deletes entire row where a NaN is found - see all queries
-    df_filtered = df_filtered.query('0<weeknum<53')
-    df_filtered = df_filtered.query('0<state_num<37')
-    df_filtered = df_filtered.query('101<lga_num<3799')
-    df_filtered = df_filtered.query('101110001<siteid<3799999999')
-
-    # Data cleaning for admissions
-    df_filtered = df_filtered.query('amar<99999')
-
-    # Convert from float to int
-    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
-        df_filtered[i] = df_filtered[i].astype(int)
-
-    # Introducing Year for X axis
-    df_filtered['year'] = df_filtered['last_seen'].map(lambda x: x.year)
-
-    # double check if the week number below is ISO standard
-    df_filtered['last_seen_weeknum'] = df_filtered['last_seen'].map(lambda x: x.week)
-
-    df_filtered['year'] = np.where(df_filtered['last_seen_weeknum'] < df_filtered['weeknum'],
-                                        df_filtered['year'] - 1, df_filtered['year'])
-
-    today_year = date.today().year
-    today_weeknum = date.today().isocalendar()[1]
-
-    # df_filtered = df_filtered.sort_values(['year', 'weeknum'])
-    df_filtered = df_filtered\
-        [(df_filtered['year'] >= 2017) | ((df_filtered['year'] == 2016) & (df_filtered['weeknum'] >= 22))]\
-        [(df_filtered['year'] < today_year) | ((df_filtered['year'] == today_year) & (df_filtered['weeknum'] <= today_weeknum))]
+    df_filtered, df_stock = data_cleaning_and_preparation(df, df_stock)
 
     # For all exit rate calculations see Final Report Consensus Meeting on M&E IMAM December 2010
     # UNICEF WCARO - Dakar Senegal
+
+    # Filter by Year
+    df_filtered = df_filtered.query("year==%s" % request.GET.get("year", "2017"))
+
+    # Filter by Site Type (all, outpatients OTP, inpatients IPF or SC)
+        # There is no data in type var of ALL only OTP and SC
+
+    if "site_type" not in request.GET or request.GET['site_type'] == "All" or request.GET['site_type'] not in ("OTP", "SC"):
+        df_filtered = df_filtered
+    elif request.GET['site_type'] == "OTP":
+        df_filtered = df_filtered.query('type=="OTP"')
+        # if var name type == string - must be within quotes
+    elif request.GET['site_type'] == "SC":
+        df_filtered = df_filtered.query('type=="SC"')
+    else:
+        raise Exception("This site_type value is not permitted: %s" % request.GET['site_type'])
 
     # Total Discharges from program
     df_filtered['total_discharges'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
@@ -137,19 +251,13 @@ def adm(request):
     # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
 
-    # Filter by Year
-    df_filtered = df_filtered.query("year==%s" % request.GET.get("year", "2017"))
 
-    # Filter by Type (all, outpatients OTP, inpatients IPF or SC)
-    #df_filtered = df_filtered.query("type==%s" % request.GET.get("type", "All"))
 
     result = {}
 
     # default or national level
     if "site_filter" not in request.GET or request.GET['site_filter'] in ("", "null"):
-        adm_by_week = df_filtered['amar'].groupby(df_filtered['weeknum']).sum()
-
-        adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered)
+        adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock)
 
         title = "National Level"
 
@@ -165,7 +273,7 @@ def adm(request):
 
         if data_type == "state":
             kind = "state_num"
-            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered, kind, num)
+            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate , latest_stock_report, latest_stock_report_weeknum= rate_by_week(df_filtered, df_stock, kind, num)
 
             # in line below, django expects only one = to get value.
             first_admin = First_admin.objects.get(state_num=num)
@@ -174,7 +282,7 @@ def adm(request):
 
         elif data_type == "lga":
             kind = "lga_num"
-            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered, kind, num)
+            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
 
             second_admin = Second_admin.objects.get(lga_num=num)
             title = "%s-LGA %s" % (second_admin.lga.title(),
@@ -183,7 +291,7 @@ def adm(request):
         elif data_type == "site":
             # result = rate_by_week(result, df_filtered, 'siteid')
             kind = "siteid"
-            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week = rate_by_week(df_filtered, kind, num)
+            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
 
             site_level = Site.objects.get(siteid=num)
             title = "%s,  %s-LGA %s " % (site_level.sitename.title(),
@@ -207,6 +315,9 @@ def adm(request):
         "defu_rate_by_week": defu_rate_by_week,
         "dmed_rate_by_week": dmed_rate_by_week,
         "tout_rate_by_week": tout_rate_by_week,
+        "latest_stock_report": latest_stock_report,
+        "latest_stock_report_weeknum": latest_stock_report_weeknum,
+        "report_rate": "%2.1f" % report_rate,
         "title": title,
         "date": date.today().strftime("%d-%m-%Y"),
     }))

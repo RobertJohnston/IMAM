@@ -40,25 +40,25 @@ def rename_cols(dataframe):
     dataframe.rename(columns={'Confirm (Category) - IMAM Program': 'confirm'}, inplace=True)
 
     # Stock database
-    dataframe.rename(columns={'PostLevel (Value) - IMAM Stock ': 'level'}, inplace=True)
-    dataframe.rename(columns={'WeekNum (Value) - IMAM Stock ': 'weeknum'}, inplace=True)
-    dataframe.rename(columns={'Self Report (Value) - IMAM Stock ': 'self_report'}, inplace=True)
-    dataframe.rename(columns={'StoSiteID (Value) - IMAM Stock ': 'sto_siteid'}, inplace=True)
-    dataframe.rename(columns={'StoType (Category) - IMAM Stock ': 'sto_type'}, inplace=True)
-    dataframe.rename(columns={'route_by_type (Category) - IMAM Stock ': 'type'}, inplace=True)
-    dataframe.rename(columns={'RUTF_in (Value) - IMAM Stock ': 'rutf_in'}, inplace=True)
+    dataframe.rename(columns={'PostLevel (Value) - IMAM Stock': 'level'}, inplace=True)
+    dataframe.rename(columns={'WeekNum (Value) - IMAM Stock': 'weeknum'}, inplace=True)
+    dataframe.rename(columns={'Self Report (Value) - IMAM Stock': 'self_report'}, inplace=True)
+    dataframe.rename(columns={'StoSiteID (Value) - IMAM Stock': 'sto_siteid'}, inplace=True)
+    dataframe.rename(columns={'StoType (Category) - IMAM Stock': 'sto_type'}, inplace=True)
+    dataframe.rename(columns={'route_by_type (Category) - IMAM Stock': 'type'}, inplace=True)
+    dataframe.rename(columns={'RUTF_in (Value) - IMAM Stock': 'rutf_in'}, inplace=True)
     # Outpatients
-    dataframe.rename(columns={'RUTF_used_carton (Value) - IMAM Stock ': 'rutf_used_carton'}, inplace=True)
-    dataframe.rename(columns={'RUTF_used_sachet (Value) - IMAM Stock ': 'rutf_used_sachet'}, inplace=True)
-    dataframe.rename(columns={'RUTF_bal_carton (Value) - IMAM Stock ': 'rutf_bal_carton'}, inplace=True)
-    dataframe.rename(columns={'RUTF_bal_sachet (Value) - IMAM Stock ': 'rutf_bal_sachet'}, inplace=True)
+    dataframe.rename(columns={'RUTF_used_carton (Value) - IMAM Stock': 'rutf_used_carton'}, inplace=True)
+    dataframe.rename(columns={'RUTF_used_sachet (Value) - IMAM Stock': 'rutf_used_sachet'}, inplace=True)
+    dataframe.rename(columns={'RUTF_bal_carton (Value) - IMAM Stock': 'rutf_bal_carton'}, inplace=True)
+    dataframe.rename(columns={'RUTF_bal_sachet (Value) - IMAM Stock': 'rutf_bal_sachet'}, inplace=True)
     # Inpatients
-    dataframe.rename(columns={'F75_bal_carton (Value) - IMAM Stock ': 'f75_bal_carton'}, inplace=True)
-    dataframe.rename(columns={'F75_bal_sachet (Value) - IMAM Stock ': 'f75_bal_sachet'}, inplace=True)
-    dataframe.rename(columns={'F100_bal_carton (Value) - IMAM Stock ': 'f100_bal_carton'}, inplace=True)
-    dataframe.rename(columns={'F100_bal_sachet (Value) - IMAM Stock ': 'f100_bal_sachet'}, inplace=True)
+    dataframe.rename(columns={'F75_bal_carton (Value) - IMAM Stock': 'f75_bal_carton'}, inplace=True)
+    dataframe.rename(columns={'F75_bal_sachet (Value) - IMAM Stock': 'f75_bal_sachet'}, inplace=True)
+    dataframe.rename(columns={'F100_bal_carton (Value) - IMAM Stock': 'f100_bal_carton'}, inplace=True)
+    dataframe.rename(columns={'F100_bal_sachet (Value) - IMAM Stock': 'f100_bal_sachet'}, inplace=True)
     # confirm correct data entry
-    dataframe.rename(columns={'Confirm (Category) - IMAM Stock ': 'confirm'}, inplace=True)
+    dataframe.rename(columns={'Confirm (Category) - IMAM Stock': 'confirm'}, inplace=True)
 
     # LGA database
     dataframe.rename(columns={'WeekNum (Value) - IMAM LGA State Stocks': 'weeknum'}, inplace=True)
