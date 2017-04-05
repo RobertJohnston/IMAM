@@ -1,17 +1,15 @@
 import json
-
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 import pandas as pd
+
 import time
 import numpy as np
 from isoweek import Week
 
 from datetime import date, timedelta
 from sqlalchemy import create_engine
-from management.commands.load_data import assign_state_lga_num
-
 from models import First_admin, Second_admin, Site
 
 
@@ -29,138 +27,6 @@ def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     return int((year_start + timedelta(days=iso_day - 1, weeks=iso_week - 1)).strftime('%s') + '000')
 
 
-def data_cleaning_and_preparation(df, df_stock):
-    # CLEAN FUTURE AND DISTANT PAST ENTRIES BEFORE DROPPING DUPLICATES
-
-
-
-    # Assign state and LGA numbers to data frame
-    df = assign_state_lga_num(df)
-
-    # Follow order for cleaning data for graph
-    #  - convert from string to float
-    #  - filter out incorrect data with query
-    #  - convert from float to int
-
-    # Convert from string to float
-    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
-        df[i] = pd.to_numeric(df[i], errors='coerce')
-
-    # Clean out of range identification data
-    for i in ('weeknum', 'state_num', 'lga_num', 'siteid'):
-        df = df.query('%s==%s' % (i, i)).query('%s>=0' % i)
-        # line above deletes entire row where a NaN is found
-
-    # the change below changes the integrity of data - do not export.
-    # This is problematic if the graph shows zero when the data is Null / NaN
-    # can you see a zero - look in tooltips
-    # no data would be evident from the reporting rate (complete reporting)
-    # keep data integrity in postgres db - change Null to zero in working df
-    for i in ( 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
-        df[i] = df[i].fillna(0)
-
-
-    # It is appropriate to delete the entire row of data if there is no ID or week number
-    # lines below deletes entire row where a NaN is found - see all queries
-    df = df.query('0<weeknum<53')
-    df = df.query('0<state_num<37')
-    df = df.query('101<lga_num<3799')
-    df = df.query('101110001<siteid<3799999999')
-
-    # Data cleaning for admissions
-    df = df.query('amar<99999')
-
-    # Convert from float to int
-    for i in ('weeknum', 'state_num', 'lga_num', 'siteid', 'amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
-        df[i] = df[i].astype(int)
-
-
-    # Introducing Year for X axis
-    df['year'] = df['last_seen'].map(lambda x: x.year)
-
-    # double check if the week number below is ISO standard
-    df['last_seen_weeknum'] = df['last_seen'].map(lambda x: x.week)
-
-    df['year'] = np.where(df['last_seen_weeknum'] < df['weeknum'],
-                                        df['year'] - 1, df['year'])
-
-    today_year = date.today().year
-    today_weeknum = date.today().isocalendar()[1]
-
-    # df = df.sort_values(['year', 'weeknum'])
-    df = df\
-        [(df['year'] >= 2017) | ((df['year'] == 2016) & (df['weeknum'] >= 22))]\
-        [(df['year'] < today_year) | ((df['year'] == today_year) & (df['weeknum'] <= today_weeknum))]
-
-
-    # Reporting rates
-    df['rep_year_wn'] = df['last_seen'].map(lambda x: x.isocalendar())
-    # double check if the week number below is ISO standard
-    # I don't know the reference for week below, but appears to be ISO week
-    df['rep_weeknum'] = df['last_seen'].map(lambda x: x.to_pydatetime().isocalendar()[1])
-
-    # delete all future reporting -before 10 am on the first day of the report week.
-    df['last_seen_dotw'] = df['last_seen'].map(lambda x: x.to_pydatetime().isocalendar()[2])
-    df['last_seen_hour'] = df['last_seen'].map(lambda x: x.to_pydatetime().hour)
-    # df.query('last_seen_dotw==1').query('last_seen_hour<10').query('rep_weeknum==weeknum')['name'].groupby(df['name']).count().plot(kind='bar', rot=90)
-    too_early = df.query('last_seen_dotw==1').query('last_seen_hour<10').query('rep_weeknum==weeknum').index.tolist()
-    df = df[~df.index.isin(too_early)]
-
-    df['year_weeknum'] = zip(df['year'], df['weeknum'])
-    df['iso_rep_year_wn'] = df['rep_year_wn'].map(lambda x: Week(x[0], x[1]))
-    df['iso_year_weeknum'] = df['year_weeknum'].map(lambda x: Week(x[0], x[1]))
-    # Remove all reports for dates in the future.
-    future_report = df.query('rep_year_wn<year_weeknum').index.tolist()
-    df = df[~df.index.isin(future_report)]
-
-    df['iso_diff'] = (df['iso_year_weeknum'] - df['iso_rep_year_wn'])
-    # remove reports for 8 weeks prior to report date
-    df = df.query('iso_diff>=-8')
-
-    year, week, dotw = date.today().isocalendar()
-    current_week = Week(year, week)
-
-    # since how many week this report is about
-    df['since_x_weeks'] = df['iso_year_weeknum'].map(lambda x: current_week - x)
-
-    # Drop duplicates from database
-    # first, reverse sort data by variable last seen
-    df = df.sort_values(by='last_seen', ascending=False)
-    # second, filter out duplicates - should have one data entry for each siteid by type and weeknum
-    df = df.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
-
-    df_stock['siteid'] = pd.to_numeric(df_stock.siteid, errors='coerce')
-    df_stock['weeknum'] = pd.to_numeric(df_stock.weeknum, errors='coerce')
-    df_stock['rutf_bal_carton'] = pd.to_numeric(df_stock.rutf_bal_carton, errors='coerce')
-    df_stock['rutf_bal_sachet'] = pd.to_numeric(df_stock.rutf_bal_sachet, errors='coerce')
-
-    df_stock = df_stock.query('siteid==siteid').query('0<siteid<3999990999')
-    # 2015 had 53 weeks
-    # 2016 had 52 weeks - current data is only for weeknumbers from 22-2016 to present
-    df_stock = df_stock.query('weeknum==weeknum').query('0.99<weeknum<53')
-    df_stock = df_stock.query('rutf_bal_carton==rutf_bal_carton').query('0<=rutf_bal_carton<9999')
-    df_stock = df_stock.query('rutf_bal_sachet==rutf_bal_sachet').query('0<=rutf_bal_sachet<9999')
-
-    df_stock['siteid'] = df_stock.siteid.astype('int')
-    df_stock['weeknum'] = df_stock.weeknum.astype('int')
-    df_stock['rutf_bal_carton'] = df_stock.rutf_bal_carton.astype('int')
-    df_stock['rutf_bal_sachet'] = df_stock.rutf_bal_sachet.astype('int')
-
-    # Drop unvalidated data
-    df_stock = df_stock.query('confirm=="Yes"')
-    # Before filter - Sort data
-    df_stock = df_stock.sort_values(by='last_seen', ascending=False)
-    df_stock = df_stock.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
-
-    df_stock['year'] = df_stock['last_seen'].map(lambda x: x.year)
-    df_stock['last_seen_weeknum'] = df_stock['last_seen'].map(lambda x: x.week)
-    df_stock['year'] = np.where(df_stock['last_seen_weeknum'] < df_stock['weeknum'],
-                          df_stock['year'] - 1, df_stock['year'])
-
-    
-    return df, df_stock
-
-
 def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     # this is national level, no need for query
     if kind is None:
@@ -171,7 +37,6 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
 
     report_rate = df_queried.query('since_x_weeks<=8').groupby(df_queried['siteid'])[
         'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
-
 
     if kind == 'siteid':
         latest_stock_report = df_stock.query('year==2017').query('siteid==%s' % num).sort_values(by='weeknum', ascending=False).drop_duplicates(
@@ -220,11 +85,21 @@ def adm(request):
     # Read data into dataframe - at each function call
     engine = create_engine(
         'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
+    # PROGRAM DATA
     df = pd.read_sql_query("select * from program;", con=engine)
+    # STOCK DATA
     df_stock = pd.read_sql_query("select * from stock;", con=engine)
+    # WAREHOUSE DATA
+    # df_warehouse= pd.read_sql_query("select * from warehouse;", con=engine)
 
+
+    # REMOVE THIS WHEN DATA CLEANING IS DONE.
+    # this should be in load_data
     # All data should be cleaned in advance.
     df_filtered, df_stock = data_cleaning_and_preparation(df, df_stock)
+    # REMOVE THIS WHEN DATA CLEANING IS DONE.
+
+
 
     # For all exit rate calculations see Final Report Consensus Meeting on M&E IMAM December 2010
     # UNICEF WCARO - Dakar Senegal

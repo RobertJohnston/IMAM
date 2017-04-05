@@ -23,6 +23,9 @@ class Command(BaseCommand):
 
         assign_state_lga_num(df)
 
+        # Opening date
+        # Closing date
+
         # First Admin
         columnsTitles = ['state_num', 'state']
         first_admin_df = df.reindex(columns=columnsTitles)
