@@ -4,7 +4,10 @@ import numpy as np
 from sqlalchemy import create_engine
 from django.conf import settings
 
-from load_data import rename_cols
+from load_data import rename_cols, generic_cleaning, \
+                    add_iso_dates, \
+                    drop_duplicate_reports, \
+                    stock_cleaning
 
 # to run python manage.py load_data
 
@@ -22,9 +25,6 @@ class Command(BaseCommand):
 
         # Rename all the columns in the imported data
         rename_cols(df)
-
-        # Create primary key for program data
-        df['unique'] =df['urn'].astype(str) + " " + df['first_seen'].astype(object).astype(str)
 
         # Change the order (the index) of the columns
         columnsTitles = ['contact_uuid',
@@ -55,15 +55,25 @@ class Command(BaseCommand):
                          'confirm',
                          'unique']
 
-        df2 = df.reindex(columns=columnsTitles)
+        df_stock = df.reindex(columns=columnsTitles)
         # df2.set_index(['unique'], inplace=True)
+        
+        # Data cleaning and preparation
+        df_stock = generic_cleaning(df_stock)
+        df_stock = add_iso_dates(df_stock)
+        df_stock = drop_duplicate_reports(df_stock)
+
+        # Program specific data cleaning
+        df_stock = stock_cleaning(df_stock)
+        
+        
 
         # engine = create_engine('postgresql://[user]:[pass]@[host]:[port]/[schema]')
         engine = create_engine(
             'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
 
         try:
-            df2.to_sql('stock', engine, schema='public', if_exists='replace')
+            df_stock.to_sql('stock', engine, schema='public', if_exists='replace')
             with engine.connect() as con:
                 con.execute('ALTER TABLE stock ADD PRIMARY KEY (urn, first_seen);')
                 # add time zones with same code

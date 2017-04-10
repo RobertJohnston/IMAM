@@ -96,7 +96,7 @@ def adm(request):
     # REMOVE THIS WHEN DATA CLEANING IS DONE.
     # this should be in load_data
     # All data should be cleaned in advance.
-    df_filtered, df_stock = data_cleaning_and_preparation(df, df_stock)
+    df_filtered = df
     # REMOVE THIS WHEN DATA CLEANING IS DONE.
 
 

@@ -228,11 +228,11 @@ def program_cleaning(dataframe):
     # Data cleaning for admissions
     dataframe = dataframe.query('amar<9999')
     # Make agegroup = 6-59m for all OTPs
-    dataframe['agegroup'] = np.where(dataframe['type'] == "OTP", "6-59m", dataframe['agegroup'])
+    dataframe['age_group'] = np.where(dataframe['type'] == "OTP", "6-59m", dataframe['age_group'])
     return dataframe
 
 
-def stock_cleaning(dataframe):
+def stock_cleaning(dataframe_stock):
     # STOCKS
     dataframe_stock['rutf_bal_carton'] = pd.to_numeric(dataframe_stock.rutf_bal_carton, errors='coerce')
     dataframe_stock['rutf_bal_sachet'] = pd.to_numeric(dataframe_stock.rutf_bal_sachet, errors='coerce')
@@ -240,11 +240,14 @@ def stock_cleaning(dataframe):
     dataframe_stock = dataframe_stock.query('rutf_bal_carton==rutf_bal_carton').query('0<=rutf_bal_carton<9999')
     dataframe_stock = dataframe_stock.query('rutf_bal_sachet==rutf_bal_sachet').query('0<=rutf_bal_sachet<9999')
 
+    # Make sure that that this is not needed.  Bad practice to set vars to zero when there was no report.
+    # dataframe[i] = dataframe[i].fillna(0)
+
     dataframe_stock['rutf_bal_carton'] = dataframe_stock.rutf_bal_carton.astype('int')
     dataframe_stock['rutf_bal_sachet'] = dataframe_stock.rutf_bal_sachet.astype('int')
 
     # add supervision data to main stock data
-    return dataframe
+    return dataframe_stock
 
 
 def warehouse_cleaning(dataframe):

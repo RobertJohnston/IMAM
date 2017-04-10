@@ -69,12 +69,12 @@ class Command(BaseCommand):
 
 
         # Data cleaning and preparation
-        generic_cleaning(df)
-        add_iso_dates(df)
-        drop_duplicate_reports(df)
+        df = generic_cleaning(df)
+        df = add_iso_dates(df)
+        df = drop_duplicate_reports(df)
 
         # Program specific data cleaning
-        program_cleaning(df)
+        df = program_cleaning(df)
 
 
         # engine = create_engine('postgresql://[user]:[pass]@[host]:[port]/[schema]')
