@@ -10,15 +10,16 @@ from django.db import models
 # Registration
 class Registration(models.Model):
     index = models.BigIntegerField(primary_key=True)
-    contact_uuid = models.UUIDField(editable=False)
+    # contact_uuid = models.UUIDField(editable=False)
+    contact_uuid = models.CharField(editable=False, max_length=36, unique=True)
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
-    urn = models.IntegerField(primary_key=True)
+    urn = models.CharField(max_length=50)
     name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
     siteid = models.IntegerField()
     type = models.CharField(max_length=20)
-    first_seen = models.DateTimeField()
+    first_seen = models.DateTimeField(null=True, blank=True)
     last_seen =  models.DateTimeField()
     post = models.CharField(max_length=30)
     mail = models.EmailField()
@@ -35,38 +36,47 @@ class Registration(models.Model):
 
 # Program data
 class Program(models.Model):
-    index = models.BigIntegerField(primary_key=True)
-    contact_uuid = models.UUIDField(editable=False)
-    # problem to add phone number field to tools
-    # urn = models.PhoneNumberField()
-    urn = models.IntegerField()
-    name =   models.CharField(max_length=100)
-    groups = models.CharField(max_length=100)
-    # if supervisor enters the data than take SiteID from proSiteID
-    siteid = models.IntegerField()
+    index = models.BigIntegerField(blank=True, null=True)
+    contact_uuid = models.TextField(blank=True, null=True)
+    urn = models.BigIntegerField()
+    name = models.TextField(blank=True, null=True)
+    groups = models.TextField(blank=True, null=True)
+    siteid = models.BigIntegerField(blank=True, null=True)
     first_seen = models.DateTimeField()
-    last_seen =  models.DateTimeField()
-    weeknum = models.IntegerField()
-    role = models.CharField(max_length=20)
-    # if supervisor enters the data then take Type from proType
-    type = models.CharField(max_length=20)
-    age_group = models.CharField(max_length=20)
-    # Admissions and Exits
-    # if data entry is from SC then don't forget to add
-    beg =  models.IntegerField()
-    amar = models.IntegerField()
-    tin =  models.IntegerField()
-    tout = models.IntegerField()
-    dcur = models.IntegerField()
-    dead = models.IntegerField()
-    defu = models.IntegerField()
-    dmed = models.IntegerField()
-    confirm = models.CharField(max_length=20)
+    last_seen = models.DateTimeField(blank=True, null=True)
+    weeknum = models.BigIntegerField(blank=True, null=True)
+    role = models.TextField(blank=True, null=True)
+    type = models.TextField(blank=True, null=True)
+    age_group = models.TextField(blank=True, null=True)
+    beg = models.TextField(blank=True, null=True)
+    amar = models.BigIntegerField(blank=True, null=True)
+    tin = models.TextField(blank=True, null=True)
+    dcur = models.BigIntegerField(blank=True, null=True)
+    dead = models.BigIntegerField(blank=True, null=True)
+    defu = models.BigIntegerField(blank=True, null=True)
+    dmed = models.BigIntegerField(blank=True, null=True)
+    tout = models.BigIntegerField(blank=True, null=True)
+    confirm = models.TextField(blank=True, null=True)
+    siteid_lgt = models.BigIntegerField(blank=True, null=True)
+    state_num = models.BigIntegerField(blank=True, null=True)
+    lga_num = models.BigIntegerField(blank=True, null=True)
+    year = models.BigIntegerField(blank=True, null=True)
+    last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
+    rep_year_wn = models.TextField(blank=True, null=True)
+    rep_weeknum = models.BigIntegerField(blank=True, null=True)
+    last_seen_dotw = models.BigIntegerField(blank=True, null=True)
+    last_seen_hour = models.BigIntegerField(blank=True, null=True)
+    year_weeknum = models.TextField(blank=True, null=True)
+    iso_rep_year_wn = models.TextField(blank=True, null=True)
+    iso_year_weeknum = models.TextField(blank=True, null=True)
+    iso_diff = models.BigIntegerField(blank=True, null=True)
+    since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
     class Meta:
-        db_table = 'program'
         managed = False
+        db_table = 'program'
         unique_together = (('urn', 'first_seen'),)
+
 
 
     def __unicode__(self):
@@ -118,14 +128,14 @@ class Lga(models.Model):
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
     urn = models.IntegerField()
-    name =   models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
     siteid = models.IntegerField()
     first_seen = models.DateTimeField('first seen')
     last_seen =  models.DateTimeField('last seen')
     weeknum = models.IntegerField()
-    rutf_in =          models.DecimalField(max_digits=8, decimal_places=2,)
-    rutf_out =  models.DecimalField(max_digits=8, decimal_places=2,)
+    rutf_in = models.DecimalField(max_digits=8, decimal_places=2,)
+    rutf_out = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_bal = models.DecimalField(max_digits=8, decimal_places=2,)
     # can add tracking of f75 and f100 later at LGA level
     # f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2,)

@@ -153,13 +153,11 @@ def generic_cleaning(dataframe):
 def add_iso_dates(dataframe):
     # Introducing Year for X axis
     dataframe['year'] = dataframe['last_seen'].map(lambda x: x.isocalendar()[0])
-    print(dataframe['year'].value_counts())
 
     # If report was for WN in last year but report data is this year, subtract one year from dataframe.year.
     # double check if the week number below is ISO standard
     dataframe['last_seen_weeknum'] = dataframe['last_seen'].map(lambda x: x.isocalendar()[1])
     dataframe['year'] = np.where((df['weeknum'] > 44) & (dataframe['last_seen_weeknum'] < dataframe['weeknum']), dataframe['year'] - 1, dataframe['year'])
-    print(dataframe['year'].value_counts())
 
     # Try loc to identify variable recoding
     #df.loc[:, ['B', 'A']] = df[['A', 'B']].values
