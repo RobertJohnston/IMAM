@@ -1,14 +1,10 @@
 from django.core.management.base import BaseCommand
-from django.conf import settings
 from temba_client.v2 import TembaClient
-
 from home.models import Registration
 
 from uuid import UUID
 
-# to run python manage.py load_data
-
-# STOCKS DATA
+# to run python manage.py import_contacts
 
 class Command(BaseCommand):
     help = 'Loads data to SQL for IMAM website'
@@ -37,3 +33,9 @@ class Command(BaseCommand):
 
                 a += 1
                 print(a)
+
+# SiteID is forced above to be INT
+# There will be many errors in SiteID.
+# Need to make a list of all errors to present on the admin page to ensure that project manager will make corrections.
+
+# Drop the contacts with siteid = NULL or NaN
