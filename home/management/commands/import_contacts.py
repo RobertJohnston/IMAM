@@ -4,10 +4,10 @@ from home.models import Registration
 
 from uuid import UUID
 
-# to run python manage.py import_contacts
+# to run python manage.py import_program
 
 class Command(BaseCommand):
-    help = 'Loads data to SQL for IMAM website'
+    help = 'Loads registration data to SQL through API'
 
     # A command must define handle
     def handle(self, *args, **options):
@@ -21,10 +21,16 @@ class Command(BaseCommand):
                 else:
                     contact_in_db = Registration()
 
+                # Add index ? - Not used in analysis
+                # Add contact_uuid
+                # Add groups ?  Not used for anything except to identfy initial registration
                 contact_in_db.urn = contact.urns[0]
                 contact_in_db.name = contact.name
                 contact_in_db.siteid = contact.fields['siteid']
                 contact_in_db.type = contact.fields['type']
+                # First Seen
+                contact_in_db.first_seen = contact.created_on
+                # Last Seen
                 contact_in_db.last_seen = contact.modified_on
                 contact_in_db.post = contact.fields['post']
                 contact_in_db.mail = contact.fields['mail']

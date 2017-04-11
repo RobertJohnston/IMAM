@@ -10,7 +10,7 @@ from load_data import rename_cols, merge_in_and_outpatients
 # to run python manage.py load_data
 
 class Command(BaseCommand):
-    help = 'Loads data to SQL for IMAM website'
+    help = 'Loads data from xls to SQL for IMAM website'
 
     # A command must define handle
     def handle(self, *args, **options):
@@ -36,7 +36,7 @@ class Command(BaseCommand):
         df2 = df.reindex(columns=columnsTitles)
 
         # set primary key - should be urn
-        df.set_index('urn')
+        #df.set_index('urn')
 
         # engine = create_engine('postgresql://[user]:[pass]@[host]:[port]/[schema]')
         engine = create_engine(

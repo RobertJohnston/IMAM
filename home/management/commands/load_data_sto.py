@@ -14,7 +14,7 @@ from load_data import rename_cols, generic_cleaning, \
 # STOCKS DATA
 
 class Command(BaseCommand):
-    help = 'Loads data to SQL for IMAM website'
+    help = 'Loads data from xls to SQL for IMAM website'
 
     # A command must define handle
     def handle(self, *args, **options):

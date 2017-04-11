@@ -6,13 +6,15 @@ from django.db import models
 # Load of initial data done with django custom commands
 # use - python manage.py load_data
 
+# how do we load the raw data once and then start to use the api after ?
+
 
 # Registration
 class Registration(models.Model):
     index = models.BigIntegerField(primary_key=True)
     # contact_uuid = models.UUIDField(editable=False)
     contact_uuid = models.CharField(editable=False, max_length=36, unique=True)
-    # problem to add phone number field to tools
+    # Do not import URN as phone number field - leave in RapidPro format
     # urn = models.PhoneNumberField()
     urn = models.CharField(max_length=50)
     name = models.CharField(max_length=100)
@@ -24,7 +26,6 @@ class Registration(models.Model):
     post = models.CharField(max_length=30)
     mail = models.EmailField()
 
-    # replaces reference home_registration
     class Meta:
         db_table = 'registration'
         # if managed = False then will not rename following Django conventions
@@ -76,8 +77,6 @@ class Program(models.Model):
         managed = False
         db_table = 'program'
         unique_together = (('urn', 'first_seen'),)
-
-
 
     def __unicode__(self):
         return "Program {}".format(self.name)
@@ -163,6 +162,7 @@ class First_admin(models.Model):
     def __unicode__(self):
         return "First_admin {}".format(self.state)
 
+
 # Second Admin IDs
 class Second_admin(models.Model):
     index = models.BigIntegerField()
@@ -176,6 +176,7 @@ class Second_admin(models.Model):
 
     def __unicode__(self):
         return "Second_admin {}".format(self.lga)
+
 
 # Site IDs
 class Site(models.Model):
@@ -198,4 +199,3 @@ class Site(models.Model):
     def __unicode__(self):
         return "Site {}".format(self.sitename)
 
-# how do we load the raw data once and then start to use the api after ?

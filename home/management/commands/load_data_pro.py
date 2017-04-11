@@ -17,7 +17,7 @@ from load_data import rename_cols, \
 # to run python manage.py load_data
 
 class Command(BaseCommand):
-    help = 'Loads data to SQL for IMAM website'
+    help = 'Loads data from xls to SQL for IMAM website'
 
     # A command must define handle
     def handle(self, *args, **options):
