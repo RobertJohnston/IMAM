@@ -157,7 +157,10 @@ def add_iso_dates(dataframe):
     # If report was for WN in last year but report data is this year, subtract one year from dataframe.year.
     # double check if the week number below is ISO standard
     dataframe['last_seen_weeknum'] = dataframe['last_seen'].map(lambda x: x.isocalendar()[1])
-    dataframe['year'] = np.where((df['weeknum'] > 44) & (dataframe['last_seen_weeknum'] < dataframe['weeknum']), dataframe['year'] - 1, dataframe['year'])
+    # this double conditional identifies the year correctly in the majority of cases
+    # except for reports with weeknum <=44 and more than 8 weeks in past
+    dataframe['year'] = np.where((dataframe['weeknum'] > 44) & \
+        (dataframe['last_seen_weeknum'] < dataframe['weeknum']), dataframe['year'] - 1, dataframe['year'])
 
     # Try loc to identify variable recoding
     #df.loc[:, ['B', 'A']] = df[['A', 'B']].values
@@ -167,7 +170,7 @@ def add_iso_dates(dataframe):
     today_weeknum = date.today().isocalendar()[1]
 
     # Select Dataframe is includes data from WN22 2016 to 2017+
-    # and most recent data cannot surpass current WN and current year.
+    # and remove future reporting - recent data cannot surpass current WN and current year.
     dataframe = dataframe \
         [(dataframe['year'] >= 2017) | ((dataframe['year'] == 2016) & (dataframe['weeknum'] >= 22))] \
         [(dataframe['year'] < today_year) | ((dataframe['year'] == today_year) & (dataframe['weeknum'] <= today_weeknum))]
@@ -188,6 +191,7 @@ def add_iso_dates(dataframe):
     dataframe['year_weeknum'] = zip(dataframe['year'], dataframe['weeknum'])
     dataframe['iso_rep_year_wn'] = dataframe['rep_year_wn'].map(lambda x: Week(x[0], x[1]))
     dataframe['iso_year_weeknum'] = dataframe['year_weeknum'].map(lambda x: Week(x[0], x[1]))
+
     # Remove all reports for dates in the future.
     future_report = dataframe.query('rep_year_wn<year_weeknum').index.tolist()
     dataframe = dataframe[~dataframe.index.isin(future_report)]
