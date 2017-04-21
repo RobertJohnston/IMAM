@@ -126,6 +126,7 @@ def assign_state_lga_num(dataframe):
 
 def generic_cleaning(dataframe):
     # Drop unvalidated data - remember the pandas query has to be in a string.
+    # FIXME confirm column was not normalized, 'y', 'ye' and cases variations columns are dropped
     dataframe = dataframe.query('confirm=="Yes"')
 
     # Assign state and LGA numbers to data frame
@@ -213,7 +214,7 @@ def drop_duplicate_reports(dataframe):
     # first, reverse sort data by variable last seen
     dataframe = dataframe.sort_values(by='last_seen', ascending=False)
     # second, filter out duplicates - should have one data entry for each siteid by type and weeknum
-    dataframe = dataframe.drop_duplicates(['siteid', 'weeknum', 'type'], keep='first')
+    dataframe = dataframe.drop_duplicates(['siteid', 'year', 'weeknum', 'type'], keep='first')
     return dataframe
 
 
@@ -221,14 +222,18 @@ def program_cleaning(dataframe):
     for i in ('amar', 'dcur', 'dead', 'defu', 'dmed', 'tout'):
         # data from string to float
         dataframe[i] = pd.to_numeric(dataframe[i], errors='coerce')
+
         # the change below changes the integrity of data - do not export.
         # This is problematic if the graph shows zero when the data is Null / NaN
         # can you see a zero - look in tooltips
         # no data would be evident from the reporting rate (complete reporting)
         # keep data integrity in postgres db
+        # double check that this does not introduce errors
         dataframe[i] = dataframe[i].fillna(0)
+
         # Convert from float to int
         dataframe[i] = dataframe[i].astype(int)
+
     # Data cleaning for admissions
     dataframe = dataframe.query('amar<9999')
     # Make agegroup = 6-59m for all OTPs

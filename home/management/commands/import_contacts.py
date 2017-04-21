@@ -16,14 +16,17 @@ class Command(BaseCommand):
         a = 0
         for contact_batch in client.get_contacts(group='Nut Personnel').iterfetches(retry_on_rate_exceed=True):
             for contact in contact_batch:
+                # Update contact
                 if Registration.objects.filter(contact_uuid=UUID(contact.uuid)).exists():
                     contact_in_db = Registration.objects.get(contact_uuid=UUID(contact.uuid))
+                # Create new contact
                 else:
                     contact_in_db = Registration()
+                    contact_in_db.contact_uuid = UUID(contact.uuid)
 
-                # Add index ? - Not used in analysis
-                # Add contact_uuid
-                # Add groups ?  Not used for anything except to identfy initial registration
+                if not contact.fields['siteid']:
+                    continue
+
                 contact_in_db.urn = contact.urns[0]
                 contact_in_db.name = contact.name
                 contact_in_db.siteid = contact.fields['siteid']
@@ -33,7 +36,16 @@ class Command(BaseCommand):
                 # Last Seen
                 contact_in_db.last_seen = contact.modified_on
                 contact_in_db.post = contact.fields['post']
-                contact_in_db.mail = contact.fields['mail']
+
+                if not contact.fields['mail'] or '@' not in contact.fields["mail"]:
+                    mail = None
+                else:
+                    mail = contact.fields["mail"].lower().rstrip('.').replace(' ', '').replace(',', '.')
+
+                    if mail.endswith('.con'):
+                        mail = mail[:-1] + 'm'
+
+                contact_in_db.mail = mail
 
                 contact_in_db.save()
 

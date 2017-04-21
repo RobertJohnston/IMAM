@@ -47,7 +47,7 @@ class Command(BaseCommand):
 
             # Error with null values in URN col
             with engine.connect() as con:
-                con.execute('ALTER TABLE registration ADD PRIMARY KEY (urn);')
+                con.execute('ALTER TABLE registration ADD PRIMARY KEY (contact_uuid);')
                 # add time zones with same code
                 print("registration data added.")
 

@@ -11,12 +11,12 @@ from django.db import models
 
 # Registration
 class Registration(models.Model):
-    index = models.BigIntegerField(primary_key=True)
+    # index = models.BigIntegerField(primary_key=True)
     # contact_uuid = models.UUIDField(editable=False)
-    contact_uuid = models.CharField(editable=False, max_length=36, unique=True)
+    contact_uuid = models.CharField(editable=False, max_length=36, primary_key=True)
     # Do not import URN as phone number field - leave in RapidPro format
     # urn = models.PhoneNumberField()
-    urn = models.CharField(max_length=50)
+    urn = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
     siteid = models.IntegerField()
@@ -24,7 +24,7 @@ class Registration(models.Model):
     first_seen = models.DateTimeField(null=True, blank=True)
     last_seen =  models.DateTimeField()
     post = models.CharField(max_length=30)
-    mail = models.EmailField()
+    mail = models.EmailField(null=True, blank=True)
 
     class Meta:
         db_table = 'registration'
@@ -37,9 +37,8 @@ class Registration(models.Model):
 
 # Program data
 class Program(models.Model):
-    index = models.BigIntegerField(blank=True, null=True)
     contact_uuid = models.TextField(blank=True, null=True)
-    urn = models.BigIntegerField()
+    urn = models.TextField()
     name = models.TextField(blank=True, null=True)
     groups = models.TextField(blank=True, null=True)
     siteid = models.BigIntegerField(blank=True, null=True)
@@ -49,16 +48,15 @@ class Program(models.Model):
     role = models.TextField(blank=True, null=True)
     type = models.TextField(blank=True, null=True)
     age_group = models.TextField(blank=True, null=True)
-    beg = models.TextField(blank=True, null=True)
+    beg = models.BigIntegerField(blank=True, null=True)
     amar = models.BigIntegerField(blank=True, null=True)
-    tin = models.TextField(blank=True, null=True)
+    tin = models.BigIntegerField(blank=True, null=True)
     dcur = models.BigIntegerField(blank=True, null=True)
     dead = models.BigIntegerField(blank=True, null=True)
     defu = models.BigIntegerField(blank=True, null=True)
     dmed = models.BigIntegerField(blank=True, null=True)
     tout = models.BigIntegerField(blank=True, null=True)
     confirm = models.TextField(blank=True, null=True)
-    siteid_lgt = models.BigIntegerField(blank=True, null=True)
     state_num = models.BigIntegerField(blank=True, null=True)
     lga_num = models.BigIntegerField(blank=True, null=True)
     year = models.BigIntegerField(blank=True, null=True)

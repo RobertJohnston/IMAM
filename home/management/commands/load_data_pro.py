@@ -90,7 +90,7 @@ class Command(BaseCommand):
 
             df.to_sql('program', engine, schema='public', if_exists='replace')
             with engine.connect() as con:
-                con.execute('ALTER TABLE program ADD PRIMARY KEY (urn, first_seen);')
+                con.execute('ALTER TABLE program ADD PRIMARY KEY (id);')
                 # is primary key necessary ?
                 print("program data added.")
 
