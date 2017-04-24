@@ -10,6 +10,8 @@ from isoweek import Week
 
 from datetime import date, timedelta
 from sqlalchemy import create_engine
+# We can replace sqlalchemy for django at some point.
+
 from models import First_admin, Second_admin, Site
 
 
@@ -19,8 +21,8 @@ def iso_year_start(iso_year):
     delta = timedelta(fourth_jan.isoweekday() - 1)
     return fourth_jan - delta
 
-# There is an error with this as week 52 of 2016 is presented as 2017 (first week of year)
-# This appears to be a highcharts presentation problem and not an error
+
+# Beware for week 52 of 2016 is presented as 2017 (first week of year)
 def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = iso_year_start(iso_year)
@@ -28,7 +30,7 @@ def iso_to_gregorian(iso_year, iso_week, iso_day=1):
 
 
 def rate_by_week(df_filtered, df_stock, kind=None, num=None):
-    # this is national level, no need for query
+    # this is national level, no query
     if kind is None:
         df_queried = df_filtered
 
@@ -122,6 +124,8 @@ def adm(request):
 
     # Total Discharges from program
     df_filtered['total_discharges'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
+    # Error message - Try using.loc[row_indexer, col_indexer] = value instead
+    # Not clear since this is creating a new variable
 
     # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
@@ -150,7 +154,7 @@ def adm(request):
             kind = "state_num"
             adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate , latest_stock_report, latest_stock_report_weeknum= rate_by_week(df_filtered, df_stock, kind, num)
 
-            # in line below, django expects only one = to get value.
+            # in line below, django expects only one equal sign to get value.
             first_admin = First_admin.objects.get(state_num=num)
 
             title = "%s %s" % (first_admin.state, data_type.capitalize())

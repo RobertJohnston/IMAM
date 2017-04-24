@@ -9,7 +9,11 @@ from home.models import Program, Registration
 
 from uuid import UUID
 
+# import_program.py
 # to run python manage.py import_program
+# imports program data from RapidPro API, cleans data and saves to Postgres
+# Data errors such as strings instead of integers are not available
+# Other data entry mistakes such as aberrant values are still visible.
 
 class Command(BaseCommand):
     help = 'Imports program data to SQL through API'
@@ -21,17 +25,25 @@ class Command(BaseCommand):
         contact_cache = {x.contact_uuid: x for x in Registration.objects.all()}
 
         a = 0
-        # rapidpro is annoying and is expecting to get a uuid for flow name
-        # we can find it in the url of the flow : for example https://app.rapidpro.io/flow/editor/a9eed2f3-a92c-48dd-aa10-4f139b1171a4/
+        # rapidpro expects a uuid to identify flow instead of a flow name
+        # The uuid is in the url of the flow : for example https://app.rapidpro.io/flow/editor/a9eed2f3-a92c-48dd-aa10-4f139b1171a4/
         for program_batch in client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4').iterfetches(retry_on_rate_exceed=True):
+
             # with transaction.atomic():
+            # Optimization tool - transaction.atomic -is turned off here as it hides errors.
+
+                # the API response is a list in a list
+                # to interpret this you have to loop over the content
                 for program in program_batch:
                     if 'confirm' not in program.values or program.values['confirm'].category != 'Yes':
-                        print 'Skip because unconfirmed'
+                        print '     Unconfirmed Entry'
                         continue
 
+                    # if id of program exists then update the row
                     if Program.objects.filter(id=program.id).exists():
                         program_in_db = Program.objects.get(id=program.id)
+
+                    # if id of program data doesn't exist then create a new row.
                     else:
                         program_in_db = Program()
                         program_in_db.id = program.id
@@ -40,15 +52,21 @@ class Command(BaseCommand):
                     program_in_db.contact_uuid = program.contact.uuid
                     program_in_db.urn = contact.urn
                     program_in_db.name = contact.name
-                    program_in_db.siteid = contact.siteid
 
                     program_in_db.first_seen = program.created_on
                     program_in_db.last_seen = program.modified_on
 
+                    # If report comes from supervisor, SiteID is entered by supervisor
+                    # and not taken directly from contacts data of reporter.
+                    if 'siteid' in program.values:
+                        program_in_db.siteid = program.values['prosite'].category
+                    else:
+                        program_in_db.siteid = contact.siteid
+
                     if 'type' in program.values:
-                        type_ = program.values['type'].category.upper()
+                        site_type = program.values['type'].category.upper()
                     elif 'protype' in program.values:
-                        type_ = program.values['protype'].category.upper()
+                        site_type = program.values['protype'].category.upper()
                     else:
                         raise Exception()
 
@@ -56,8 +74,8 @@ class Command(BaseCommand):
                     program_in_db.role = program.values['role'].value
                     # age_group = models.TextField(blank=True, null=True)
 
-                    if type_ in ("OTP", "OPT", "O"):
-                        type_ = "OTP"
+                    if site_type in ("OTP", "OPT", "O"):
+                        site_type = "OTP"
                         program_in_db.beg = program.values['beg_o'].value
                         program_in_db.amar = program.values['amar_o'].value
                         program_in_db.tin = program.values['tin_o'].value
@@ -69,7 +87,7 @@ class Command(BaseCommand):
 
                         # Beware if data are entered by supervision staff, then we need to replace siteid = prositeid
 
-                    elif type_ == "SC":
+                    elif site_type == "SC":
                         program_in_db.beg = program.values['beg_i'].value
                         program_in_db.amar = program.values['amar_i'].value
                         program_in_db.tin = program.values['tin_i'].value
@@ -82,7 +100,7 @@ class Command(BaseCommand):
                     else:
                         raise Exception()
 
-                    program_in_db.type = type_
+                    program_in_db.type = site_type
 
                     program_in_db.confirm = program.values['confirm'].category
 
@@ -98,7 +116,7 @@ class Command(BaseCommand):
                     bad_data = False
                     for i in ('weeknum', 'state_num', 'lga_num', 'siteid'):
                         if getattr(program_in_db, i) < 0:
-                            bad_data = '%s field is inferior to zero, skip' % i
+                            bad_data = '        %s less than zero, skip' % i
                             break
 
                     if bad_data:
@@ -106,19 +124,19 @@ class Command(BaseCommand):
                         continue
 
                     if program_in_db.weeknum > 53:
-                        print 'weeknum is superior than 53 (%s), skip' % (program_in_db.weeknum)
+                        print '     WEEKNUM > 53 (%s), skip' % (program_in_db.weeknum)
                         continue
 
                     if program_in_db.state_num >= 37:
-                        print 'state_num is superior/egal than 37 (%s), skip' % (program_in_db.state_num)
+                        print '     STATE id error (%s), skip' % (program_in_db.state_num)
                         continue
 
                     if 101 >= program_in_db.lga_num >= 3799:
-                        print 'lga_num is superior/egal than 3799 or inferior/egal than 101 (%s), skip' % (program_in_db.lga_num)
+                        print '     LGA id error (%s), skip' % (program_in_db.lga_num)
                         continue
 
                     if 101110001 >= program_in_db.siteid >= 3799990999:
-                        print 'siteid is superior/egal than 3799990999 or inferior/egal than 101110001 (%s), skip' % (program_in_db.siteid)
+                        print '     SITEID error (%s), skip' % (program_in_db.siteid)
                         continue
 
                     # # Introducing Year for X axis
@@ -143,20 +161,18 @@ class Command(BaseCommand):
                     # Select Dataframe is includes data from WN22 2016 to 2017+
                     # and remove future reporting - recent data cannot surpass current WN and current year.
                     if program_in_db.year == 2016 and program_in_db.weeknum < 22:
-                        print 'This data is before the beginning of the program skip it (%s %s)' % (program_in_db.year, program_in_db.weeknum)
+                        print '     Training data - (%s %s)' % (program_in_db.year, program_in_db.weeknum)
                         continue
 
                     if program_in_db.year > today_year:
-                        print 'data is from a futur year (%s), skip it' % (program_in_db.year)
+                        print '     Future reporting year (%s)' % (program_in_db.year)
                         continue
 
                     if program_in_db.year == today_year and program_in_db.weeknum > today_weeknum:
-                        print 'data is from a futur week (%s) (current : %s), skip it' % (program_in_db.weeknum, today_weeknum)
+                        print '     Future reporting weeknum current week (%s) (current : %s)' % (program_in_db.weeknum, today_weeknum)
                         continue
 
                     # double check if the week number below is ISO standard
-                    # I don't know the reference for week below, but appears to be ISO week
-
                     rep_weeknum = program_in_db.last_seen.isocalendar()[1]
 
                     # Delete all future reporting -before 10 AM on the first day of the report week.
@@ -164,7 +180,7 @@ class Command(BaseCommand):
                     last_seen_hour = program_in_db.last_seen.hour
 
                     if last_seen_dotw == 1 and last_seen_hour < 10 and rep_weeknum == program_in_db.weeknum:
-                        print 'program is too early on monday morning and is for the current week (%s), skip it' % (program_in_db.last_seen)
+                        print '     Monday AM reporting (%s), skip it' % (program_in_db.last_seen)
                         continue
 
                     rep_year_wn = program_in_db.last_seen.isocalendar()
@@ -175,7 +191,7 @@ class Command(BaseCommand):
 
                     # remove reports for 8 weeks prior to report date
                     if program_in_db.iso_diff < -8:
-                        print('remove reports for 8 weeks prior to report date (iso diff: %s, last_seen: %s, last_seen_weeknum: %s, weeknum: %s, year: %s), skip it' % (
+                        print('     ISO DIFF: %s, last_seen: %s, last_seen_weeknum: %s, weeknum: %s, year: %s)' % (
                             program_in_db.iso_diff, program_in_db.last_seen, last_seen_weeknum, program_in_db.weeknum, program_in_db.year,
                         ))
                         continue
@@ -208,7 +224,8 @@ class Command(BaseCommand):
 
                     program_in_db.save()
 
-                    # if there is an older report for the sane week by the same siteid for the same type, remove this old report
+                    # Drop duplicates
+                    # if there is a duplicate for the same (siteid, type, weeknum, year) remove older report
                     for oldest_program_report in Program.objects.filter(
                         siteid=contact.siteid,
                         year=program_in_db.year,

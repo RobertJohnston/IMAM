@@ -24,12 +24,22 @@ class Command(BaseCommand):
                     contact_in_db = Registration()
                     contact_in_db.contact_uuid = UUID(contact.uuid)
 
+                # if there is no siteid of contact then skip to next contact in contact_batch
                 if not contact.fields['siteid']:
                     continue
 
                 contact_in_db.urn = contact.urns[0]
                 contact_in_db.name = contact.name
-                contact_in_db.siteid = contact.fields['siteid']
+
+                # CHECK TYPE OF VARIABLE siteid HERE.
+                # if there are letters in siteid
+                try:
+                    value = int(contact.fields['siteid'])
+                    # contact.fields['siteid'].isalnum ?
+                except ValueError:
+                    strip_siteid = filter(lambda x: x.isdigit(), contact.fields['siteid'])
+                    contact_in_db.siteid = strip_siteid
+
                 contact_in_db.type = contact.fields['type']
                 # First Seen
                 contact_in_db.first_seen = contact.created_on
