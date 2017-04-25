@@ -25,6 +25,8 @@ class Registration(models.Model):
     last_seen =  models.DateTimeField()
     post = models.CharField(max_length=30)
     mail = models.EmailField(null=True, blank=True)
+    # add OPENING DATE variable
+    # add CLOSING DATE variable
 
     class Meta:
         db_table = 'registration'

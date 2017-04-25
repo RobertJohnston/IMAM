@@ -32,7 +32,7 @@ class Command(BaseCommand):
                 contact_in_db.name = contact.name
 
                 # CHECK TYPE OF VARIABLE siteid HERE.
-                # if there are letters in siteid
+                # if siteid is a string, remove all letters from the string - in hopes to have only siteid numbers
                 try:
                     value = int(contact.fields['siteid'])
                     # contact.fields['siteid'].isalnum ?
