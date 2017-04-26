@@ -12,6 +12,9 @@ from uuid import UUID
 # import_program.py
 # to run python manage.py import_program
 # imports program data from RapidPro API, cleans data and saves to Postgres
+
+# FIXME change data entry to accept all data
+# create variable valid (true/false)
 # Data errors such as strings instead of integers are not available
 # Other data entry mistakes such as aberrant values are still visible.
 
@@ -36,7 +39,7 @@ class Command(BaseCommand):
                 # to interpret this you have to loop over the content
                 for program in program_batch:
                     if 'confirm' not in program.values or program.values['confirm'].category != 'Yes':
-                        print '     Unconfirmed Entry'
+                        print '     Confirm Error - is not yes'
                         continue
 
                     # if id of program exists then update the row
@@ -238,10 +241,4 @@ class Command(BaseCommand):
                     print(a)
 
 
-
-
-# missing amar_i and all other inpatients variables
-
-# Import all data as strings and then clean
-
-# Drop the contacts with siteid = NULL or NaN
+# Ensure that amar_i and all other inpatients variables are included
