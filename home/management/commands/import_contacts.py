@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from temba_client.v2 import TembaClient
 from home.models import Registration
 
@@ -15,52 +16,56 @@ class Command(BaseCommand):
 
         a = 0
         for contact_batch in client.get_contacts(group='Nut Personnel').iterfetches(retry_on_rate_exceed=True):
-            for contact in contact_batch:
-                # Update contact
-                if Registration.objects.filter(contact_uuid=UUID(contact.uuid)).exists():
-                    contact_in_db = Registration.objects.get(contact_uuid=UUID(contact.uuid))
-                # Create new contact
-                else:
-                    contact_in_db = Registration()
-                    contact_in_db.contact_uuid = UUID(contact.uuid)
+            with transaction.atomic():
+                for contact in contact_batch:
+                    # Optimization tool - transaction.atomic -is turned on
 
-                # if there is no siteid of contact then skip to next contact in contact_batch
-                if not contact.fields['siteid']:
-                    continue
+                    # Update contact
+                    if Registration.objects.filter(contact_uuid=UUID(contact.uuid)).exists():
+                        contact_in_db = Registration.objects.get(contact_uuid=UUID(contact.uuid))
+                    # Create new contact
+                    else:
+                        contact_in_db = Registration()
+                        contact_in_db.contact_uuid = UUID(contact.uuid)
 
-                contact_in_db.urn = contact.urns[0]
-                contact_in_db.name = contact.name
+                    # if there is no siteid of contact then skip to next contact in contact_batch
+                    if not contact.fields['siteid']:
+                        print "No siteid for %s, skip" % contact.name
+                        continue
 
-                # CHECK TYPE OF VARIABLE siteid HERE.
-                # if siteid is a string, remove all letters from the string - in hopes to have only siteid numbers
-                try:
-                    value = int(contact.fields['siteid'])
-                    # contact.fields['siteid'].isalnum ?
-                except ValueError:
-                    strip_siteid = filter(lambda x: x.isdigit(), contact.fields['siteid'])
-                    contact_in_db.siteid = strip_siteid
+                    contact_in_db.urn = contact.urns[0]
+                    contact_in_db.name = contact.name
 
-                contact_in_db.type = contact.fields['type']
-                # First Seen
-                contact_in_db.first_seen = contact.created_on
-                # Last Seen
-                contact_in_db.last_seen = contact.modified_on
-                contact_in_db.post = contact.fields['post']
+                    # CHECK TYPE OF VARIABLE siteid HERE.
+                    # if siteid is a string, remove all letters from the string - in hopes to have only siteid numbers
+                    try:
+                        contact_in_db.siteid = int(contact.fields['siteid'])
+                        # contact.fields['siteid'].isalnum ?
+                    except ValueError:
+                        strip_siteid = filter(lambda x: x.isdigit(), contact.fields['siteid'])
+                        contact_in_db.siteid = strip_siteid
 
-                if not contact.fields['mail'] or '@' not in contact.fields["mail"]:
-                    mail = None
-                else:
-                    mail = contact.fields["mail"].lower().rstrip('.').replace(' ', '').replace(',', '.')
+                    contact_in_db.type = contact.fields['type']
+                    # First Seen
+                    contact_in_db.first_seen = contact.created_on
+                    # Last Seen
+                    contact_in_db.last_seen = contact.modified_on
+                    contact_in_db.post = contact.fields['post']
 
-                    if mail.endswith('.con'):
-                        mail = mail[:-1] + 'm'
+                    if not contact.fields['mail'] or '@' not in contact.fields["mail"]:
+                        mail = None
+                    else:
+                        mail = contact.fields["mail"].lower().rstrip('.').replace(' ', '').replace(',', '.')
 
-                contact_in_db.mail = mail
+                        if mail.endswith('.con'):
+                            mail = mail[:-1] + 'm'
 
-                contact_in_db.save()
+                    contact_in_db.mail = mail
 
-                a += 1
-                print(a)
+                    contact_in_db.save()
+
+                    a += 1
+                    print(a)
 
 # SiteID is forced above to be INT
 # There will be many errors in SiteID.

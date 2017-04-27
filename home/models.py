@@ -86,21 +86,23 @@ class Program(models.Model):
 class Stock(models.Model):
     index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
-    # problem to add phone number field to tools
-    # urn = models.PhoneNumberField()
     urn = models.IntegerField(primary_key=True)
     name =   models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
+
+    # if supervisor enters the data then don't forget to take data
     # if supervisor enters the data than take SiteID from StoSiteID
     siteid = models.IntegerField()
+    # if supervisor enters the data then take Type from stoType
+    type = models.CharField(max_length=20)
+
     first_seen = models.DateTimeField()
     last_seen =  models.DateTimeField()
-    # if supervisor enters the data then don't forget to take data
+
     # level (first, second, site)
     level = models.CharField(max_length=20)
     weeknum = models.IntegerField()
-    # if supervisor enters the data then take Type from stoType
-    type = models.CharField(max_length=20)
+
     rutf_in = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_used_carton = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_used_sachet = models.DecimalField(max_digits=7, decimal_places=2,)

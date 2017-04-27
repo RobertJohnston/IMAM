@@ -45,7 +45,6 @@ class Command(BaseCommand):
         try:
             df2.to_sql('registration', engine, schema='public', if_exists='replace')
 
-            # Error with null values in URN col
             with engine.connect() as con:
                 con.execute('ALTER TABLE registration ADD PRIMARY KEY (contact_uuid);')
                 # add time zones with same code

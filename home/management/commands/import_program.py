@@ -33,7 +33,7 @@ class Command(BaseCommand):
         for program_batch in client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4').iterfetches(retry_on_rate_exceed=True):
 
             # with transaction.atomic():
-            # Optimization tool - transaction.atomic -is turned off here as it hides errors.
+            # Optimization tool - transaction.atomic -is turned off above as it hides errors.
 
                 # the API response is a list in a list
                 # to interpret this you have to loop over the content
@@ -50,6 +50,10 @@ class Command(BaseCommand):
                     else:
                         program_in_db = Program()
                         program_in_db.id = program.id
+
+                    if program.contact.uuid not in contact_cache:
+                        print">>>>> No Contact UUID in database %s" % program.contact.uuid
+                        continue
 
                     contact = contact_cache[program.contact.uuid]
                     program_in_db.contact_uuid = program.contact.uuid
