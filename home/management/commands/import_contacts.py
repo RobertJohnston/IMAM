@@ -38,6 +38,11 @@ class Command(BaseCommand):
 
                     # CHECK TYPE OF VARIABLE siteid HERE.
                     # if siteid is a string, remove all letters from the string - in hopes to have only siteid numbers
+
+                    # Code below removes all text characters from siteid
+                    # this works well for examples such as siteid = 821110001 OTP"
+                    # it does not work for siteid = 82111ooo1" - these contact entries are dropped.
+
                     try:
                         contact_in_db.siteid = int(contact.fields['siteid'])
                         # contact.fields['siteid'].isalnum ?

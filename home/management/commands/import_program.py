@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 # to interpret this you have to loop over the content
                 for program in program_batch:
                     if 'confirm' not in program.values or program.values['confirm'].category != 'Yes':
-                        print '     Confirm Error - is not yes'
+                        print '     Not CONFIRMED'
                         continue
 
                     # if id of program exists then update the row
@@ -52,7 +52,8 @@ class Command(BaseCommand):
                         program_in_db.id = program.id
 
                     if program.contact.uuid not in contact_cache:
-                        print">>>>> No Contact UUID in database %s" % program.contact.uuid
+                        print"      No Contact UUID in database %s" % program.contact.uuid
+                        # continue causes the import to skip this entry
                         continue
 
                     contact = contact_cache[program.contact.uuid]
@@ -63,10 +64,13 @@ class Command(BaseCommand):
                     program_in_db.first_seen = program.created_on
                     program_in_db.last_seen = program.modified_on
 
-                    # If report comes from supervisor, SiteID is entered by supervisor
+                    # If report comes from supervisor, siteid (prosite) and site type (protype) is entered by supervisor
                     # and not taken directly from contacts data of reporter.
-                    if 'siteid' in program.values:
-                        program_in_db.siteid = program.values['prosite'].category
+                    # FIXME
+                    # DOUBLE CHECK with Laurent
+                    # program.values['prosite'].value not program.values['prosite'].category
+                    if 'prosite' in program.values:
+                        program_in_db.siteid = program.values['prosite'].value
                     else:
                         program_in_db.siteid = contact.siteid
 
@@ -85,14 +89,22 @@ class Command(BaseCommand):
                         site_type = "OTP"
                         program_in_db.beg = program.values['beg_o'].value
                         program_in_db.amar = program.values['amar_o'].value
-                        program_in_db.tin = program.values['tin_o'].value
+
+                        # program_in_db.tin = program.values['tin_o'].value
+                        # one import from June 2016 where tin_o has KeyError
+                        if 'tin_o' in program.values:
+                            program_in_db.tin = program.values['tin_o'].value
+                        else:
+                            program_in_db.tin = 0
+                            print"      tin_o KeyError - RapidPro error from %s" % program_in_db.last_seen
+
                         program_in_db.dcur = program.values['dcur_o'].value
                         program_in_db.dead = program.values['dead_o'].value
                         program_in_db.defu = program.values['defu_o'].value
                         program_in_db.dmed = program.values['dmed_o'].value
                         program_in_db.tout = program.values['tout_o'].value
 
-                        # Beware if data are entered by supervision staff, then we need to replace siteid = prositeid
+
 
                     elif site_type == "SC":
                         program_in_db.beg = program.values['beg_i'].value
@@ -108,7 +120,6 @@ class Command(BaseCommand):
                         raise Exception()
 
                     program_in_db.type = site_type
-
                     program_in_db.confirm = program.values['confirm'].category
 
                     if len(str(contact.siteid)) == 9:
@@ -119,6 +130,7 @@ class Command(BaseCommand):
                         program_in_db.lga_num = int(str(contact.siteid)[:4])
 
                     # FIXME filter siteid data
+                    #  SiteID can be zero for national level registration
 
                     bad_data = False
                     for i in ('weeknum', 'state_num', 'lga_num', 'siteid'):
@@ -130,6 +142,7 @@ class Command(BaseCommand):
                         print bad_data
                         continue
 
+                    # FIXME - Add weeknum here
                     if program_in_db.weeknum > 53:
                         print '     WEEKNUM > 53 (%s), skip' % (program_in_db.weeknum)
                         continue
