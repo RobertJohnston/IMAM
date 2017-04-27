@@ -85,9 +85,10 @@ class Command(BaseCommand):
                     program_in_db.role = program.values['role'].value
                     # age_group = models.TextField(blank=True, null=True)
 
+                    # in theory, if we take the category of type or protype, then only 2 answers should be OTP or SC
                     if site_type in ("OTP", "OPT", "O"):
                         site_type = "OTP"
-                        program_in_db.beg = program.values['beg_o'].value
+                        program_in_db.beg =  program.values['beg_o'].value
                         program_in_db.amar = program.values['amar_o'].value
 
                         # program_in_db.tin = program.values['tin_o'].value
@@ -105,11 +106,10 @@ class Command(BaseCommand):
                         program_in_db.tout = program.values['tout_o'].value
 
 
-
                     elif site_type == "SC":
-                        program_in_db.beg = program.values['beg_i'].value
+                        program_in_db.beg =  program.values['beg_i'].value
                         program_in_db.amar = program.values['amar_i'].value
-                        program_in_db.tin = program.values['tin_i'].value
+                        program_in_db.tin =  program.values['tin_i'].value
                         program_in_db.dcur = program.values['dcur_i'].value
                         program_in_db.dead = program.values['dead_i'].value
                         program_in_db.defu = program.values['defu_i'].value
@@ -130,10 +130,11 @@ class Command(BaseCommand):
                         program_in_db.lga_num = int(str(contact.siteid)[:4])
 
                     # FIXME filter siteid data
-                    #  SiteID can be zero for national level registration
+                    # What is needed here ?
+                    # SiteID can be zero for national level registration
 
                     bad_data = False
-                    for i in ('weeknum', 'state_num', 'lga_num', 'siteid'):
+                    for i in ('state_num', 'lga_num', 'siteid'):
                         if getattr(program_in_db, i) < 0:
                             bad_data = '        %s less than zero, skip' % i
                             break
@@ -142,9 +143,9 @@ class Command(BaseCommand):
                         print bad_data
                         continue
 
-                    # FIXME - Add weeknum here
-                    if program_in_db.weeknum > 53:
-                        print '     WEEKNUM > 53 (%s), skip' % (program_in_db.weeknum)
+                    # Double check
+                    if program_in_db.weeknum < 1 or program_in_db.weeknum > 53:
+                        print '     WEEKNUM < 1 or > 53 (%s), skip' % (program_in_db.weeknum)
                         continue
 
                     if program_in_db.state_num >= 37:
@@ -161,46 +162,38 @@ class Command(BaseCommand):
 
                     # # Introducing Year for X axis
                     program_in_db.year = program_in_db.last_seen.isocalendar()[0]
-
-                    # If report was for WN in last year but report data is this year, subtract one year from dataframe.year.
-                    # double check if the week number below is ISO standard
                     last_seen_weeknum = program_in_db.last_seen.isocalendar()[1]
 
+                    # If report was for weeknum in last year but report data is this year, subtract one year from dataframe.year.
                     # this double conditional identifies the year correctly in the majority of cases
                     # except for reports with weeknum <=44 and more than 8 weeks in past
                     if program_in_db.weeknum > 44 and last_seen_weeknum < program_in_db.weeknum:
                         program_in_db.year -= 1
 
-                    # Try loc to identify variable recoding
-                    # df.loc[:, ['B', 'A']] = df[['A', 'B']].values
-                    # first input in loc is row, second is column
-
                     today_year = date.today().year
                     today_weeknum = date.today().isocalendar()[1]
+                    rep_weeknum = program_in_db.last_seen.isocalendar()[1]
 
-                    # Select Dataframe is includes data from WN22 2016 to 2017+
-                    # and remove future reporting - recent data cannot surpass current WN and current year.
+                    # Program reporting with RapidPro started in June 2016 (week 22)
                     if program_in_db.year == 2016 and program_in_db.weeknum < 22:
                         print '     Training data - (%s %s)' % (program_in_db.year, program_in_db.weeknum)
                         continue
-
+                    # Remove future reporting - recent data cannot surpass current year.
                     if program_in_db.year > today_year:
-                        print '     Future reporting year (%s)' % (program_in_db.year)
+                        print '     Future reporting YEAR (%s)' % (program_in_db.year)
+                        continue
+                    # Remove future reporting - recent data cannot surpass current WN and current year.
+                    # Double check this should compare to rep_weeknum and not today_weeknum
+                    if program_in_db.year == today_year and program_in_db.weeknum > rep_weeknum :
+                        print '     Future reporting WEEKNUM (%s) current weeknum (%s)' % (program_in_db.weeknum, rep_weeknum)
                         continue
 
-                    if program_in_db.year == today_year and program_in_db.weeknum > today_weeknum:
-                        print '     Future reporting weeknum current week (%s) (current : %s)' % (program_in_db.weeknum, today_weeknum)
-                        continue
-
-                    # double check if the week number below is ISO standard
-                    rep_weeknum = program_in_db.last_seen.isocalendar()[1]
-
-                    # Delete all future reporting -before 10 AM on the first day of the report week.
+                    # Delete all future reporting -before 12 PM on the first day of the report week.
                     last_seen_dotw = program_in_db.last_seen.isocalendar()[2]
                     last_seen_hour = program_in_db.last_seen.hour
 
-                    if last_seen_dotw == 1 and last_seen_hour < 10 and rep_weeknum == program_in_db.weeknum:
-                        print '     Monday AM reporting (%s), skip it' % (program_in_db.last_seen)
+                    if last_seen_dotw == 1 and last_seen_hour < 12 and rep_weeknum == program_in_db.weeknum:
+                        print '     Monday AM reporting (%s)' % (program_in_db.last_seen.strftime("%d-%m-%Y %H:%M:%S"))
                         continue
 
                     rep_year_wn = program_in_db.last_seen.isocalendar()
@@ -212,7 +205,8 @@ class Command(BaseCommand):
                     # remove reports for 8 weeks prior to report date
                     if program_in_db.iso_diff < -8:
                         print('     ISO DIFF: %s, last_seen: %s, last_seen_weeknum: %s, weeknum: %s, year: %s)' % (
-                            program_in_db.iso_diff, program_in_db.last_seen, last_seen_weeknum, program_in_db.weeknum, program_in_db.year,
+                            program_in_db.iso_diff, program_in_db.last_seen.strftime("%d-%m-%Y"),
+                            last_seen_weeknum, int(program_in_db.weeknum), program_in_db.year,
                         ))
                         continue
 
@@ -221,14 +215,6 @@ class Command(BaseCommand):
 
                     # Report is X weeks before current week number
                     program_in_db.since_x_weeks = current_week - iso_year_weeknum
-
-                    # state_num = models.BigIntegerField(blank=True, null=True)
-                    # lga_num = models.BigIntegerField(blank=True, null=True)
-                    # year = models.BigIntegerField(blank=True, null=True)
-
-                    # iso_year_weeknum = models.TextField(blank=True, null=True)
-                    # iso_diff = models.BigIntegerField(blank=True, null=True)
-                    # since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
                     # TODO delete those columns
                     # last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
@@ -241,6 +227,8 @@ class Command(BaseCommand):
 
                     if program_in_db.type == "OTP":
                         program_in_db.age_group = "6-59m"
+                    elif program_in_db.type == "SC":
+                        program_in_db.age_group = program.values['age_group'].category
 
                     program_in_db.save()
 
@@ -252,7 +240,8 @@ class Command(BaseCommand):
                         weeknum=program_in_db.weeknum,
                         type=program_in_db.type).order_by('-last_seen')[1:]:
 
-                        print oldest_program_report.delete()
+                        print "     Drop Duplicate"
+                        # print oldest_program_report.delete()
 
                     a += 1
                     print(a)
