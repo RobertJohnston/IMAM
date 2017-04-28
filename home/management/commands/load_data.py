@@ -115,6 +115,17 @@ def assign_state_lga_num(dataframe):
     # Conditional - Numpy - if site id < 10 digits then take first 1 for state or 3 for LGA
     dataframe['state_num'] = np.where(dataframe['siteid_lgt']==9, dataframe['siteid'].astype(str).str[:1], dataframe['state_num'])
     dataframe['lga_num'] = np.where(dataframe['siteid_lgt']==9, dataframe['siteid'].astype(str).str[:3], dataframe['lga_num'])
+
+    # LGA - Numpy - if site id =3  then first 1 for state or 3 for LGA
+    dataframe['state_num'] = np.where(dataframe['siteid_lgt']==3, dataframe['siteid'].astype(str).str[:1], dataframe['state_num'])
+    dataframe['lga_num'] = np.where(dataframe['siteid_lgt']==3, dataframe['siteid'].astype(str).str[:3], dataframe['lga_num'])
+
+    # STATE - Numpy - if site id <=2 digits then take first 1 or 2 for state
+    dataframe['state_num'] = np.where(dataframe['siteid_lgt']==1, dataframe['siteid'], dataframe['state_num'])
+    dataframe['state_num'] = np.where(dataframe['siteid_lgt']==2, dataframe['siteid'], dataframe['state_num'])
+    # Set lga_num to NaN for state level
+    #Should make this to match what is in import_contacts.py
+
     return dataframe
 
 

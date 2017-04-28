@@ -85,7 +85,7 @@ class Command(BaseCommand):
                     program_in_db.role = program.values['role'].value
                     # age_group = models.TextField(blank=True, null=True)
 
-                    # in theory, if we take the category of type or protype, then only 2 answers should be OTP or SC
+                    # in theory, if we take the category of variable type or protype, then only 2 answers should be OTP or SC
                     if site_type in ("OTP", "OPT", "O"):
                         site_type = "OTP"
                         program_in_db.beg =  program.values['beg_o'].value
@@ -105,7 +105,6 @@ class Command(BaseCommand):
                         program_in_db.dmed = program.values['dmed_o'].value
                         program_in_db.tout = program.values['tout_o'].value
 
-
                     elif site_type == "SC":
                         program_in_db.beg =  program.values['beg_i'].value
                         program_in_db.amar = program.values['amar_i'].value
@@ -115,19 +114,27 @@ class Command(BaseCommand):
                         program_in_db.defu = program.values['defu_i'].value
                         program_in_db.dmed = program.values['dmed_i'].value
                         program_in_db.tout = program.values['tout_i'].value
-
                     else:
                         raise Exception()
 
                     program_in_db.type = site_type
                     program_in_db.confirm = program.values['confirm'].category
 
-                    if len(str(contact.siteid)) == 9:
+                    # Create state_num and LGA_num
+                    # Implementation and LGA level
+                    if len(str(contact.siteid)) == 9 or len(str(contact.siteid)) == 3:
                         program_in_db.state_num = int(str(contact.siteid)[:1])
                         program_in_db.lga_num = int(str(contact.siteid)[:3])
-                    else:
+                    elif len(str(contact.siteid)) == 10 or len(str(contact.siteid)) == 4:
                         program_in_db.state_num = int(str(contact.siteid)[:2])
                         program_in_db.lga_num = int(str(contact.siteid)[:4])
+                    # State level
+                    elif len(str(contact.siteid)) == 1 or len(str(contact.siteid)) == 2:
+                    program_in_db.state_num = int(contact.siteid))
+                    program_in_db.lga_num = None
+                    else:
+                        raise Exception()
+
 
                     # FIXME filter siteid data
                     # What is needed here ?
@@ -228,6 +235,7 @@ class Command(BaseCommand):
                     if program_in_db.type == "OTP":
                         program_in_db.age_group = "6-59m"
                     elif program_in_db.type == "SC":
+                        # TODO double check - age_group category
                         program_in_db.age_group = program.values['age_group'].category
 
                     program_in_db.save()
