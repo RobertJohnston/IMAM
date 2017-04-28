@@ -4,10 +4,6 @@ from django.http import HttpResponse
 from django.conf import settings
 import pandas as pd
 
-import time
-import numpy as np
-from isoweek import Week
-
 from datetime import date, timedelta
 from sqlalchemy import create_engine
 # We can replace sqlalchemy for django at some point.
