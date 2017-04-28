@@ -107,6 +107,9 @@ def add_stock_reports_from_supervision(stock_df):
 
 
 def assign_state_lga_num(dataframe):
+    # Tried to replace code below to match the assign lga_num and state_num in import contacts.
+    # Inplace modification works below with Numpy / Pandas because working on vectorized data.
+    # Inplace modification using python code does not work without a loop over each value in the series / df.
     # Set siteid to str to measure length  - only works with strings
     dataframe['siteid_lgt'] = dataframe['siteid'].astype(str).str.len()
     dataframe['state_num'] = dataframe['siteid'].astype(str).str[:2]
@@ -122,7 +125,9 @@ def assign_state_lga_num(dataframe):
 
     # STATE - Numpy - if site id <=2 digits then take first 1 or 2 for state
     dataframe['state_num'] = np.where(dataframe['siteid_lgt']==1, dataframe['siteid'], dataframe['state_num'])
+    dataframe['lga_num'] = np.where(dataframe['siteid_lgt'] == 1, None, dataframe['lga_num'])
     dataframe['state_num'] = np.where(dataframe['siteid_lgt']==2, dataframe['siteid'], dataframe['state_num'])
+    dataframe['lga_num'] = np.where(dataframe['siteid_lgt'] == 2, None, dataframe['lga_num'])
     # Set lga_num to NaN for state level
     #Should make this to match what is in import_contacts.py
 
