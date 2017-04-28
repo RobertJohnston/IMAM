@@ -37,7 +37,7 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     else:
         df_queried = df_filtered.query('%s==%s' % (kind, num))
 
-    report_rate = df_queried.query('since_x_weeks<=8').groupby(df_queried['siteid'])[
+    report_rate = df_queried.query('since_x_weeks>0').query('since_x_weeks<=8').groupby(df_queried['siteid'])[
         'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
 
     if kind == 'siteid':

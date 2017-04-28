@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 # to interpret this you have to loop over the content
                 for program in program_batch:
                     if 'confirm' not in program.values or program.values['confirm'].category != 'Yes':
-                        print '     Not CONFIRMED'
+                        print('     Not CONFIRMED')
                         continue
 
                     # if id of program exists then update the row
@@ -52,7 +52,7 @@ class Command(BaseCommand):
                         program_in_db.id = program.id
 
                     if program.contact.uuid not in contact_cache:
-                        print"      No Contact UUID in database %s" % program.contact.uuid
+                        print("      No Contact UUID in database %s" % program.contact.uuid)
                         # continue causes the import to skip this entry
                         continue
 
@@ -66,9 +66,6 @@ class Command(BaseCommand):
 
                     # If report comes from supervisor, siteid (prosite) and site type (protype) is entered by supervisor
                     # and not taken directly from contacts data of reporter.
-                    # FIXME
-                    # DOUBLE CHECK with Laurent
-                    # program.values['prosite'].value not program.values['prosite'].category
                     if 'prosite' in program.values:
                         program_in_db.siteid = program.values['prosite'].value
                     else:
@@ -86,8 +83,7 @@ class Command(BaseCommand):
                     # age_group = models.TextField(blank=True, null=True)
 
                     # in theory, if we take the category of variable type or protype, then only 2 answers should be OTP or SC
-                    if site_type in ("OTP", "OPT", "O"):
-                        site_type = "OTP"
+                    if site_type == "OTP":
                         program_in_db.beg =  program.values['beg_o'].value
                         program_in_db.amar = program.values['amar_o'].value
 
@@ -97,7 +93,7 @@ class Command(BaseCommand):
                             program_in_db.tin = program.values['tin_o'].value
                         else:
                             program_in_db.tin = 0
-                            print"      tin_o KeyError - RapidPro error from %s" % program_in_db.last_seen
+                            print("      tin_o KeyError - RapidPro error from %s" % program_in_db.last_seen)
 
                         program_in_db.dcur = program.values['dcur_o'].value
                         program_in_db.dead = program.values['dead_o'].value
@@ -130,8 +126,8 @@ class Command(BaseCommand):
                         program_in_db.lga_num = int(str(contact.siteid)[:4])
                     # State level
                     elif len(str(contact.siteid)) == 1 or len(str(contact.siteid)) == 2:
-                    program_in_db.state_num = int(contact.siteid))
-                    program_in_db.lga_num = None
+                        program_in_db.state_num = int(contact.siteid)
+                        program_in_db.lga_num = None
                     else:
                         raise Exception()
 
@@ -147,24 +143,24 @@ class Command(BaseCommand):
                             break
 
                     if bad_data:
-                        print bad_data
+                        print (bad_data)
                         continue
 
                     # Double check
                     if program_in_db.weeknum < 1 or program_in_db.weeknum > 53:
-                        print '     WEEKNUM < 1 or > 53 (%s), skip' % (program_in_db.weeknum)
+                        print('     WEEKNUM < 1 or > 53 (%s), skip' % (program_in_db.weeknum))
                         continue
 
                     if program_in_db.state_num >= 37:
-                        print '     STATE id error (%s), skip' % (program_in_db.state_num)
+                        print('     STATE id error (%s), skip' % (program_in_db.state_num))
                         continue
 
-                    if 101 >= program_in_db.lga_num >= 3799:
-                        print '     LGA id error (%s), skip' % (program_in_db.lga_num)
+                    if  101 >= program_in_db.lga_num or program_in_db.lga_num >= 3799:
+                        print('     LGA id error (%s), skip' % (program_in_db.lga_num))
                         continue
 
-                    if 101110001 >= program_in_db.siteid >= 3799990999:
-                        print '     SITEID error (%s), skip' % (program_in_db.siteid)
+                    if 0 >= program_in_db.siteid or program_in_db.siteid >= 3799990999:
+                        print('     SITEID error (%s), skip' % (program_in_db.siteid))
                         continue
 
                     # # Introducing Year for X axis
@@ -183,16 +179,15 @@ class Command(BaseCommand):
 
                     # Program reporting with RapidPro started in June 2016 (week 22)
                     if program_in_db.year == 2016 and program_in_db.weeknum < 22:
-                        print '     Training data - (%s %s)' % (program_in_db.year, program_in_db.weeknum)
+                        print('     Training data - (%s %s)' % (program_in_db.year, program_in_db.weeknum))
                         continue
                     # Remove future reporting - recent data cannot surpass current year.
                     if program_in_db.year > today_year:
-                        print '     Future reporting YEAR (%s)' % (program_in_db.year)
+                        print('     Future reporting YEAR (%s)' % (program_in_db.year))
                         continue
-                    # Remove future reporting - recent data cannot surpass current WN and current year.
-                    # Double check this should compare to rep_weeknum and not today_weeknum
+                    # Remove future reporting - program data cannot surpass report WN and current year.
                     if program_in_db.year == today_year and program_in_db.weeknum > rep_weeknum :
-                        print '     Future reporting WEEKNUM (%s) current weeknum (%s)' % (program_in_db.weeknum, rep_weeknum)
+                        print('     Future reporting WEEKNUM (%s) current weeknum (%s)' % (program_in_db.weeknum, rep_weeknum))
                         continue
 
                     # Delete all future reporting -before 12 PM on the first day of the report week.
@@ -200,7 +195,7 @@ class Command(BaseCommand):
                     last_seen_hour = program_in_db.last_seen.hour
 
                     if last_seen_dotw == 1 and last_seen_hour < 12 and rep_weeknum == program_in_db.weeknum:
-                        print '     Monday AM reporting (%s)' % (program_in_db.last_seen.strftime("%d-%m-%Y %H:%M:%S"))
+                        print('     Monday AM reporting (%s)' % (program_in_db.last_seen.strftime("%d-%m-%Y %H:%M:%S")))
                         continue
 
                     rep_year_wn = program_in_db.last_seen.isocalendar()
@@ -235,7 +230,6 @@ class Command(BaseCommand):
                     if program_in_db.type == "OTP":
                         program_in_db.age_group = "6-59m"
                     elif program_in_db.type == "SC":
-                        # TODO double check - age_group category
                         program_in_db.age_group = program.values['age_group'].category
 
                     program_in_db.save()
@@ -248,7 +242,7 @@ class Command(BaseCommand):
                         weeknum=program_in_db.weeknum,
                         type=program_in_db.type).order_by('-last_seen')[1:]:
 
-                        print "     Drop Duplicate"
+                        print("     Drop Duplicate")
                         # print oldest_program_report.delete()
 
                     a += 1

@@ -20,6 +20,12 @@ class Command(BaseCommand):
                 for contact in contact_batch:
                     # Optimization tool - transaction.atomic -is turned on
 
+                    # we know that those contacts are broken because they don't have a valid siteid so we skip them
+                    if contact.uuid in ('2e3ab6f7-4bff-411d-9565-fc174a57a7de',
+                                        '980369db-7e03-41d0-8f73-3909fda60e6e',
+                                        '1112aee2-471a-4a20-8907-0bd25299e515'):
+                        continue
+
                     # Update contact
                     if Registration.objects.filter(contact_uuid=UUID(contact.uuid)).exists():
                         contact_in_db = Registration.objects.get(contact_uuid=UUID(contact.uuid))
@@ -30,7 +36,7 @@ class Command(BaseCommand):
 
                     # if there is no siteid of contact then skip to next contact in contact_batch
                     if not contact.fields['siteid']:
-                        print "No siteid for %s, skip" % contact.name
+                        print ("No siteid for %s, skip" % contact.name)
                         continue
 
                     contact_in_db.urn = contact.urns[0]
@@ -47,8 +53,8 @@ class Command(BaseCommand):
                         contact_in_db.siteid = int(contact.fields['siteid'])
                         # contact.fields['siteid'].isalnum ?
                     except ValueError:
-                        strip_siteid = filter(lambda x: x.isdigit(), contact.fields['siteid'])
-                        contact_in_db.siteid = strip_siteid
+                        strip_siteid = filter(lambda x: x.isdigit(), contact.fields['siteid'].replace('O', '0').replace('o', '0'))
+                        contact_in_db.siteid = int(strip_siteid)
 
                     contact_in_db.type = contact.fields['type']
                     # First Seen
@@ -66,6 +72,24 @@ class Command(BaseCommand):
                             mail = mail[:-1] + 'm'
 
                     contact_in_db.mail = mail
+
+                    # Create state_num and LGA_num
+                    # Implementation and LGA level
+                    if len(str(contact_in_db.siteid)) == 9 or len(str(contact_in_db.siteid)) == 3:
+                        contact_in_db.state_num = int(str(contact_in_db.siteid)[:1])
+                        contact_in_db.lga_num = int(str(contact_in_db.siteid)[:3])
+
+                    elif len(str(contact_in_db.siteid)) == 10 or len(str(contact_in_db.siteid)) == 4:
+                        contact_in_db.state_num = int(str(contact_in_db.siteid)[:2])
+                        contact_in_db.lga_num = int(str(contact_in_db.siteid)[:4])
+
+                    # State level
+                    elif len(str(contact_in_db.siteid)) == 1 or len(str(contact_in_db.siteid)) == 2:
+                        contact_in_db.state_num = int(contact_in_db.siteid)
+                        contact_in_db.lga_num = None
+
+                    else:
+                        raise Exception()
 
                     contact_in_db.save()
 

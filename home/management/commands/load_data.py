@@ -130,14 +130,13 @@ def assign_state_lga_num(dataframe):
 
 
     # Follow order for cleaning data for graph
-    #  - convert from string to float
+    #  - convert from string to float - removing any text from data entry
     #  - filter out incorrect data with query
     #  - convert from float to int
 
 
 def generic_cleaning(dataframe):
     # Drop unvalidated data - remember the pandas query has to be in a string.
-    # FIXME confirm column was not normalized, 'y', 'ye' and cases variations columns are dropped
     dataframe = dataframe.query('confirm=="Yes"')
 
     # Assign state and LGA numbers to data frame

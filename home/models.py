@@ -25,13 +25,13 @@ class Registration(models.Model):
     last_seen =  models.DateTimeField()
     post = models.CharField(max_length=30)
     mail = models.EmailField(null=True, blank=True)
-    # add OPENING DATE variable
-    # add CLOSING DATE variable
+    state_num = models.BigIntegerField(blank=True, null=True)
+    lga_num = models.BigIntegerField(blank=True, null=True)
 
     class Meta:
         db_table = 'registration'
         # if managed = False then will not rename following Django conventions
-        managed = False
+        # managed = False
 
     def __unicode__(self): # Python 3: def __str__(self):
         return "Registration {}".format(self.name)
@@ -191,6 +191,9 @@ class Site(models.Model):
     x_long = models.IntegerField(blank=True, null=True)
     y_lat = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+
+    # add OPENING DATE variable
+    # add CLOSING DATE variable
 
     class Meta:
         # This is reference of Django to Postgres
