@@ -1,7 +1,9 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from temba_client.v2 import TembaClient
-from home.models import Registration
+from home.models import Registration, LastUpdatedAPICall
 
 from uuid import UUID
 
@@ -14,8 +16,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         client = TembaClient('rapidpro.io', open('token').read().strip())
 
+        last_update_time = LastUpdatedAPICall.objects.filter(kind="contact").first()
+
+        if last_update_time:
+            clients_from_api = client.get_contacts(group='Nut Personnel', after=last_update_time.timestamp)
+        else:
+            clients_from_api = client.get_contacts(group='Nut Personnel')
+            last_update_time = LastUpdatedAPICall(kind="contact")
+
+        last_update_time.timestamp = datetime.now()
+
         a = 0
-        for contact_batch in client.get_contacts(group='Nut Personnel').iterfetches(retry_on_rate_exceed=True):
+        for contact_batch in clients_from_api.iterfetches(retry_on_rate_exceed=True):
             with transaction.atomic():
                 for contact in contact_batch:
                     # Optimization tool - transaction.atomic -is turned on
@@ -95,6 +107,8 @@ class Command(BaseCommand):
 
                     a += 1
                     print(a)
+
+        last_update_time.save()
 
 # SiteID is forced above to be INT
 # There will be many errors in SiteID.
