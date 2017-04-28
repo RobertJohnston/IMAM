@@ -1,11 +1,11 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from temba_client.v2 import TembaClient
 from isoweek import Week
-from home.models import Program, Registration
+from home.models import Program, Registration, LastUpdatedAPICall
 
 from uuid import UUID
 
@@ -27,12 +27,22 @@ class Command(BaseCommand):
 
         contact_cache = {x.contact_uuid: x for x in Registration.objects.all()}
 
+        last_update_time = LastUpdatedAPICall.objects.filter(kind="program").first()
+
+        if last_update_time:
+            clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4', after=last_update_time.timestamp)
+        else:
+            clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4')
+            last_update_time = LastUpdatedAPICall(kind="program")
+
+        last_update_time.timestamp = datetime.now()
+
         a = 0
         # rapidpro expects a uuid to identify flow instead of a flow name
         # The uuid is in the url of the flow : for example https://app.rapidpro.io/flow/editor/a9eed2f3-a92c-48dd-aa10-4f139b1171a4/
-        for program_batch in client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4').iterfetches(retry_on_rate_exceed=True):
+        for program_batch in clients_from_api.iterfetches(retry_on_rate_exceed=True):
 
-            # with transaction.atomic():
+            with transaction.atomic():
             # Optimization tool - transaction.atomic -is turned off above as it hides errors.
 
                 # the API response is a list in a list
@@ -51,11 +61,13 @@ class Command(BaseCommand):
                         program_in_db = Program()
                         program_in_db.id = program.id
 
-                    if program.contact.uuid not in contact_cache:
-                        print("      No Contact UUID in database %s" % program.contact.uuid)
-                        # continue causes the import to skip this entry
-                        continue
+                    # if program.contact.uuid not in contact_cache:
+                    #     print("      No Contact UUID in database %s" % program.contact.uuid)
+                    #     # continue causes the import to skip this entry
+                    #     # possible concurrency problem if someone registers during import_contacts and sends valid program data
+                    #     continue
 
+                    # Line below will cause import to crash if contact does not exist - one way to address concurrency problem.
                     contact = contact_cache[program.contact.uuid]
                     program_in_db.contact_uuid = program.contact.uuid
                     program_in_db.urn = contact.urn
@@ -243,10 +255,10 @@ class Command(BaseCommand):
                         type=program_in_db.type).order_by('-last_seen')[1:]:
 
                         print("     Drop Duplicate")
-                        # print oldest_program_report.delete()
+                        oldest_program_report.delete()
 
                     a += 1
                     print(a)
 
-
+        last_update_time.save()
 # Ensure that amar_i and all other inpatients variables are included
