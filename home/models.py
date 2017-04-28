@@ -8,6 +8,10 @@ from django.db import models
 
 # how do we load the raw data once and then start to use the api after ?
 
+class LastUpdatedAPICall(models.Model):
+    kind = models.CharField(max_length=255, unique=True)
+    timestamp = models.DateTimeField()
+
 
 # Registration
 class Registration(models.Model):
