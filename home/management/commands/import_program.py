@@ -49,7 +49,7 @@ class Command(BaseCommand):
                 # to interpret this you have to loop over the content
                 for program in program_batch:
                     if 'confirm' not in program.values or program.values['confirm'].category != 'Yes':
-                        print('     Not CONFIRMED')
+                        print('     Not CONFIRMED %s') % program.contact.name
                         continue
 
                     # if id of program exists then update the row
