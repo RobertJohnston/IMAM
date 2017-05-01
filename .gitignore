@@ -10,3 +10,9 @@ posts_by_type
 venv/
 ve/
 token
+
+# Changed name of notebook below.  Trying to stop tracking in github.
+IMAM Supervision.ipynb
+
+.ipynb_checkpoints/
+xlrd
