@@ -16,6 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         client = TembaClient('rapidpro.io', open('token').read().strip())
 
+        # Check in PostGreSQL database for last timestamp of API call
         last_update_time = LastUpdatedAPICall.objects.filter(kind="contact").first()
 
         if last_update_time:
@@ -28,9 +29,9 @@ class Command(BaseCommand):
 
         a = 0
         for contact_batch in clients_from_api.iterfetches(retry_on_rate_exceed=True):
+            # Optimization tool - transaction.atomic -is turned on
             with transaction.atomic():
                 for contact in contact_batch:
-                    # Optimization tool - transaction.atomic -is turned on
 
                     # we know that those contacts are broken because they don't have a valid siteid so we skip them
                     if contact.uuid in ('2e3ab6f7-4bff-411d-9565-fc174a57a7de',
@@ -59,11 +60,11 @@ class Command(BaseCommand):
 
                     # Code below removes all text characters from siteid
                     # this works well for examples such as siteid = 821110001 OTP"
-                    # it does not work for siteid = 82111ooo1" - these contact entries are dropped.
+                    # Replaces upper and lower case letter Os with zeros
 
                     try:
                         contact_in_db.siteid = int(contact.fields['siteid'])
-                        # contact.fields['siteid'].isalnum ?
+
                     except ValueError:
                         strip_siteid = filter(lambda x: x.isdigit(), contact.fields['siteid'].replace('O', '0').replace('o', '0'))
                         contact_in_db.siteid = int(strip_siteid)
@@ -75,11 +76,19 @@ class Command(BaseCommand):
                     contact_in_db.last_seen = contact.modified_on
                     contact_in_db.post = contact.fields['post']
 
+                    # This code was used for an error in RapidPro in Nov 2016 to correct presentation of post
+                    # it is no longer necessary.
+                    # if contact.fields['post'] == "S":
+                    #     contact_in_db.post ="STOCKS MANAGER"
+                    # if contact.fields['post'] == "D":
+                    #     contact_in_db.post = "DATABASE MANAGER"
+
                     if not contact.fields['mail'] or '@' not in contact.fields["mail"]:
                         mail = None
                     else:
                         mail = contact.fields["mail"].lower().rstrip('.').replace(' ', '').replace(',', '.')
 
+                        # Data cleaning for email addresses - Change .con to .com
                         if mail.endswith('.con'):
                             mail = mail[:-1] + 'm'
 
