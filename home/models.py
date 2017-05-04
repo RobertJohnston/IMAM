@@ -23,7 +23,7 @@ class Registration(models.Model):
     urn = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
-    siteid = models.IntegerField()
+    siteid = models.BigIntegerField()
     type = models.CharField(max_length=20)
     first_seen = models.DateTimeField(null=True, blank=True)
     last_seen =  models.DateTimeField()
@@ -95,7 +95,7 @@ class Stock(models.Model):
 
     # if supervisor enters the data then don't forget to take data
     # if supervisor enters the data than take SiteID from StoSiteID
-    siteid = models.IntegerField()
+    siteid = models.BigIntegerField()
     # if supervisor enters the data then take Type from stoType
     type = models.CharField(max_length=20)
 
@@ -133,7 +133,7 @@ class Lga(models.Model):
     urn = models.IntegerField()
     name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
-    siteid = models.IntegerField()
+    siteid = models.BigIntegerField()
     first_seen = models.DateTimeField('first seen')
     last_seen =  models.DateTimeField('last seen')
     weeknum = models.IntegerField()
