@@ -119,7 +119,6 @@ class Stock(models.Model):
 
     class Meta:
         db_table = 'stock'
-        managed = False
 
     def __unicode__(self):
         return "Stock {}".format(self.name)
@@ -148,7 +147,6 @@ class Lga(models.Model):
 
     class Meta:
         db_table = 'lga'
-        managed = False
 
     def __unicode__(self):
         return "Lga {}".format(self.name)
@@ -162,7 +160,6 @@ class First_admin(models.Model):
 
     class Meta:
         db_table = 'first_admin'
-        managed = False
 
     def __unicode__(self):
         return "First_admin {}".format(self.state)
@@ -177,7 +174,6 @@ class Second_admin(models.Model):
 
     class Meta:
         db_table = 'second_admin'
-        managed = False
 
     def __unicode__(self):
         return "Second_admin {}".format(self.lga)
@@ -201,8 +197,6 @@ class Site(models.Model):
     class Meta:
         # This is reference of Django to Postgres
         db_table = 'site'
-        # do not automatically update
-        managed = False
 
     def __unicode__(self):
         return "Site {}".format(self.sitename)
