@@ -89,7 +89,7 @@ class Program(models.Model):
 class Stock(models.Model):
     index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
-    urn = models.IntegerField(primary_key=True)
+    urn = models.IntegerField(unique=True)
     name =   models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
 
