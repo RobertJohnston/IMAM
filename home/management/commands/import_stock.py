@@ -34,17 +34,17 @@ class Command(BaseCommand):
                 # to interpret this you have to loop over the content
                 for stock in stock_batch:
                     if 'confirm' not in stock.values or stock.values['confirm'].category != 'Yes':
-                        print '     Unconfirmed Entry'
+                        print('     Unconfirmed Entry')
                         continue
 
                     # if id of stock exists then update the row
-                    if Stock.objects.filter(id=stock.id).exists():
-                        stock_in_db = Stock.objects.get(id=stock.id)
+                    if Stock.objects.filter(index=stock.id).exists():
+                        stock_in_db = Stock.objects.get(index=stock.id)
 
                     # if id of stock data doesn't exist then create a new row.
                     else:
                         stock_in_db = Stock()
-                        stock_in_db.id = stock.id
+                        stock_in_db.index = stock.id
 
                     contact = contact_cache[stock.contact.uuid]
                     stock_in_db.contact_uuid = stock.contact.uuid
@@ -54,15 +54,16 @@ class Command(BaseCommand):
                     stock_in_db.first_seen = stock.created_on
                     stock_in_db.last_seen =  stock.modified_on
 
-
                     stock_in_db.save()  # Drop duplicates
+
                     # if there is a duplicate for the same (siteid, type, weeknum, year) remove older report
                     for oldest_stock_report in Stock.objects.filter(
-                            siteid=contact.siteid,
-                            year=stock_in_db.year,
-                            weeknum=stock_in_db.weeknum,
-                            type=stock_in_db.type).order_by('-last_seen')[1:]:
-                        print
+                        siteid=contact.siteid,
+                        year=stock_in_db.year,
+                        weeknum=stock_in_db.weeknum,
+                        type=stock_in_db.type).order_by('-last_seen')[1:]:
+
+                        print ("     Drop Duplicate")
                         oldest_stock_report.delete()
             
                     a += 1
