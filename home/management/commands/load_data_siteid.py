@@ -7,7 +7,7 @@ from load_data import assign_state_lga_num
 
 # Site IDs data for the health care facilities for 12 northern Nigerian states
 
-# to run python manage.py load_data
+# to run "python manage.py load_data_siteid"
 
 class Command(BaseCommand):
     help = 'Loads sites data to SQL for IMAM website'
@@ -40,6 +40,10 @@ class Command(BaseCommand):
         columnsTitles = ['lga_num', 'lga', 'state_num']
         second_admin_df = df.reindex(columns=columnsTitles)
         second_admin_df = second_admin_df.drop_duplicates(['lga_num'], keep='first')
+        # instead of filtering out only the LGA sites, just deleting cases of lga_num == NaN which are only found in
+        # state level sites
+        from ipdb import set_trace; set_trace()
+        second_admin_df = second_admin_df.query('lga_num==lga_num')
         second_admin_df.lga_num = second_admin_df.lga_num.astype(int)
         second_admin_df = second_admin_df.sort_values(by='lga_num')
         second_admin_df.reset_index(drop=True)
