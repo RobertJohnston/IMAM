@@ -78,7 +78,6 @@ class Program(models.Model):
     since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'program'
         unique_together = (('urn', 'first_seen'),)
 
