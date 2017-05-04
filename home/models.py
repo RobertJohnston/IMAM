@@ -21,8 +21,8 @@ class Registration(models.Model):
     # Do not import URN as phone number field - leave in RapidPro format
     # urn = models.PhoneNumberField()
     urn = models.CharField(max_length=50, unique=True)
-    name = models.CharField(max_length=100)
-    groups = models.CharField(max_length=100, null=True, blank=True)
+    name = models.CharField(max_length=300)
+    groups = models.CharField(max_length=1000, null=True, blank=True)
     siteid = models.BigIntegerField()
     type = models.CharField(max_length=20, null=True, blank=True)
     first_seen = models.DateTimeField()
