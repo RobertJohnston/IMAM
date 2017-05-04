@@ -89,7 +89,7 @@ class Program(models.Model):
 class Stock(models.Model):
     index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
-    urn = models.IntegerField(unique=True)
+    urn = models.TextField()
     name =   models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
 
@@ -106,6 +106,8 @@ class Stock(models.Model):
     level = models.CharField(max_length=20)
     weeknum = models.IntegerField()
 
+    year = models.BigIntegerField(null=True)
+
     rutf_in = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_used_carton = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_used_sachet = models.DecimalField(max_digits=7, decimal_places=2,)
@@ -118,6 +120,7 @@ class Stock(models.Model):
     confirm = models.CharField(max_length=20)
 
     class Meta:
+        managed = False
         db_table = 'stock'
 
     def __unicode__(self):
@@ -146,6 +149,7 @@ class Lga(models.Model):
     confirm = models.CharField(max_length=20)
 
     class Meta:
+        managed = False
         db_table = 'lga'
 
     def __unicode__(self):
@@ -159,6 +163,7 @@ class First_admin(models.Model):
     state_num = models.IntegerField(primary_key=True)
 
     class Meta:
+        managed = False
         db_table = 'first_admin'
 
     def __unicode__(self):
@@ -173,6 +178,7 @@ class Second_admin(models.Model):
     lga_num = models.IntegerField(primary_key=True)
 
     class Meta:
+        managed = False
         db_table = 'second_admin'
 
     def __unicode__(self):
@@ -195,6 +201,7 @@ class Site(models.Model):
     # add CLOSING DATE variable
 
     class Meta:
+        managed = False
         # This is reference of Django to Postgres
         db_table = 'site'
 
