@@ -42,7 +42,6 @@ class Command(BaseCommand):
         second_admin_df = second_admin_df.drop_duplicates(['lga_num'], keep='first')
         # instead of filtering out only the LGA sites, just deleting cases of lga_num == NaN which are only found in
         # state level sites
-        from ipdb import set_trace; set_trace()
         second_admin_df = second_admin_df.query('lga_num==lga_num')
         second_admin_df.lga_num = second_admin_df.lga_num.astype(int)
         second_admin_df = second_admin_df.sort_values(by='lga_num')
