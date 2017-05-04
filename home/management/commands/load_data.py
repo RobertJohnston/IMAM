@@ -124,14 +124,13 @@ def assign_state_lga_num(dataframe):
     dataframe['lga_num'] = np.where(dataframe['siteid_lgt']==3, dataframe['siteid'].astype(str).str[:3], dataframe['lga_num'])
 
     # STATE - Numpy - if site id <=2 digits then take first 1 or 2 for state
-    # Still error below - not important if we delete these load_data tools to use only API.
     dataframe['state_num'] = np.where(dataframe['siteid_lgt']==1, dataframe['siteid'], dataframe['state_num'])
-    dataframe['lga_num'] = np.where(dataframe['siteid_lgt'] == 1, dataframe['lga_num'], None)
     dataframe['state_num'] = np.where(dataframe['siteid_lgt']==2, dataframe['siteid'], dataframe['state_num'])
-    dataframe['lga_num'] = np.where(dataframe['siteid_lgt'] == 2, dataframe['lga_num'], None)
     # Set lga_num to NaN for state level
-    #Should make this to match what is in import_contacts.py
+    dataframe['lga_num'] = np.where(dataframe['siteid_lgt'] != 1, dataframe['lga_num'], None)
+    dataframe['lga_num'] = np.where(dataframe['siteid_lgt'] != 2, dataframe['lga_num'], None)
 
+    dataframe.drop('siteid_lgt', axis=1)
     return dataframe
 
 
