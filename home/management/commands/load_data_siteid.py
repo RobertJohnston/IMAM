@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
         # Load SITE ID dataframe
         # note for PROGRAM- use 'Runs' tab and not 'Contacts'
-        df = pd.ExcelFile('/home/robert/Downloads/all_siteid.xls').parse('Sheet1')
+        df = pd.ExcelFile('all_siteid.xls').parse('Sheet1')
 
         assign_state_lga_num(df)
 
