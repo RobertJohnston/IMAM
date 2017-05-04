@@ -11,8 +11,8 @@ venv/
 ve/
 token
 
-# Changed name of notebook below.  Trying to stop tracking in github.
-IMAM Supervision.ipynb
-
 .ipynb_checkpoints/
 xlrd
+
+IMAM_state_lga_test.xlsx
+IMAM_state_supervision.xlsx
