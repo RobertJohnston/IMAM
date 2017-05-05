@@ -42,10 +42,12 @@ class Command(BaseCommand):
                     # Update contact
                     if Registration.objects.filter(contact_uuid=UUID(contact.uuid)).exists():
                         contact_in_db = Registration.objects.get(contact_uuid=UUID(contact.uuid))
+                        print('Updating existing contact')
                     # Create new contact
                     else:
                         contact_in_db = Registration()
                         contact_in_db.contact_uuid = UUID(contact.uuid)
+                        print('Creating a new contact')
 
                     # if there is no siteid of contact then skip to next contact in contact_batch
                     if not contact.fields['siteid']:
