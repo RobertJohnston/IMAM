@@ -3,7 +3,7 @@ __pycache__
 db.sqlite3
 local_settings.py
 .idea/
-IMAM/settings.py
+
 home/migrations/0001_initial.py
 home/migrations/0002_auto_20170129_1727.py
 posts_by_type
