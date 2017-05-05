@@ -54,17 +54,21 @@
     </select>
 
     <div id="admissions-chart">
-        <p>Chart</p>
+        <div class="loader-wrapper">
+            <div class="loader"></div>
+        </div>
         <!--style="width:100%;height:314px"-->
     </div>
 
-    <center>
-        <h3>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h3>
-    </center>
-    <center>
-        <h3>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></h3>
-        <p>(add State and LGA Results)</p>
-    </center>
+    <div class="reporting-rate">
+        <center>
+            <h3>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h3>
+        </center>
+        <center>
+            <h3>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></h3>
+            <p>(add State and LGA Results)</p>
+        </center>
+    </div>
 
 
     <script>
@@ -224,8 +228,10 @@
                 "chart":{"renderTo":"admissions-chart"},
             }
         }
+
         $.getJSON("/adm/").success(function(data) {
             amarChart = new Highcharts.Chart(format_data(data));
+            $('.reporting-rate').show();
             $("#reporting-rate").html(data.report_rate);
 
             $("#latest_stock_report").html(data.latest_stock_report);
@@ -241,8 +247,12 @@
 
             var yearFilter = $("#filter-by-year").val();
 
+            $("#admissions-chart").html('<div class="loader-wrapper"><div class="loader"></div></div>');
+            $('.reporting-rate').hide();
+
             $.getJSON("/adm/?site_filter=" + siteFilter + "&site_type=" + site_typeFilter + "&year=" + yearFilter).success(function(data) {
-                amarChart.update(format_data(data));
+                amarChart = new Highcharts.Chart(format_data(data));
+                $('.reporting-rate').show();
                 $("#reporting-rate").html(data.report_rate);
 
                 $("#latest_stock_report").html(data.latest_stock_report);

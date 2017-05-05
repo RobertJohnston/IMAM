@@ -22,10 +22,45 @@
 		body {
 		  height:100%
 		}
+
+	.beta-warning {
+		text-align: center;
+		padding: 20px;
+		font-size: x-large;
+		background-color: red;
+		width: 100%;
+		font-weight: 700;
+		border: 4px solid darkred;
+		color: darkred;
+	}
+
+	.loader-wrapper {
+		padding: 140px;
+	}
+
+	.reporting-rate {
+		display: none;
+	}
+
+	 .loader {
+		border: 16px solid #fefefe; /* Light grey */
+		border-top: 16px solid #3498db; /* Blue */
+		border-radius: 50%;
+		width: 120px;
+		height: 120px;
+		animation: spin 2s linear infinite;
+		margin: auto;
+	}
+
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
+	}
 	</style>
 </head>
 
 <body class="body" style="background-color:#f6f6f6">
+<div class="beta-warning">Warning: this is a beta version of this website, you can't consider the data here to be final</div>
 	<div class="container-fluid" style="min-height:95%; ">
 		<div class="row">
 			  <div class="col-sm-2">
