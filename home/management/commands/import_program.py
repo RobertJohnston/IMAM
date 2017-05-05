@@ -55,11 +55,13 @@ class Command(BaseCommand):
                     # if id of program exists then update the row
                     if Program.objects.filter(id=program.id).exists():
                         program_in_db = Program.objects.get(id=program.id)
+                        print('Updating an existing program data')
 
                     # if id of program data doesn't exist then create a new row.
                     else:
                         program_in_db = Program()
                         program_in_db.id = program.id
+                        print('Creating a new program data')
 
                     # if program.contact.uuid not in contact_cache:
                     #     print("      No Contact UUID in database %s" % program.contact.uuid)
