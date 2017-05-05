@@ -39,8 +39,4 @@ class Migration(migrations.Migration):
             name='program',
             options={'managed': False},
         ),
-        migrations.AlterModelOptions(
-            name='stock',
-            options={'managed': False},
-        ),
     ]

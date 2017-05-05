@@ -87,15 +87,17 @@ class Program(models.Model):
 
 # Stock data
 class Stock(models.Model):
+    # change index to id
     index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     urn = models.TextField()
-    name =   models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
 
     # if supervisor enters the data then don't forget to take data
     # if supervisor enters the data than take SiteID from StoSiteID
     siteid = models.BigIntegerField()
+
     # if supervisor enters the data then take Type from stoType
     type = models.CharField(max_length=20)
 
@@ -103,24 +105,22 @@ class Stock(models.Model):
     last_seen =  models.DateTimeField()
 
     # level (first, second, site)
-    level = models.CharField(max_length=20)
+    # level = models.CharField(max_length=20)
     weeknum = models.IntegerField()
 
-    year = models.BigIntegerField(null=True)
+    year = models.BigIntegerField()
 
-    rutf_in = models.DecimalField(max_digits=8, decimal_places=2,)
-    rutf_used_carton = models.DecimalField(max_digits=8, decimal_places=2,)
-    rutf_used_sachet = models.DecimalField(max_digits=7, decimal_places=2,)
-    rutf_bal_carton = models.DecimalField(max_digits=8, decimal_places=2,)
-    rutf_bal_sachet =  models.DecimalField(max_digits=7, decimal_places=2,)
-    f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2,)
-    f75_bal_sachet =   models.DecimalField(max_digits=7, decimal_places=2,)
-    f100_bal_carton =  models.DecimalField(max_digits=7, decimal_places=2,)
-    f100_bal_sachet =  models.DecimalField(max_digits=7, decimal_places=2,)
-    confirm = models.CharField(max_length=20)
+    rutf_in = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    rutf_used_carton = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    rutf_used_sachet = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    rutf_bal_carton = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    rutf_bal_sachet =  models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f75_bal_sachet =   models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f100_bal_carton =  models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f100_bal_sachet =  models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
 
     class Meta:
-        managed = False
         db_table = 'stock'
 
     def __unicode__(self):

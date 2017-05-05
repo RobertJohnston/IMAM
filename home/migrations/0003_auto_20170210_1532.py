@@ -40,8 +40,4 @@ class Migration(migrations.Migration):
             name='program',
             table='program',
         ),
-        migrations.AlterModelTable(
-            name='stock',
-            table='stock',
-        ),
     ]
