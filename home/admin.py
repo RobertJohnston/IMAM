@@ -29,7 +29,7 @@ class Second_adminAdmin(admin.ModelAdmin):
 
 class SiteAdmin(admin.ModelAdmin):
     list_display = ('sitename', 'siteid', 'state_num', 'lga_num', 'ward', 'x_long', 'y_lat', 'notes')
-
+    # add opening date, closing date
 
 admin.site.register(Registration, RegistrationAdmin)
 admin.site.register(Program, ProgramAdmin)
