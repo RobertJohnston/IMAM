@@ -247,6 +247,7 @@
 
             var yearFilter = $("#filter-by-year").val();
 
+            //  run spinner
             $("#admissions-chart").html('<div class="loader-wrapper"><div class="loader"></div></div>');
             $('.reporting-rate').hide();
 
@@ -265,10 +266,11 @@
         $("#filter-by-site-type").on("select2:select", updateGraph);
 
         $("#filter-by-year").on("select2:select", updateGraph);
+
     </script>
 
 
-{% include "home/includes/htmlsnippet.html" %}
+<!--{% include "home/includes/htmlsnippet.html" %}-->
 
 <!--htmlsnippet could include an error message that is repeated on many different pages. -->
 
