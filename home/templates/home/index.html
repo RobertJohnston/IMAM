@@ -104,7 +104,6 @@
                 },
                 xAxis: [{
 
-                    // categories: data.adm_by_week,
                     // highcharts automatically knows the first of 2 # in series is x axis.
                     labels: {
                         formatter: function() {
@@ -114,6 +113,7 @@
                         }
                     },
                     type: 'datetime',
+                    // categories: data.categories,
 
                     crosshair: true,
                     title: {
@@ -157,7 +157,6 @@
                 }],
                 tooltip: {
                     shared: true
-
                 },
 
                 legend: {
@@ -177,17 +176,20 @@
                     "data": data.adm_by_week,
                     "yAxis": 0,
                     color: '#ffcccc',
+                                        findNearestPointBy: 'x',
                     tooltip: {
                         valueSuffix: ' cases'
                     }
                 },
                     {
+
                     name: 'Default Rate',
                     type: 'line',
                     yAxis: 1,
                     data: data.defu_rate_by_week,
                     color: '#000000',
                     marker: { enabled: false},
+                    findNearestPointBy: 'x',
                     tooltip: {
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
@@ -199,10 +201,12 @@
                     dashStyle: 'shortdot',
                     color: '#FFA500',
                     marker: { enabled: false},
+                                        findNearestPointBy: 'x',
                     tooltip: {
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
                 }, {
+
                     name: 'Non-recovered Rate',
                     type: 'line',
                     yAxis: 1,
@@ -210,6 +214,7 @@
                     dashStyle: 'dash',
                     color: '#9370DB',
                     marker: { enabled: false},
+                                            findNearestPointBy: 'x',
                     tooltip: {
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
@@ -220,6 +225,7 @@
                     yAxis: 1,
                     data: data.dead_rate_by_week,
                     color: '#FF0000',
+                                            findNearestPointBy: 'x',
                     tooltip: {
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
@@ -258,6 +264,9 @@
 
                 $("#latest_stock_report").html(data.latest_stock_report);
                 $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
+            }).error(function() {
+                console.log("Error while fetching chart data:");
+                console.log(arguments);
             });
         }
 
