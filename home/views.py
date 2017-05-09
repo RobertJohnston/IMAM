@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 import pandas as pd
+import numpy as np
 
 from datetime import date, timedelta
 from sqlalchemy import create_engine
@@ -37,15 +38,19 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
         'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
 
     if kind == 'siteid':
-        latest_stock_report = df_stock.query('year==2017').query('siteid==%s' % num).sort_values(by='weeknum', ascending=False).drop_duplicates(
-            ['siteid'], keep='first')['rutf_bal_carton'].tolist()
+        def grab_first_if_exists(value_in_list):
+            if len(value_in_list) > 0 and not np.isnan(value_in_list[0]):
+                return value_in_list[0]
+            return None
 
-        latest_stock_report = latest_stock_report[0] if len(latest_stock_report) != 0 else None
+        # FIXME don't hardcode the year
+        latest_stock = df_stock.query('year==2017')\
+                               .query('siteid==%s' % num)\
+                               .sort_values(by='weeknum', ascending=False)\
+                               .drop_duplicates(['siteid'], keep='first')
 
-        latest_stock_report_weeknum = df_stock.query('year==2017').query('siteid==%s' % num).sort_values(by='weeknum', ascending=False).drop_duplicates(
-            ['siteid'], keep='first')['weeknum'].tolist()
-
-        latest_stock_report_weeknum = latest_stock_report_weeknum[0] if len(latest_stock_report_weeknum) != 0 else None
+        latest_stock_report = grab_first_if_exists(latest_stock['rutf_bal_carton'].tolist())
+        latest_stock_report_weeknum = grab_first_if_exists(latest_stock['weeknum'].tolist())
 
     # for National, State, and LGA level
     else:
@@ -176,6 +181,14 @@ def adm(request):
         else:
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
 
+    # categories = [iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index]
+
+    # adm_by_week = adm_by_week.values.tolist()
+    # dead_rate_by_week = dead_rate_by_week.values.tolist()
+    # defu_rate_by_week = defu_rate_by_week.values.tolist()
+    # dmed_rate_by_week = dmed_rate_by_week.values.tolist()
+    # tout_rate_by_week = tout_rate_by_week.values.tolist()
+
     adm_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index], adm_by_week.values.tolist()))
 
     dead_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dead_rate_by_week.index], dead_rate_by_week.values.tolist()))
@@ -185,6 +198,7 @@ def adm(request):
 
     # return HttpResponse(json.dumps(result)
     return HttpResponse(json.dumps({
+        # "categories": categories,
         "adm_by_week": adm_by_week,
         "dead_rate_by_week": dead_rate_by_week,
         "defu_rate_by_week": defu_rate_by_week,
