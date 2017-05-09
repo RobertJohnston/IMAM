@@ -75,10 +75,11 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     dmed_rate_by_week = df_queried['dmed'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_discharge * 100
     tout_rate_by_week = df_queried['tout'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_cout * 100
 
-    dead_rate_by_week = dead_rate_by_week.dropna()
-    defu_rate_by_week = defu_rate_by_week.dropna()
-    dmed_rate_by_week = dmed_rate_by_week.dropna()
-    tout_rate_by_week = tout_rate_by_week.dropna()
+    # convert NaN to None using numpy
+    dead_rate_by_week = np.where(dead_rate_by_week != dead_rate_by_week, None, dead_rate_by_week)
+    defu_rate_by_week = np.where(defu_rate_by_week != defu_rate_by_week, None, defu_rate_by_week)
+    dmed_rate_by_week = np.where(dmed_rate_by_week != dmed_rate_by_week, None, dmed_rate_by_week)
+    tout_rate_by_week = np.where(tout_rate_by_week != tout_rate_by_week, None, tout_rate_by_week)
     
     return adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum
 
@@ -174,7 +175,7 @@ def adm(request):
             adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
 
             site_level = Site.objects.get(siteid=num)
-            title = "%s,  %s-LGA %s " % (site_level.sitename.title(),
+            title = "%s,  %s-LGA %s " % (site_level.sitename,
                                          site_level.lga_num.lga.title(),
                                          site_level.state_num.state)
 
@@ -183,22 +184,35 @@ def adm(request):
 
     # categories = [iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index]
 
-    # adm_by_week = adm_by_week.values.tolist()
+    adm_by_week = adm_by_week.values.tolist()
     # dead_rate_by_week = dead_rate_by_week.values.tolist()
     # defu_rate_by_week = defu_rate_by_week.values.tolist()
     # dmed_rate_by_week = dmed_rate_by_week.values.tolist()
     # tout_rate_by_week = tout_rate_by_week.values.tolist()
 
-    adm_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index], adm_by_week.values.tolist()))
+    # convert numpy array to list for json serialization
+    dead_rate_by_week = list(dead_rate_by_week)
+    defu_rate_by_week = list(defu_rate_by_week)
+    dmed_rate_by_week = list(dmed_rate_by_week)
+    tout_rate_by_week = list(tout_rate_by_week)
 
-    dead_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dead_rate_by_week.index], dead_rate_by_week.values.tolist()))
-    defu_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in defu_rate_by_week.index], defu_rate_by_week.values.tolist()))
-    dmed_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dmed_rate_by_week.index], dmed_rate_by_week.values.tolist()))
-    tout_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in tout_rate_by_week.index], tout_rate_by_week.values.tolist()))
+    categories = []
+    current_year, current_week, _ = date.today().isocalendar()
+
+    if current_year == int(request.GET.get("year", current_year)):
+        for week_iterator in range(1, current_week + 1):
+            categories.append(iso_to_gregorian(current_year, week_iterator))
+
+    # adm_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index], adm_by_week.values.tolist()))
+    #
+    # dead_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dead_rate_by_week.index], dead_rate_by_week.values.tolist()))
+    # defu_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in defu_rate_by_week.index], defu_rate_by_week.values.tolist()))
+    # dmed_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dmed_rate_by_week.index], dmed_rate_by_week.values.tolist()))
+    # tout_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in tout_rate_by_week.index], tout_rate_by_week.values.tolist()))
 
     # return HttpResponse(json.dumps(result)
     return HttpResponse(json.dumps({
-        # "categories": categories,
+        "categories": categories,
         "adm_by_week": adm_by_week,
         "dead_rate_by_week": dead_rate_by_week,
         "defu_rate_by_week": defu_rate_by_week,
