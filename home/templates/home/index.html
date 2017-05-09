@@ -113,7 +113,10 @@
                         }
                     },
                     type: 'datetime',
-                    // categories: data.categories,
+                    categories: data.categories,
+                    min: 0,
+                    // length -1 is used because the counts are 1 to x and the data are 0 to x
+                    max: data.categories.length -1,
 
                     crosshair: true,
                     title: {
