@@ -128,6 +128,7 @@ class Stock(models.Model):
 
 
 # State and LGA Stock data
+# Need a generic name - Warehouse
 class Lga(models.Model):
     index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
