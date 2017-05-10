@@ -76,11 +76,11 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     tout_rate_by_week = df_queried['tout'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_cout * 100
 
     # convert NaN to None using numpy
-    dead_rate_by_week = np.where(dead_rate_by_week != dead_rate_by_week, None, dead_rate_by_week)
-    defu_rate_by_week = np.where(defu_rate_by_week != defu_rate_by_week, None, defu_rate_by_week)
-    dmed_rate_by_week = np.where(dmed_rate_by_week != dmed_rate_by_week, None, dmed_rate_by_week)
-    tout_rate_by_week = np.where(tout_rate_by_week != tout_rate_by_week, None, tout_rate_by_week)
-    
+    # dead_rate_by_week = np.where(dead_rate_by_week != dead_rate_by_week, None, dead_rate_by_week)
+    # defu_rate_by_week = np.where(defu_rate_by_week != defu_rate_by_week, None, defu_rate_by_week)
+    # dmed_rate_by_week = np.where(dmed_rate_by_week != dmed_rate_by_week, None, dmed_rate_by_week)
+    # tout_rate_by_week = np.where(tout_rate_by_week != tout_rate_by_week, None, tout_rate_by_week)
+
     return adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum
 
 
@@ -184,24 +184,50 @@ def adm(request):
 
     # categories = [iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index]
 
-    adm_by_week = adm_by_week.values.tolist()
+    # adm_by_week = adm_by_week.values.tolist()
     # dead_rate_by_week = dead_rate_by_week.values.tolist()
     # defu_rate_by_week = defu_rate_by_week.values.tolist()
     # dmed_rate_by_week = dmed_rate_by_week.values.tolist()
     # tout_rate_by_week = tout_rate_by_week.values.tolist()
 
     # convert numpy array to list for json serialization
-    dead_rate_by_week = list(dead_rate_by_week)
-    defu_rate_by_week = list(defu_rate_by_week)
-    dmed_rate_by_week = list(dmed_rate_by_week)
-    tout_rate_by_week = list(tout_rate_by_week)
+    # dead_rate_by_week = list(dead_rate_by_week)
+    # defu_rate_by_week = list(defu_rate_by_week)
+    # dmed_rate_by_week = list(dmed_rate_by_week)
+    # tout_rate_by_week = list(tout_rate_by_week)
 
     categories = []
     current_year, current_week, _ = date.today().isocalendar()
 
-    if current_year == int(request.GET.get("year", current_year)):
+    asked_year = int(request.GET.get("year", current_year))
+
+    if current_year == asked_year:
         for week_iterator in range(1, current_week + 1):
             categories.append(iso_to_gregorian(current_year, week_iterator))
+
+    # Previous years
+    elif current_year > asked_year:
+        # change hardcoded 52 below to len or max("year" when year == x)
+        for week_iterator in range(1, 52 + 1):
+            categories.append(iso_to_gregorian(asked_year, week_iterator))
+
+    def fill_empty_entries(to_fill):
+        filled_list = []
+        to_fill = dict(zip([iso_to_gregorian(asked_year, x) for x in to_fill.index.levels[1]], to_fill))
+        for category in categories:
+            if category in to_fill and not np.isnan(to_fill[category]):
+                filled_list.append(to_fill[category])
+            else:
+                filled_list.append(None)
+
+        return filled_list
+
+    adm_by_week = fill_empty_entries(adm_by_week)
+    # from ipdb import set_trace; set_trace()
+    dead_rate_by_week = fill_empty_entries(dead_rate_by_week)
+    defu_rate_by_week = fill_empty_entries(defu_rate_by_week)
+    dmed_rate_by_week = fill_empty_entries(dmed_rate_by_week)
+    tout_rate_by_week = fill_empty_entries(tout_rate_by_week)
 
     # adm_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index], adm_by_week.values.tolist()))
     #
