@@ -12,6 +12,9 @@ class LastUpdatedAPICall(models.Model):
     kind = models.CharField(max_length=255, unique=True)
     timestamp = models.DateTimeField()
 
+    def __unicode__(self):
+        return u"%s: %s" % (self.kind, self.timestamp  )
+
 
 # Registration
 class Registration(models.Model):
