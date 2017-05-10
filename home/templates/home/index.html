@@ -115,8 +115,8 @@
                     type: 'datetime',
                     categories: data.categories,
                     min: 0,
-                    // length -1 is used because the counts are 1 to x and the data are 0 to x
                     max: data.categories.length -1,
+                    // length -1 is used because the counts are 1 to x and the data are 0 to x
 
                     crosshair: true,
                     title: {
@@ -183,20 +183,18 @@
                     tooltip: {
                         valueSuffix: ' cases'
                     }
-                },
-                    {
-
+                },  {
                     name: 'Default Rate',
                     type: 'line',
                     yAxis: 1,
                     data: data.defu_rate_by_week,
                     color: '#000000',
-                    marker: { enabled: false},
+                    marker: { enabled: true},
                     findNearestPointBy: 'x',
                     tooltip: {
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
-                }, {
+                },  {
                     name: 'Transfer Rate',
                     type: 'line',
                     yAxis: 1,
@@ -221,7 +219,6 @@
                     tooltip: {
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
-
                 }, {
                     name: 'Death Rate',
                     type: 'line',
