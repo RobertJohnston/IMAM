@@ -3,22 +3,8 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from temba_client.v2 import TembaClient
-from home.models import Registration, LastUpdatedAPICall, First_admin, Second_admin, Site
-
+from home.models import Registration, LastUpdatedAPICall
 from uuid import UUID
-
-# Dependencies
-import pandas as pd
-import numpy as np
-import xlsxwriter
-from pandas import ExcelWriter
-
-from sqlalchemy import create_engine
-
-
-from django.conf import settings
-from home.management.commands.load_data import rename_cols
-
 
 # to run python manage.py (name of file), OR
 # ipython --pdb manage.py (name of file)
