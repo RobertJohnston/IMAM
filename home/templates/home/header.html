@@ -57,6 +57,42 @@
 		0% { transform: rotate(0deg); }
 		100% { transform: rotate(360deg); }
 	}
+
+	#filter-by-site {
+		min-width: 300px;
+	}
+
+	.filter-menus {
+		margin-bottom: 5px;
+	}
+
+	@media (max-width: 768px) {
+		/* .container-fluid {
+			padding-right: 5px;
+			padding-left: 5px;
+		}
+
+		.col-lg-1, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-md-1, .col-md-10, .col-md-11, .col-md-12, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-xs-1, .col-xs-10, .col-xs-11, .col-xs-12, .col-xs-2, .col-xs-3, .col-xs-4, .col-xs-5, .col-xs-6, .col-xs-7, .col-xs-8, .col-xs-9 {
+    		padding-right: 5px;
+    		padding-left: 5px;
+		}*/
+
+	 	#filter-by-site {
+	 		min-width: 280px;
+			width: 100%;
+	 	}
+
+	 	.select2 {
+	 		margin-bottom: 5px;
+	 	}
+
+		.filter-menus {
+			display: flex;
+		}
+
+	 }
+
+
 	</style>
 </head>
 
@@ -64,13 +100,13 @@
 <div class="beta-warning">Warning: this is a beta version of this website, you can't consider the data here to be final</div>
 	<div class="container-fluid" style="min-height:95%; ">
 		<div class="row">
-			  <div class="col-sm-2">
+			  <div class="col-sm-2 col-xs-4">
 				  <br>
 				  <left>
 					<img src="{% static 'home/img/child_measure.jpg' %}" class="responsive-img" style='max-height:60px;' alt="face">
 				  </left>
 			  </div>
-			  <div class="col-sm-10">
+			  <div class="col-sm-10 col-xs-8">
 				  <br>
 				  <left>
 				  <h1>IMAM</h1>
@@ -83,7 +119,7 @@
 
 		    <!-- Great, til you resize. -->
 			<!--<div class="well bs-sidebar affix" id="sidebar" style="background-color:#fff">-->
-			<div class="well bs-sidebar" id="sidebar" style="background-color:#fff">
+			<div class="well bs-sidebar hidden-xs" id="sidebar" style="background-color:#fff">
 			  <ul class="nav nav-pills nav-stacked">
 				<li><a href='/'>Home</a></li>
 			    <li><a href='/map/'>Maps</a></li>
@@ -93,13 +129,8 @@
 			</div> <!--well bs-sidebar affix-->
 		  </div> <!--col-sm-2-->
 		  <div class="col-sm-10">
-
-			<div class='container-fluid'>
-				<div id="container" style="width:100%; height:350px;">
 			   {% block content %}
 			   {% endblock %}
-				</div>
-			</div>
 		  </div>
 		</div>
 	</div>

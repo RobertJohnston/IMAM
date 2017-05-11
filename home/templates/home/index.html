@@ -36,22 +36,23 @@
         </script>
     </div>
 
+    <div class="filter-menus">
+        <select class="js-data-example-ajax" id="filter-by-site" style="">
+            <!--adjust CSS for phones versus computers-->
+        </select>
 
-    <select class="js-data-example-ajax" id="filter-by-site" style="min-width: 300px">
-        <!--adjust CSS for phones versus computers-->
-    </select>
+        <select class="" id="filter-by-site-type" style="min-width: 40px">
+            <option value="All" selected="selected">All</option>
+            <option value="OTP" selected="selected">OTP</option>
+            <option value="SC" selected="selected">SC</option>
+        </select>
 
-    <select class="" id="filter-by-site-type" style="min-width: 40px">
-        <option value="All" selected="selected">All</option>
-        <option value="OTP" selected="selected">OTP</option>
-        <option value="SC" selected="selected">SC</option>
-    </select>
-
-    <select class="" id="filter-by-year" style="min-width: 40px">
-        <!--make this section generic to select years in database-->
-        <option value="2017" selected="selected">2017</option>
-        <option value="2016" selected="selected">2016</option>
-    </select>
+        <select class="" id="filter-by-year" style="min-width: 40px">
+            <!--make this section generic to select years in database-->
+            <option value="2017" selected="selected">2017</option>
+            <option value="2016" selected="selected">2016</option>
+        </select>
+    </div>
 
     <div id="admissions-chart">
         <div class="loader-wrapper">
@@ -63,6 +64,7 @@
     <div class="reporting-rate">
         <center>
             <h3>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h3>
+            <h3>Active sites <span id="number_of_active_sites" class="label label-success">X</span> Inactive sites <span id="number_of_inactive_sites"  class="label label-warning">X</span></h3>
         </center>
         <center>
             <h3>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></h3>
@@ -159,7 +161,11 @@
                     opposite: true
                 }],
                 tooltip: {
-                    shared: true
+                    shared: true,
+                    /* formatter: function() {
+                        return 'stuff';
+                    } */
+                    xDateFormat: '%Y-%m-%d'
                 },
 
                 legend: {
@@ -169,6 +175,9 @@
                     verticalAlign: 'top',
                     y: 20,
                     floating: true,
+                    borderColor: '#ddd',
+                    borderRadius: 6,
+                    borderWidth: 1,
                     backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
                     // Change Highcharts code if the legend overlaps the columns
                 },
@@ -242,6 +251,8 @@
 
             $("#latest_stock_report").html(data.latest_stock_report);
             $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
+            $("#number_of_active_sites").html(data.number_of_active_sites);
+            $("#number_of_inactive_sites").html(data.number_of_inactive_sites);
         });
 
         // on select event - run code in {} below
@@ -264,6 +275,8 @@
 
                 $("#latest_stock_report").html(data.latest_stock_report);
                 $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
+                $("#number_of_active_sites").html(data.number_of_active_sites);
+                $("#number_of_inactive_sites").html(data.number_of_inactive_sites);
             }).error(function() {
                 console.log("Error while fetching chart data:");
                 console.log(arguments);
