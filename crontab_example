@@ -1,0 +1,1 @@
+*/15 * * * * imam cd /home/imam/IMAM && ve/bin/python manage.py import_contacts && ve/bin/python manage.py import_program && ve/bin/python manage.py import_stock
