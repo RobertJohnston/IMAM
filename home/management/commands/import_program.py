@@ -230,7 +230,7 @@ class Command(BaseCommand):
                     current_week = Week(year, week)
 
                     # Report is X weeks before current week number
-                    program_in_db.since_x_weeks = current_week - iso_year_weeknum
+                    # program_in_db.since_x_weeks = current_week - iso_year_weeknum
 
                     # TODO delete those columns
                     # last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
