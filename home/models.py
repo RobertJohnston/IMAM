@@ -78,7 +78,7 @@ class Program(models.Model):
     iso_rep_year_wn = models.TextField(blank=True, null=True)
     iso_year_weeknum = models.TextField(blank=True, null=True)
     iso_diff = models.BigIntegerField(blank=True, null=True)
-    since_x_weeks = models.BigIntegerField(blank=True, null=True)
+    # since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
     class Meta:
         db_table = 'program'
