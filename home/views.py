@@ -5,25 +5,31 @@ from django.conf import settings
 import pandas as pd
 import numpy as np
 
+from isoweek import Week
+
 from datetime import date, timedelta
 from sqlalchemy import create_engine
 # We can replace sqlalchemy for django at some point.
 
 from models import First_admin, Second_admin, Site
 
-
+# can put in utilities.py
 def iso_year_start(iso_year):
     "The gregorian calendar date of the first day of the given ISO year"
     fourth_jan = date(iso_year, 1, 4)
     delta = timedelta(fourth_jan.isoweekday() - 1)
     return fourth_jan - delta
 
-
 # Beware for week 52 of 2016 is presented as 2017 (first week of year)
 def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = iso_year_start(iso_year)
     return int((year_start + timedelta(days=iso_day - 1, weeks=iso_week - 1)).strftime('%s') + '000')
+
+
+def weeks_for_year(year):
+    last_week = date(year, 12, 28)
+    return last_week.isocalendar()[1]
 
 
 def rate_by_week(df_filtered, df_stock, kind=None, num=None):
@@ -34,8 +40,45 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     else:
         df_queried = df_filtered.query('%s==%s' % (kind, num))
 
+    # iso_year_weeknum = Week(int(program_in_db.year), int(program_in_db.weeknum))
+    #
+    # program_in_db.iso_diff = (iso_year_weeknum - iso_rep_year_wn)
+    # program_in_db.since_x_weeks = current_week - iso_year_weeknum
+
+    df_queried['year_weeknum'] = zip(df_queried['year'], df_queried['weeknum'])
+    df_queried['iso_year_weeknum'] = df_queried['year_weeknum'].map(lambda x: Week(x[0], x[1]))
+
+    year, week, _ = date.today().isocalendar()
+    current_week = Week(year, week)
+    
+    # since how many week this report is about
+    df_queried['since_x_weeks'] = df_queried['iso_year_weeknum'].map(lambda x: current_week - x)
+
     report_rate = df_queried.query('since_x_weeks>0').query('since_x_weeks<=8').groupby(df_queried['siteid'])[
         'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
+
+    active_sites = df_queried.query('since_x_weeks<=8')\
+                             .query('siteid>101110001')\
+                             .groupby(['siteid', 'type'])\
+                             ['siteid'].unique()\
+                             .to_frame()\
+                             .drop('siteid', axis=1)\
+                             .reset_index()
+
+    all_sites = df_queried.query('siteid>101110001')\
+                          .groupby(['siteid', 'type'])\
+                          ['siteid'].unique()\
+                          .to_frame()\
+                          .drop('siteid', axis=1)\
+                          .reset_index()
+
+    if len(active_sites) > 0:
+        number_of_inactive_sites = len(set(zip(all_sites['siteid'], all_sites['type'])) - set(zip(active_sites['siteid'], active_sites['type'])))
+        number_of_active_sites = len(active_sites)
+    else:
+        number_of_inactive_sites = None
+        number_of_active_sites = None
+
 
     if kind == 'siteid':
         def grab_first_if_exists(value_in_list):
@@ -81,7 +124,7 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     # dmed_rate_by_week = np.where(dmed_rate_by_week != dmed_rate_by_week, None, dmed_rate_by_week)
     # tout_rate_by_week = np.where(tout_rate_by_week != tout_rate_by_week, None, tout_rate_by_week)
 
-    return adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum
+    return number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum
 
 
 # Query database and create data for admissions graph
@@ -133,12 +176,9 @@ def adm(request):
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
 
 
-
-    result = {}
-
     # default or national level
     if "site_filter" not in request.GET or request.GET['site_filter'] in ("", "null"):
-        adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock)
+        number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock)
 
         title = "National Level"
 
@@ -154,7 +194,7 @@ def adm(request):
 
         if data_type == "state":
             kind = "state_num"
-            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate , latest_stock_report, latest_stock_report_weeknum= rate_by_week(df_filtered, df_stock, kind, num)
+            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate , latest_stock_report, latest_stock_report_weeknum= rate_by_week(df_filtered, df_stock, kind, num)
 
             # in line below, django expects only one equal sign to get value.
             first_admin = First_admin.objects.get(state_num=num)
@@ -163,7 +203,7 @@ def adm(request):
 
         elif data_type == "lga":
             kind = "lga_num"
-            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
+            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
 
             second_admin = Second_admin.objects.get(lga_num=num)
             title = "%s-LGA %s" % (second_admin.lga.title(),
@@ -172,7 +212,7 @@ def adm(request):
         elif data_type == "site":
             # result = rate_by_week(result, df_filtered, 'siteid')
             kind = "siteid"
-            adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
+            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
 
             site_level = Site.objects.get(siteid=num)
             title = "%s,  %s-LGA %s " % (site_level.sitename,
@@ -201,13 +241,12 @@ def adm(request):
 
     selected_year = int(request.GET.get("year", current_year))
 
+
     if current_year == selected_year:
         for week_iterator in range(1, current_week + 1):
             categories.append(iso_to_gregorian(current_year, week_iterator))
     elif current_year > selected_year:      # Previous years
-        # FIXME
-        # change hardcoded 52 below to len or max("year" when year == x)
-        for week_iterator in range(1, 52 + 1):
+        for week_iterator in range(1, weeks_for_year(selected_year) + 1):
             categories.append(iso_to_gregorian(selected_year, week_iterator))
 
     # Code below zips together data with correct week number so that missing data is presented correctly in highcharts
@@ -242,6 +281,8 @@ def adm(request):
         "defu_rate_by_week": defu_rate_by_week,
         "dmed_rate_by_week": dmed_rate_by_week,
         "tout_rate_by_week": tout_rate_by_week,
+        "number_of_inactive_sites": number_of_inactive_sites,
+        "number_of_active_sites": number_of_active_sites,
         "latest_stock_report": latest_stock_report,
         "latest_stock_report_weeknum": latest_stock_report_weeknum,
         "report_rate": "%2.1f" % report_rate,
