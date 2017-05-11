@@ -199,21 +199,21 @@ def adm(request):
     categories = []
     current_year, current_week, _ = date.today().isocalendar()
 
-    asked_year = int(request.GET.get("year", current_year))
+    selected_year = int(request.GET.get("year", current_year))
 
-    if current_year == asked_year:
+    if current_year == selected_year:
         for week_iterator in range(1, current_week + 1):
             categories.append(iso_to_gregorian(current_year, week_iterator))
-
-    # Previous years
-    elif current_year > asked_year:
+    elif current_year > selected_year:      # Previous years
+        # FIXME
         # change hardcoded 52 below to len or max("year" when year == x)
         for week_iterator in range(1, 52 + 1):
-            categories.append(iso_to_gregorian(asked_year, week_iterator))
+            categories.append(iso_to_gregorian(selected_year, week_iterator))
 
+    # Code below zips together data with correct week number so that missing data is presented correctly in highcharts
     def fill_empty_entries(to_fill):
         filled_list = []
-        to_fill = dict(zip([iso_to_gregorian(asked_year, x) for x in to_fill.index.levels[1]], to_fill))
+        to_fill = dict(zip([iso_to_gregorian(selected_year, x) for x in to_fill.index.levels[1]], to_fill))
         for category in categories:
             if category in to_fill and not np.isnan(to_fill[category]):
                 filled_list.append(to_fill[category])
@@ -223,14 +223,12 @@ def adm(request):
         return filled_list
 
     adm_by_week = fill_empty_entries(adm_by_week)
-    # from ipdb import set_trace; set_trace()
     dead_rate_by_week = fill_empty_entries(dead_rate_by_week)
     defu_rate_by_week = fill_empty_entries(defu_rate_by_week)
     dmed_rate_by_week = fill_empty_entries(dmed_rate_by_week)
     tout_rate_by_week = fill_empty_entries(tout_rate_by_week)
 
     # adm_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index], adm_by_week.values.tolist()))
-    #
     # dead_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dead_rate_by_week.index], dead_rate_by_week.values.tolist()))
     # defu_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in defu_rate_by_week.index], defu_rate_by_week.values.tolist()))
     # dmed_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dmed_rate_by_week.index], dmed_rate_by_week.values.tolist()))
