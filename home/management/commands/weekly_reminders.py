@@ -1,15 +1,12 @@
-
-
 import pandas as pd
 
 from datetime import date, datetime
 from django.core.management.base import BaseCommand
 from sqlalchemy import create_engine
-from home.models import Program
 from isoweek import Week
-
 from django.conf import settings
 
+from home.models import Program
 
 class Command(BaseCommand):
     help = 'Imports program data to SQL through API'
