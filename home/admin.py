@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # from .models import Registration, Program, Stock, Lga
-from .models import Registration, Program, Stock, Lga, First_admin, Second_admin, Site
+from .models import Registration, Program, Stock, Warehouse, First_admin, Second_admin, Site
 
 class RegistrationAdmin(admin.ModelAdmin):
     # here am able to access the variables in Registration using their names (django ORM)
@@ -17,7 +17,7 @@ class StockAdmin(admin.ModelAdmin):
                     #'rutf_bal_carton', 'rutf_used_sachet',
                     #'f75_bal_carton', 'f75_bal_carton', 'f100_bal_carton', 'f100_bal_carton', 'confirm')
 
-class LgaAdmin(admin.ModelAdmin):
+class WarehouseAdmin(admin.ModelAdmin):
     list_display = ('name', 'urn', 'siteid', 'weeknum')
                     #'rutf_in', 'rutf_out', 'rutf_bal', 'confirm')
 # First Admin
@@ -34,7 +34,7 @@ class SiteAdmin(admin.ModelAdmin):
 admin.site.register(Registration, RegistrationAdmin)
 admin.site.register(Program, ProgramAdmin)
 admin.site.register(Stock, StockAdmin)
-admin.site.register(Lga, LgaAdmin)
+admin.site.register(Warehouse, WarehouseAdmin)
 
 admin.site.register(First_admin, First_adminAdmin)
 admin.site.register(Second_admin, Second_adminAdmin)
