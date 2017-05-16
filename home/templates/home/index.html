@@ -64,7 +64,8 @@
     <div class="reporting-rate">
         <center>
             <h3>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h3>
-            <h3>Active sites <span id="number_of_active_sites" class="label label-success">X</span> Inactive sites <span id="number_of_inactive_sites"  class="label label-warning">X</span></h3>
+            <h3>Active sites <span id="number_of_active_sites" class="label label-success">X</span></h3>
+            <h3>Inactive sites <span id="number_of_inactive_sites"  class="label label-warning">X</span></h3>
         </center>
         <center>
             <h3>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></h3>
@@ -91,7 +92,7 @@
             return {
                 title: {text: data.title},
 
-                // subtitle not working - Why? Remove?
+                // subtitle not working - Why? a second subtitle is used below. Only one is allowed.
                 subtitle: {
                     text: "Admissions and Performance Indicators by Week",
                     floating: true,
@@ -163,9 +164,9 @@
                 tooltip: {
                     shared: true,
                     /* formatter: function() {
-                        return 'stuff';
+                        return 'stuff'
                     } */
-                    xDateFormat: '%Y-%m-%d'
+                    xDateFormat: '%e %b %Y'
                 },
 
                 legend: {
