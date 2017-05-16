@@ -110,7 +110,6 @@ class Stock(models.Model):
     # level (first, second, site)
     # level = models.CharField(max_length=20)
     weeknum = models.IntegerField()
-
     year = models.BigIntegerField()
 
     rutf_in = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
@@ -130,34 +129,32 @@ class Stock(models.Model):
         return "Stock {}".format(self.name)
 
 
-# State and LGA Stock data
-# Need a generic name - Warehouse
-class Lga(models.Model):
+# Warehouse data  - State and LGA Stock data
+class Warehouse(models.Model):
     index = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
-    urn = models.IntegerField()
+    urn = models.TextField()
     name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
     siteid = models.BigIntegerField()
     first_seen = models.DateTimeField('first seen')
     last_seen =  models.DateTimeField('last seen')
     weeknum = models.IntegerField()
+    year = models.BigIntegerField()
     rutf_in = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_out = models.DecimalField(max_digits=8, decimal_places=2,)
     rutf_bal = models.DecimalField(max_digits=8, decimal_places=2,)
-    # can add tracking of f75 and f100 later at LGA level
+    # can add tracking of f75 and f100 later at Warehouse level
     # f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2,)
     # f100_bal_carton =  models.DecimalField(max_digits=7, decimal_places=2,)
-    confirm = models.CharField(max_length=20)
 
     class Meta:
-        managed = False
-        db_table = 'lga'
+        db_table = 'warehouse'
 
     def __unicode__(self):
-        return "Lga {}".format(self.name)
+        return "Warehouse {}".format(self.name)
 
 
 # First Admin IDs
