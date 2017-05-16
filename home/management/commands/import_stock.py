@@ -101,7 +101,8 @@ class Command(BaseCommand):
 
 
 
-                    # # Introducing Year for X axis
+                    # Introducing Year for X axis
+                    # Remember that this code is running in a loop over all data in the api call
                     stock_in_db.year = stock_in_db.last_seen.isocalendar()[0]
                     last_seen_weeknum = stock_in_db.last_seen.isocalendar()[1]
 
