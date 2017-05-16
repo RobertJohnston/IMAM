@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from django.conf import settings
 from home.management.commands.load_data import rename_cols
 
+# Refactor this export command
 
 class Command(BaseCommand):
     help = 'Loads registration data to SQL through API'
