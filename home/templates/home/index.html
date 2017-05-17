@@ -63,11 +63,19 @@
 
     <div class="reporting-rate">
         <center>
-            <h3>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h3>
-            <h3>Active sites <span id="number_of_active_sites" class="label label-success">X</span></h3>
-            <h3>Inactive sites <span id="number_of_inactive_sites"  class="label label-warning">X</span></h3>
-        </center>
-        <center>
+            <h4>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
+
+            <div class="panel panel-default sites-panel">
+                    <table class="table">
+                        <tr>
+                            <td>Active sites</td><td class="centered"> <span id="number_of_active_sites" class="label label-success">X</span></td>
+                        </tr>
+                        <tr>
+                            <td>Inactive sites</td><td class="centered"><span id="number_of_inactive_sites"  class="label label-warning">X</span></td>
+                        </tr>
+                    </table>
+            </div>
+
             <h3>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></h3>
             <p>(add State and LGA Results)</p>
         </center>
