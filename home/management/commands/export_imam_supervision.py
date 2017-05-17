@@ -1,3 +1,5 @@
+import time
+
 from django.core.management.base import BaseCommand
 from home.models import First_admin, Second_admin, Site
 
@@ -6,6 +8,7 @@ import pandas as pd
 import numpy as np
 
 from sqlalchemy import create_engine
+from temba_client.v2 import TembaClient
 
 from django.conf import settings
 from home.management.commands.load_data import rename_cols
@@ -17,6 +20,13 @@ class Command(BaseCommand):
 
     # A command must define handle
     def handle(self, *args, **options):
+
+        client = TembaClient('rapidpro.io', open('token').read().strip())
+
+        all_fields = set()
+        for field_batch in client.get_fields().iterfetches(retry_on_rate_exceed=True):
+            for field in field_batch:
+                all_fields.add(field.key)
 
         # Export IMAM Supervision as xlsx file
         # Be careful with the correct indentation or this code will run before API load of contact data
@@ -264,4 +274,26 @@ class Command(BaseCommand):
 
         print('IMAM_Supervision.xlsx exported')
 
-        # Consider uploading these data to RapidPro through the API
+        # this will give use all the column names into a set
+        all_needed_fields = set(final_df) - {'name', 'Phone', 'siteid', 'sitename'}
+
+        for field_to_create in all_needed_fields - all_fields:
+            print "Creating new needed field:", field_to_create
+            client.create_field(label=field_to_create, value_type='text')
+
+        def update_contact_fields(row_in_df):
+            new_contact_fields = {}
+
+            for field in all_needed_fields:
+                if row_in_df[field] and row_in_df[field] == row_in_df[field]:
+                    new_contact_fields[field] = row_in_df[field]
+                else:
+                    new_contact_fields[field] = ''
+
+            print row_in_df.name, row_in_df['name'], row_in_df['Phone'], new_contact_fields
+            client.update_contact('tel:' + row_in_df['Phone'], fields=new_contact_fields)
+
+            # make is slow so we don't exceed rate limit
+            # time.sleep(2)
+
+        final_df.apply(update_contact_fields, axis=1)
