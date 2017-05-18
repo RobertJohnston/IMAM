@@ -294,6 +294,9 @@ class Command(BaseCommand):
             client.update_contact('tel:' + row_in_df['Phone'], fields=new_contact_fields)
 
             # make is slow so we don't exceed rate limit
-            # time.sleep(2)
+            time.sleep(1)
+
+            # time to complete export_imam_supervision.py
+            # 1:45 minutes
 
         final_df.apply(update_contact_fields, axis=1)
