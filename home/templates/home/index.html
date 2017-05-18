@@ -83,6 +83,83 @@
 
 
     <script>
+    /* Start of workaround */
+var Pointer = Highcharts.Pointer.prototype;
+Highcharts.Point.prototype.onMouseOver = function(e) {
+  var point = this,
+    series = point.series,
+    chart = series.chart,
+    pointer = chart.pointer;
+  e = e ?
+    pointer.normalize(e) :
+    // In cases where onMouseOver is called directly without an event
+    pointer.getChartCoordinatesFromPoint(point, chart.inverted);
+  point.firePointEvent('mouseOver');
+  pointer.runPointActions(e, point);
+}
+Pointer.getChartCoordinatesFromPoint = function(point, inverted) {
+  var series = point.series,
+    xAxis = series.xAxis,
+    yAxis = series.yAxis;
+  return inverted ? {
+    chartX: xAxis.len + xAxis.pos - point.clientX,
+    chartY: yAxis.len + yAxis.pos - point.plotY
+  } : {
+    chartX: point.clientX + xAxis.pos,
+    chartY: point.plotY + yAxis.pos
+  };
+}
+
+Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series, isDirectTouch, shared, coordinates) {
+    var hoverPoint = existingHoverPoint,
+      hoverSeries = existingHoverSeries,
+      searchSeries = shared ? series : [hoverSeries],
+      notSticky = hoverSeries && !hoverSeries.stickyTracking,
+      isHoverPoint = function(point, i) {
+        return i === 0;
+      },
+      H = Highcharts,
+      hoverPoints;
+
+    // If there is a hoverPoint and its series requires direct touch (like columns, #3899), or we're on
+    // a noSharedTooltip series among shared tooltip series (#4546), use the existing hoverPoint.
+    if (isDirectTouch && existingHoverPoint) {
+      isHoverPoint = function(p) {
+        return p === existingHoverPoint;
+      };
+    } else if (notSticky) {
+      isHoverPoint = function(p) {
+        return p.series === hoverSeries;
+      };
+    } else {
+      // Avoid series with stickyTracking false
+      searchSeries = H.grep(series, function(s) {
+        return s.stickyTracking;
+      });
+    }
+    hoverPoints = this.getKDPoints(searchSeries, shared, coordinates);
+    hoverPoint = H.find(hoverPoints, isHoverPoint);
+    hoverSeries = hoverPoint && hoverPoint.series;
+
+    /* In this case we could only look for the hoverPoint in series with
+     * stickyTracking, but we should still include all series in the shared tooltip */
+    if (!isDirectTouch && !notSticky && shared) {
+      hoverPoints = this.getKDPoints(series, shared, coordinates);
+    }
+    // Keep the order of series in tooltip
+    // Must be done after assigning of hoverPoint
+    hoverPoints.sort(function(p1, p2) {
+      return p1.series.index - p2.series.index;
+    });
+
+    return {
+      hoverPoint: hoverPoint,
+      hoverSeries: hoverSeries,
+      hoverPoints: hoverPoints
+    };
+  }
+  /* End of Workaround */
+
         function ISO8601_week_no(dt) {
             var tdt = new Date(dt.valueOf());
             var dayn = (dt.getDay() + 6) % 7;
