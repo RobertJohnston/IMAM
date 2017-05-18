@@ -10,13 +10,26 @@ from home.models import Warehouse, Registration, LastUpdatedAPICall
 from uuid import UUID
 
 
-# to run python manage.py import_warehouse
+# to run:
+#  python manage.py import_warehouse or
+#  python manage.py import_warehouse import_warehouse --all
+
 # imports data from RapidPro API, cleans data and saves to Postgres
 
 # 5f2027ce-092f-4712-9b1c-79cddd232fa9
 
+
 class Command(BaseCommand):
     help = 'Imports warehouse data to SQL through API'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='all',
+            default=False,
+            help='Import all data',
+        )
 
     # A command must define handle
     def handle(self, *args, **options):
@@ -26,10 +39,19 @@ class Command(BaseCommand):
 
         last_update_time = LastUpdatedAPICall.objects.filter(kind="warehouse").first()
 
-        if last_update_time:
-            clients_from_api = client.get_runs(flow=u'5f2027ce-092f-4712-9b1c-79cddd232fa9',
-                                               after=last_update_time.timestamp)
-        else:
+        # Code below is explicitly describing all possible four conditions.
+        # T/T   T/F    F/T    F/F
+        if options['all'] and last_update_time:
+            clients_from_api = client.get_runs(flow=u'5f2027ce-092f-4712-9b1c-79cddd232fa9')
+
+        elif options['all'] and not last_update_time:
+            clients_from_api = client.get_runs(flow=u'5f2027ce-092f-4712-9b1c-79cddd232fa9')
+            last_update_time = LastUpdatedAPICall(kind="warehouse")
+
+        elif not options['all'] and last_update_time:
+            clients_from_api = client.get_runs(flow=u'5f2027ce-092f-4712-9b1c-79cddd232fa9', after=last_update_time.timestamp)
+
+        elif not options['all'] and not last_update_time:
             clients_from_api = client.get_runs(flow=u'5f2027ce-092f-4712-9b1c-79cddd232fa9')
             last_update_time = LastUpdatedAPICall(kind="warehouse")
 
@@ -79,6 +101,9 @@ class Command(BaseCommand):
                     stock_in_db.rutf_out = stock.values['rutf_out'].value
                     stock_in_db.rutf_bal = stock.values['rutf_bal'].value
 
+                    # FIXME
+                    #Add data cleaning
+
                     # Introducing Year for X axis
                     # Remember that this code is running in a loop over all data in the api call
                     stock_in_db.year = stock_in_db.last_seen.isocalendar()[0]
@@ -103,6 +128,4 @@ class Command(BaseCommand):
                     a += 1
                     print(a)
 
-        # FIXME
-        # Uncomment when code is finalized
-        # last_update_time.save()
+        last_update_time.save()
