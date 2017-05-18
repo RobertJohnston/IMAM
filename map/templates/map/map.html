@@ -16,6 +16,9 @@
             subtitle: {
             text: "Stock and Stock Margins by Week",
             floating: true,
+                },
+            title: {
+            text: 'National'
             },
 
             chart: {
@@ -26,7 +29,38 @@
             enabled: false
             },
 
+            tooltip: {
+                shared: true,
+                /* formatter: function() {
+                    return 'stuff'
+                } */
+                xDateFormat: '%e %b %Y'
+            },
+
+            legend: {
+                layout: 'vertical',
+                align: 'left',
+                x: 80,
+                verticalAlign: 'top',
+                y: 20,
+                floating: true,
+                borderColor: '#ddd',
+                borderRadius: 6,
+                borderWidth: 1,
+                backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+                // Change Highcharts code if the legend overlaps the columns
+            },
+
+            yAxis: {
+                title: {
+                    text: 'Cartons'
+                },
+            },
+
             xAxis: {
+                title: {
+                    text: 'Week Number'
+                },
                 categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
                             '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
                             '21', '22', '23', '24', '25', '26', '27', '28', '29', 30]
