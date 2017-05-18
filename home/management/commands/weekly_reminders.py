@@ -19,7 +19,7 @@ class Command(BaseCommand):
         management.call_command('import_contacts')
         management.call_command('import_program')
         management.call_command('import_stock')
-        # management.call_command('import_warehouse')
+        management.call_command('import_warehouse')
 
         client = TembaClient('rapidpro.io', open('token').read().strip())
 
@@ -108,6 +108,96 @@ class Command(BaseCommand):
 
         # Add the context of missing stock data for Warehouses.
 
+        # Create missing stock reports
+        warehouse = pd.read_sql_query("select * from warehouse;", con=engine)
+
+        # Introducing Year for analysis
+        # must loop over the data in the pandas series to assign the new variable with isocalendar
+        # warehouse['year'] = warehouse.last_seen.isocalendar()[0]
+
+        warehouse['year'] = warehouse['last_seen'].map(lambda x: x.isocalendar()[0])
+        print(warehouse['year'].value_counts())
+
+        # FIXME - add cleaning to importation
+        # Weeknum data are not clean - not int
+        warehouse.weeknum = pd.to_numeric(warehouse.weeknum, errors='coerce')
+
+        # Clean out of range identification data - this deletes entire row where a NaN is found
+        # week 52 should not be hard coded.
+        warehouse = warehouse.query('weeknum==weeknum').query('weeknum>=1').query('weeknum<=52')
+        # Convert from float to int
+        warehouse.weeknum = warehouse.weeknum.astype(int)
+
+        warehouse['year_weeknum'] = zip(warehouse['year'], warehouse['weeknum'])
+        warehouse['iso_year_weeknum'] = warehouse['year_weeknum'].map(lambda x: Week(x[0], x[1]))
+
+        year, week, _ = date.today().isocalendar()
+        current_week = Week(year, week)
+
+        # since how many week this report is about
+        warehouse['since_x_weeks'] = warehouse['iso_year_weeknum'].map(lambda x: current_week - x)
+
+        # There are no types per se in warehouse data.  All sites are warehouses.
+        # to make the code more generic, assign correction to type variable in import_warehouse
+        # then all warehouses sites will be coded as 'sup'.
+
+        # For variable below - will not show output if referred to as warehouse.type only as warehouse['type']
+        warehouse['type'] = "Sup"
+        # warehouse['type'].value_counts()
+
+        # Merge siteID with first and second that all inactive sites are included in the analysis
+
+        # remove all cases that are not supervision level - with site id more than 101110001
+
+        warehouse_stomiss = warehouse.query('since_x_weeks>0').query('since_x_weeks<=8').query('siteid<101110001').groupby(
+            ['siteid', 'type'])['weeknum'].unique().map(
+            lambda x: list(sorted(set(range(week - 8, week)) - set(x)))).to_frame()
+
+        warehouse_stomiss = warehouse_stomiss.reset_index()
+        warehouse_stomiss = warehouse_stomiss.rename(index=str, columns={"weeknum": "missing_stock"})
+
+        # Need to add first and second
+        first = pd.read_sql_query("select * from First_admin;", con=engine)
+        first['siteid'] = first.state_num
+        first['sitename'] = first.state
+
+        second = pd.read_sql_query("select * from second_admin;", con=engine)
+        second['siteid'] = second.lga_num
+        second['sitename'] = second.lga
+
+        supervision_sites = pd.concat([second, first])
+
+        supervision_stomiss = pd.merge(supervision_sites, warehouse_stomiss, on='siteid', how='outer')
+
+        target_weeks = []
+        for i in range(1, 9):
+            target_weeks.append((current_week - i).week)
+
+        target_weeks = list(reversed(target_weeks))
+
+        supervision_stomiss['missing_stock'] = supervision_stomiss['missing_stock'].map(
+            lambda x: x if x == x else target_weeks)
+
+        supervision_stomiss['missing_stock_len'] = supervision_stomiss.missing_stock.map(lambda x: (len(x)))
+        supervision_stomiss = supervision_stomiss.query('missing_stock_len > 0')
+
+        # merge with contacts
+        contacts = pd.read_sql_query("select * from registration;", con=engine)
+
+        # If using same code as implementation - then add type
+        warehouse_reminders = pd.merge(supervision_stomiss, contacts, on=['siteid'])
+
+        warehouse_reminders['message'] = ""
+
+        def create_message(row_in_df):
+            row_in_df.message = "Dear %s from %s. Reminder to send" % (row_in_df['name'].rstrip('.'), row_in_df.sitename)
+            row_in_df.message += ' STOCK reports for weeks %s.' % (", ".join(map(lambda x: str(x), row_in_df.missing_stock)))
+            return row_in_df
+
+        warehouse_reminders = warehouse_reminders.apply(create_message, axis=1)
+
+        # FIXME merge reminders_sites and warehouse_reminders
+        # for export in excel just in case we need to use old back system of sending reminders through import contacts
         filename = "Weekly Reminders.xlsx"
         writer = pd.ExcelWriter(filename, engine='xlsxwriter')
         reminders_sites.to_excel(writer, 'Sheet1')
@@ -118,6 +208,9 @@ class Command(BaseCommand):
             print "Sending message '%s' to '%s' (%s)" % (row_in_df['message'], row_in_df['name'], row_in_df['contact_uuid'])
             # client.create_broadcast(row_in_df['message'], contacts=[row_in_df['contact_uuid']])
 
+        # Run reminders for implementation sites
         reminders_sites.apply(send_reminders, axis=1)
+        # Run reminders for warehouses
+        warehouse_reminders.apply(send_reminders, axis=1)
 
         print("weekly reminders exported to Excel")
