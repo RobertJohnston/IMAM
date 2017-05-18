@@ -3,17 +3,66 @@
 
 {% block content %}
 
-
     <title>Add map here</title>
 
+    <!--<img src="{% static 'map/img/red-splash-small.png' %}" class="responsive-img" style='max-height:60px;' alt="splash">-->
+
+<div id="stockGraph"></div>
+
+<script>
+    $(function () {
+        $('#stockGraph').highcharts({
+
+            subtitle: {
+            text: "Stock and Stock Margins by Week",
+            floating: true,
+            },
+
+            chart: {
+                type: 'column'
+            },
+
+            credits: {
+            enabled: false
+            },
+
+            xAxis: {
+                categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+                            '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
+                            '21', '22', '23', '24', '25', '26', '27', '28', '29', 30]
+            },
+
+            plotOptions: {
+                column: {
+                    dataLabels: {
+                        enabled: true,
+                        useHTML: true,
+                        formatter: function() {
+                            if (this.y == 0) {
+                                return '<div><img src="https://image.ibb.co/eSTgfk/red_splash_small.png"></div></div>';
+                            }
+                        }
+                    }
+                },
+                series: {
+                }
+            },
+
+            series: [{
+                data: [3, 4, 6, 0, 0, 0, 0, 0, 1, 6, 3, 2, 6, 0, 0, 2, 4, 0, 1, 6, 3, 2, 0, 2, 4, 0, 1, 6, 3, 2]
+            }]
+        });
+    });
+</script>
+
     <!--<div id="demoMap" style="height:250px"></div>-->
-    <!--<script src="OpenLayers.js"></script>-->
+    <!--<script src="OpenLayers.js">-->
+
     <!--<script>-->
         <!--map = new OpenLayers.Map("demoMap");-->
         <!--map.addLayer(new OpenLayers.Layer.OSM());-->
         <!--map.zoomToMaxExtent();-->
     <!--</script>-->
-
 
 {% endblock %}
 
