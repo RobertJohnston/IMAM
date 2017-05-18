@@ -41,13 +41,13 @@
             <!--adjust CSS for phones versus computers-->
         </select>
 
-        <select class="" id="filter-by-site-type" style="min-width: 40px">
+        <select class="" id="filter-by-site-type" style="min-width: 50px">
             <option value="All" selected="selected">All</option>
             <option value="OTP" selected="selected">OTP</option>
             <option value="SC" selected="selected">SC</option>
         </select>
 
-        <select class="" id="filter-by-year" style="min-width: 40px">
+        <select class="" id="filter-by-year" style="min-width: 50px">
             <!--make this section generic to select years in database-->
             <option value="2017" selected="selected">2017</option>
             <option value="2016" selected="selected">2016</option>
@@ -66,14 +66,14 @@
             <h4>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
 
             <div class="panel panel-default sites-panel">
-                    <table class="table">
-                        <tr>
-                            <td>Active sites</td><td class="centered"> <span id="number_of_active_sites" class="label label-success">X</span></td>
-                        </tr>
-                        <tr>
-                            <td>Inactive sites</td><td class="centered"><span id="number_of_inactive_sites"  class="label label-warning">X</span></td>
-                        </tr>
-                    </table>
+                <table class="table">
+                    <tr>
+                        <td>Active sites</td><td class="centered"> <span id="number_of_active_sites" class="label label-success">X</span></td>
+                    </tr>
+                    <tr>
+                        <td>Inactive sites</td><td class="centered"><span id="number_of_inactive_sites"  class="label label-warning">X</span></td>
+                    </tr>
+                </table>
             </div>
 
             <h3>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></h3>
@@ -81,9 +81,9 @@
         </center>
     </div>
 
-
     <script>
-    /* Start of workaround */
+
+/* Start of workaround */
 var Pointer = Highcharts.Pointer.prototype;
 Highcharts.Point.prototype.onMouseOver = function(e) {
   var point = this,
