@@ -13,13 +13,17 @@
     $(function () {
         $('#stockGraph').highcharts({
 
-            subtitle: {
-            text: "Stock and Stock Margins by Week",
-            floating: true,
-                },
             title: {
-            text: 'National'
+            text: 'National<br>Stock Balance by Week '
             },
+
+            subtitle: {
+                text: 'IMAM Nigeria add date',
+                align: 'right',
+                verticalAlign: 'bottom',
+                x: -50,
+                y: 10
+                },
 
             chart: {
                 type: 'column'
@@ -51,11 +55,7 @@
                 // Change Highcharts code if the legend overlaps the columns
             },
 
-            yAxis: {
-                title: {
-                    text: 'Cartons'
-                },
-            },
+
 
             xAxis: {
                 title: {
@@ -78,16 +78,39 @@
                         }
                     }
                 },
-                series: {
-                }
             },
 
-            series: [{
-                data: [0.3, 4, 16, 0, 0, 0.9, 0, 0, 11, 16, 23, 32, 46, 0, 0, 12, 4, 0, 21, 16, 3, 22, 0, 22, 24, 0, 11, 16, 23, 22]
-            }]
+            yAxis: {
+                title: {
+                    text: 'Cartons'
+                },
+            },
+
+            "series":[{
+                "name":"RUTF",
+                type: 'column',
+                "data": [0.3, 4, 16, 0, 10, 0.9, 10, 0, 11, 16, 23, 32, 46, 0, 0, 12, 4, 0, 21, 16, 3, 22, 0, 22, 24, 0, 11, 16, 23, 22],
+                color: '#72639B',
+                findNearestPointBy: 'x',
+                tooltip: {
+                    valueSuffix: ' cartons'
+                }
+            },  {
+                name: 'Two week margin',
+                type: 'line',
+                data: [20, 24, 26, 20,20, 20.9, 20, 20, 21, 26, 23, 22, 22, 20, 20, 22, 24, 20, 21, 26, 23, 22, 20, 22, 24, 20, 21, 26, 23, 22],
+                dashStyle: 'shortdot',
+                color: '#8A9861',
+                marker: { enabled: false},
+                findNearestPointBy: 'x',
+                tooltip: {
+                    pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.0f}</b>'
+                }
+            }],
         });
     });
 </script>
+
 
     <!--<div id="demoMap" style="height:250px"></div>-->
     <!--<script src="OpenLayers.js">-->
