@@ -63,7 +63,6 @@ class Command(BaseCommand):
         # stock missing reports
         stomiss = stock.query('since_x_weeks>0')\
                        .query('since_x_weeks<=8')\
-                       .query('siteid>101110001')\
                        .groupby(['siteid', 'type'])['weeknum']\
                        .unique()\
                        .map(lambda x: list(sorted(set(range(week - 8, week)) - set(x))))\
@@ -147,8 +146,6 @@ class Command(BaseCommand):
 
         # Merge siteID with first and second that all inactive sites are included in the analysis
 
-        # remove all cases that are not supervision level - with site id more than 101110001
-
         warehouse_stomiss = warehouse.query('since_x_weeks>0').query('since_x_weeks<=8').query('siteid<101110001').groupby(
             ['siteid', 'type'])['weeknum'].unique().map(
             lambda x: list(sorted(set(range(week - 8, week)) - set(x)))).to_frame()
@@ -206,11 +203,13 @@ class Command(BaseCommand):
 
         def send_reminders(row_in_df):
             print "Sending message '%s' to '%s' (%s)" % (row_in_df['message'], row_in_df['name'], row_in_df['contact_uuid'])
+            # API CALL - send_reminders
+            # Uncomment to activate the API
             # client.create_broadcast(row_in_df['message'], contacts=[row_in_df['contact_uuid']])
 
-        # Run reminders for implementation sites
+        # Send reminders to API for implementation sites
         reminders_sites.apply(send_reminders, axis=1)
-        # Run reminders for warehouses
+        # Send reminders to API for warehouses
         warehouse_reminders.apply(send_reminders, axis=1)
 
-        print("weekly reminders exported to Excel")
+        print (datetime.now().strftime('Weekly reminders sent at %d %b %Y %-H:%M:%S'))
