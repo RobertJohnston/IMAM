@@ -171,17 +171,9 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             return 1 + Math.ceil((firstThursday - tdt) / 604800000);
         }
 
-
         format_data = function(data) {
             return {
-                title: {text: data.title},
-
-                // subtitle not working - Why? a second subtitle is used below. Only one is allowed.
-                subtitle: {
-                    text: "Admissions and Performance Indicators by Week",
-                    floating: true,
-                },
-
+                title: {text: data.title + "<br>Admissions and Exits"},
                 subtitle: {
                     text: 'IMAM Nigeria ' + data.date,
                     align: 'right',
