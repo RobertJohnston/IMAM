@@ -205,11 +205,12 @@ class Command(BaseCommand):
             print "Sending message '%s' to '%s' (%s)" % (row_in_df['message'], row_in_df['name'], row_in_df['contact_uuid'])
             # API CALL - send_reminders
             # Uncomment to activate the API
-            # client.create_broadcast(row_in_df['message'], contacts=[row_in_df['contact_uuid']])
+            client.create_broadcast(row_in_df['message'], contacts=[row_in_df['contact_uuid']])
 
+        reminders_timer = datetime.now()
         # Send reminders to API for implementation sites
         reminders_sites.apply(send_reminders, axis=1)
         # Send reminders to API for warehouses
         warehouse_reminders.apply(send_reminders, axis=1)
 
-        print (datetime.now().strftime('Weekly reminders sent at %d %b %Y %-H:%M:%S'))
+        print datetime.now().strftime('Weekly reminders sent at %d %b %Y %-H:%M:%S'), 'Took %s time to talk to the API' % (datetime.now() - reminders_timer)
