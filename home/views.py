@@ -31,32 +31,44 @@ def weeks_for_year(year):
     last_week = date(year, 12, 28)
     return last_week.isocalendar()[1]
 
+# kind = national, state, LGA or site
+# num is the siteid
 
-def rate_by_week(df_filtered, df_stock, kind=None, num=None):
+# this will also be stock reporting by week
+
+def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
     # this is national level, no query
     if kind is None:
         df_queried = df_filtered
+        df_stock_queried = df_stock_filtered
 
     else:
+        # take only the rows where the kind (level) is identified by the site id
         df_queried = df_filtered.query('%s==%s' % (kind, num))
-
-    # iso_year_weeknum = Week(int(program_in_db.year), int(program_in_db.weeknum))
-    #
-    # program_in_db.iso_diff = (iso_year_weeknum - iso_rep_year_wn)
-    # program_in_db.since_x_weeks = current_week - iso_year_weeknum
+        df_stock_queried = df_stock_filtered.query('%s==%s' % (kind, num))
 
     df_queried['year_weeknum'] = zip(df_queried['year'], df_queried['weeknum'])
     df_queried['iso_year_weeknum'] = df_queried['year_weeknum'].map(lambda x: Week(x[0], x[1]))
+
+    df_stock_queried['year_weeknum'] = zip(df_stock_queried['year'], df_stock_queried['weeknum'])
+    df_stock_queried['iso_year_weeknum'] = df_stock_queried['year_weeknum'].map(lambda x: Week(x[0], x[1]))
 
     year, week, _ = date.today().isocalendar()
     current_week = Week(year, week)
     
     # since how many week this report is about
     df_queried['since_x_weeks'] = df_queried['iso_year_weeknum'].map(lambda x: current_week - x)
+    df_stock_queried['since_x_weeks'] = df_stock_queried['iso_year_weeknum'].map(lambda x: current_week - x)
 
+    # percentage of complete reporting
     report_rate = df_queried.query('since_x_weeks>0').query('since_x_weeks<=8').groupby(df_queried['siteid'])[
         'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
 
+    stock_report_rate = df_stock_queried.query('since_x_weeks>0').query('since_x_weeks<=8').groupby(df_stock_queried['siteid'])[
+        'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
+
+
+    #FIXME add stock reports to algorithm to determine active sites.
     active_sites = df_queried.query('since_x_weeks<=8')\
                              .query('siteid>101110001')\
                              .groupby(['siteid', 'type'])\
@@ -79,17 +91,17 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
         number_of_inactive_sites = None
         number_of_active_sites = None
 
-
+    # most recent stock report and week number
     if kind == 'siteid':
         def grab_first_if_exists(value_in_list):
             if len(value_in_list) > 0 and not np.isnan(value_in_list[0]):
                 return value_in_list[0]
             return None
 
-        latest_stock = df_stock.query('year==%s' % year)\
-                               .query('siteid==%s' % num)\
-                               .sort_values(by='weeknum', ascending=False)\
-                               .drop_duplicates(['siteid'], keep='first')
+        latest_stock = df_stock_filtered.query('year==%s' % year)\
+                                        .query('siteid==%s' % num)\
+                                        .sort_values(by='weeknum', ascending=False)\
+                                        .drop_duplicates(['siteid'], keep='first')
 
         latest_stock_report = grab_first_if_exists(latest_stock['rutf_bal_carton'].tolist())
         latest_stock_report_weeknum = grab_first_if_exists(latest_stock['weeknum'].tolist())
@@ -101,7 +113,28 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
 
     print(kind, latest_stock_report, latest_stock_report_weeknum)
 
-    adm_by_week = df_queried['amar'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum()
+    adm_by_week = df_queried['amar'].groupby([df_queried['year'], df_queried['weeknum']]).sum()
+    stock_by_week = df_stock_queried['rutf_bal_carton'].groupby([df_stock_queried['year'], df_stock_queried['weeknum']]).sum()
+
+
+    # Median RUTF use over past 8 weeks by week
+    max_since_x_weeks = df_stock_queried['since_x_weeks'].max()
+
+    two_weeks_margin = []
+
+    for i in sorted(df_stock_queried['since_x_weeks'].unique()):
+        # only valid if year == 2016
+        if i > (max_since_x_weeks - 7):
+            break
+
+        # FIXME window is broken because the dataframe is filtered already by year and the window will break at the beginning of the year
+
+        two_weeks_margin.append([
+            df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_used_carton'].median(),
+            df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['iso_year_weeknum'].max()
+        ])
+
+    two_weeks_margin = reversed(two_weeks_margin)
 
     # filter by one site
     # percentage of complete reporting for one site
@@ -123,7 +156,9 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
     # dmed_rate_by_week = np.where(dmed_rate_by_week != dmed_rate_by_week, None, dmed_rate_by_week)
     # tout_rate_by_week = np.where(tout_rate_by_week != tout_rate_by_week, None, tout_rate_by_week)
 
-    return number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum
+    return number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
+           dmed_rate_by_week, tout_rate_by_week, report_rate,\
+           stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum
 
 
 # Query database and create data for admissions graph
@@ -143,26 +178,32 @@ def adm(request):
     # this should be in load_data
     # All data should be cleaned in advance.
     df_filtered = df
+    df_stock_filtered = df_stock
     # REMOVE THIS WHEN DATA CLEANING IS DONE.
 
-
+    current_year, current_week, _ = date.today().isocalendar()
 
     # For all exit rate calculations see Final Report Consensus Meeting on M&E IMAM December 2010
     # UNICEF WCARO - Dakar Senegal
 
     # Filter by Year
-    df_filtered = df_filtered.query("year==%s" % request.GET.get("year", "2017"))
+    df_filtered = df_filtered.query("year==%s" % request.GET.get("year", current_year))
+    df_stock_filtered = df_stock_filtered.query("year==%s" % request.GET.get("year", current_year))
+
 
     # Filter by Site Type (all, outpatients OTP, inpatients IPF or SC)
         # There is no data in type var of ALL only OTP and SC
 
     if "site_type" not in request.GET or request.GET['site_type'] == "All" or request.GET['site_type'] not in ("OTP", "SC"):
         df_filtered = df_filtered
+        df_stock_filtered = df_stock_filtered
     elif request.GET['site_type'] == "OTP":
         df_filtered = df_filtered.query('type=="OTP"')
+        df_stock_filtered = df_stock_filtered.query('type=="OTP"')
         # if var name type == string - must be within quotes
     elif request.GET['site_type'] == "SC":
         df_filtered = df_filtered.query('type=="SC"')
+        df_stock_filtered = df_stock_filtered.query('type=="SC"')
     else:
         raise Exception("This site_type value is not permitted: %s" % request.GET['site_type'])
 
@@ -177,7 +218,9 @@ def adm(request):
 
     # default or national level
     if "site_filter" not in request.GET or request.GET['site_filter'] in ("", "null"):
-        number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock)
+        number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week,\
+        defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate,\
+        stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered)
 
         title = "National Level"
 
@@ -193,16 +236,19 @@ def adm(request):
 
         if data_type == "state":
             kind = "state_num"
-            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate , latest_stock_report, latest_stock_report_weeknum= rate_by_week(df_filtered, df_stock, kind, num)
+            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
+            dmed_rate_by_week, tout_rate_by_week, report_rate,\
+            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, kind, num)
 
             # in line below, django expects only one equal sign to get value.
             first_admin = First_admin.objects.get(state_num=num)
-
             title = "%s %s" % (first_admin.state, data_type.capitalize())
 
         elif data_type == "lga":
             kind = "lga_num"
-            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
+            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
+            dmed_rate_by_week, tout_rate_by_week, report_rate, \
+            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, kind, num)
 
             second_admin = Second_admin.objects.get(lga_num=num)
             title = "%s-LGA %s" % (second_admin.lga.title(),
@@ -211,13 +257,14 @@ def adm(request):
         elif data_type == "site":
             # result = rate_by_week(result, df_filtered, 'siteid')
             kind = "siteid"
-            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock, kind, num)
+            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
+            dmed_rate_by_week, tout_rate_by_week, report_rate, \
+            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, kind, num)
 
             site_level = Site.objects.get(siteid=num)
             title = "%s,  %s-LGA %s " % (site_level.sitename,
                                          site_level.lga_num.lga.title(),
                                          site_level.state_num.state)
-
         else:
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
 
@@ -236,7 +283,6 @@ def adm(request):
     # tout_rate_by_week = list(tout_rate_by_week)
 
     categories = []
-    current_year, current_week, _ = date.today().isocalendar()
 
     selected_year = int(request.GET.get("year", current_year))
 
@@ -261,6 +307,9 @@ def adm(request):
         return filled_list
 
     adm_by_week = fill_empty_entries(adm_by_week)
+    stock_by_week = fill_empty_entries(stock_by_week)
+    # FIXME fill blanks
+    two_weeks_margin = [x[0] for x in two_weeks_margin]
     dead_rate_by_week = fill_empty_entries(dead_rate_by_week)
     defu_rate_by_week = fill_empty_entries(defu_rate_by_week)
     dmed_rate_by_week = fill_empty_entries(dmed_rate_by_week)
@@ -282,6 +331,8 @@ def adm(request):
         "tout_rate_by_week": tout_rate_by_week,
         "number_of_inactive_sites": number_of_inactive_sites,
         "number_of_active_sites": number_of_active_sites,
+        "stock_by_week": map(lambda x: float("%2.1f" % x) if x is not None else x, stock_by_week),
+        "two_weeks_margin": two_weeks_margin,
         "latest_stock_report": latest_stock_report,
         "latest_stock_report_weeknum": latest_stock_report_weeknum,
         "report_rate": "%2.1f" % report_rate,
