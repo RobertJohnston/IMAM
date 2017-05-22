@@ -86,8 +86,7 @@ def rate_by_week(df_filtered, df_stock, kind=None, num=None):
                 return value_in_list[0]
             return None
 
-        # FIXME don't hardcode the year
-        latest_stock = df_stock.query('year==2017')\
+        latest_stock = df_stock.query('year==%s' % year)\
                                .query('siteid==%s' % num)\
                                .sort_values(by='weeknum', ascending=False)\
                                .drop_duplicates(['siteid'], keep='first')
