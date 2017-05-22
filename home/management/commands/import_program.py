@@ -14,6 +14,7 @@ from uuid import UUID
 # imports program data from RapidPro API, cleans data and saves to Postgres
 
 # FIXME change data entry to accept all data
+# and clean data immediately after
 # create variable valid (true/false)
 # Data errors such as strings instead of integers are not available
 # Other data entry mistakes such as aberrant values are still visible.
@@ -39,11 +40,13 @@ class Command(BaseCommand):
 
         a = 0
         # rapidpro expects a uuid to identify flow instead of a flow name
+
+        #Fixme put uuids in settings
         # The uuid is in the url of the flow : for example https://app.rapidpro.io/flow/editor/a9eed2f3-a92c-48dd-aa10-4f139b1171a4/
         for program_batch in clients_from_api.iterfetches(retry_on_rate_exceed=True):
 
             with transaction.atomic():
-            # Optimization tool - transaction.atomic -is turned off above as it hides errors.
+            # Optimization tool - transaction.atomic -turn off to debug as it hides errors.
 
                 # the API response is a list in a list
                 # to interpret this you have to loop over the content
@@ -195,6 +198,9 @@ class Command(BaseCommand):
                     if program_in_db.year == 2016 and program_in_db.weeknum < 22:
                         print('     Training data - (%s %s)' % (program_in_db.year, program_in_db.weeknum))
                         continue
+
+                    # Remove any cases from 2015
+
                     # Remove future reporting - recent data cannot surpass current year.
                     if program_in_db.year > today_year:
                         print('     Future reporting YEAR (%s)' % (program_in_db.year))
