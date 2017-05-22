@@ -16,6 +16,15 @@ from uuid import UUID
 class Command(BaseCommand):
     help = 'Imports stock data to SQL through API'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='all',
+            default=False,
+            help='Import all data',
+        )
+        
     # A command must define handle
     def handle(self, *args, **options):
         client = TembaClient('rapidpro.io', open('token').read().strip())
@@ -24,9 +33,19 @@ class Command(BaseCommand):
 
         last_update_time = LastUpdatedAPICall.objects.filter(kind="stock").first()
 
-        if last_update_time:
+        # Code below is explicitly describing all possible four conditions.
+        # T/T   T/F    F/T    F/F
+        if options['all'] and last_update_time:
+            clients_from_api = client.get_runs(flow=u'a678268d-0e42-43f1-82cd-aa12117d145d')
+
+        elif options['all'] and not last_update_time:
+            clients_from_api = client.get_runs(flow=u'a678268d-0e42-43f1-82cd-aa12117d145d')
+            last_update_time = LastUpdatedAPICall(kind="stock")
+
+        elif not options['all'] and last_update_time:
             clients_from_api = client.get_runs(flow=u'a678268d-0e42-43f1-82cd-aa12117d145d', after=last_update_time.timestamp)
-        else:
+
+        elif not options['all'] and not last_update_time:
             clients_from_api = client.get_runs(flow=u'a678268d-0e42-43f1-82cd-aa12117d145d')
             last_update_time = LastUpdatedAPICall(kind="stock")
 
@@ -99,10 +118,8 @@ class Command(BaseCommand):
                         raise Exception()
 
 
-
-
                     # Introducing Year for X axis
-                    # Remember that this code is running in a loop over all data in the api call
+                    # Remember that this code is running in a loop over all rows in data during the api call
                     stock_in_db.year = stock_in_db.last_seen.isocalendar()[0]
                     last_seen_weeknum = stock_in_db.last_seen.isocalendar()[1]
 
@@ -111,6 +128,29 @@ class Command(BaseCommand):
                     # except for reports with weeknum <=44 and more than 8 weeks in past
                     if stock_in_db.weeknum > 44 and last_seen_weeknum < stock_in_db.weeknum:
                         stock_in_db.year -= 1
+
+                    # FIXME
+                    # add data cleaning
+
+                    # df = df.query('not (weeknum < 22 & year <=2016)')
+                    # df = df.query('not (weeknum > %s & year ==%s)' % (week, year))
+                    # df = df.query('year >= 2016')
+                    # remove future reports
+
+                    # Create state_num and LGA_num
+                    # Implementation and LGA level
+                    if len(str(contact.siteid)) == 9 or len(str(contact.siteid)) == 3:
+                        stock_in_db.state_num = int(str(contact.siteid)[:1])
+                        stock_in_db.lga_num = int(str(contact.siteid)[:3])
+                    elif len(str(contact.siteid)) == 10 or len(str(contact.siteid)) == 4:
+                        stock_in_db.state_num = int(str(contact.siteid)[:2])
+                        stock_in_db.lga_num = int(str(contact.siteid)[:4])
+                    # State level
+                    elif len(str(contact.siteid)) == 1 or len(str(contact.siteid)) == 2:
+                        stock_in_db.state_num = int(contact.siteid)
+                        stock_in_db.lga_num = None
+                    else:
+                        raise Exception()
 
                     stock_in_db.save()  # Drop duplicates
 
