@@ -80,6 +80,9 @@
         </center>
     </div>
 
+    <div id="stock-chart">
+    </div>
+
     <script>
 
 /* Start of workaround for fixing the tooltips to one column at a time*/
@@ -321,8 +324,121 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             }
         }
 
+        format_stock_data = function(data) {
+            return {
+                    title: {
+                    text: 'National<br>Stock Balance by Week '
+                },
+
+                subtitle: {
+                    text: 'IMAM Nigeria add date',
+                    align: 'right',
+                    verticalAlign: 'bottom',
+                    x: -50,
+                    y: 10
+                },
+
+                chart: {
+                    type: 'column',
+                    renderTo: "stock-chart"
+                },
+
+                credits: {
+                    enabled: false
+                },
+
+                tooltip: {
+                    shared: true,
+                    /* formatter: function() {
+                        return 'stuff'
+                    } */
+                    xDateFormat: '%e %b %Y'
+                },
+
+                legend: {
+                    layout: 'vertical',
+                    align: 'left',
+                    x: 80,
+                    verticalAlign: 'top',
+                    y: 20,
+                    floating: true,
+                    borderColor: '#ddd',
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+                    // Change Highcharts code if the legend overlaps the columns
+                },
+
+                xAxis: [{
+
+                    // highcharts automatically knows the first of 2 # in series is x axis.
+                    labels: {
+                        formatter: function() {
+                            var a = new Date(0);
+                            a.setUTCMilliseconds(this.value);
+                            return a.getFullYear() + ' ' + ISO8601_week_no(a);
+                        }
+                    },
+                    type: 'datetime',
+                    categories: data.categories,
+                    min: 0,
+                    max: data.categories.length -1,
+                    // length -1 is used because the counts are 1 to x and the data are 0 to x
+
+                    crosshair: true,
+                    title: {
+                        text: 'Week Number'
+                    },
+                }],
+
+                plotOptions: {
+                    column: {
+                        dataLabels: {
+                            enabled: true,
+                            useHTML: true,
+                            formatter: function() {
+                                if (this.y < 1) {
+                                    return '<div><img src="https://image.ibb.co/dbbekv/red_splash_vs.png"></div></div>';
+                                }
+                            }
+                        }
+                    },
+                },
+
+                yAxis: {
+                    title: {
+                        text: 'Cartons'
+                    },
+                },
+
+                "series":[{
+                    "name":"RUTF",
+                    type: 'column',
+                    "data": data.stock_by_week,
+                    color: '#72639B',
+                    findNearestPointBy: 'x',
+                    tooltip: {
+                        valueSuffix: ' cartons'
+                    }
+                },  {
+                    name: 'Two week margin',
+                    type: 'line',
+                    data: data.two_weeks_margin,
+                    dashStyle: 'shortdot',
+                    color: '#8A9861',
+                    marker: { enabled: false},
+                    findNearestPointBy: 'x',
+                    tooltip: {
+                        pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.0f}</b>'
+                    }
+                }],
+            }
+        }
+
         $.getJSON("/adm/").success(function(data) {
             amarChart = new Highcharts.Chart(format_data(data));
+            stockChart = new Highcharts.Chart(format_stock_data(data));
+
             $('.reporting-rate').show();
             $("#reporting-rate").html(data.report_rate);
 
@@ -347,6 +463,8 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
 
             $.getJSON("/adm/?site_filter=" + siteFilter + "&site_type=" + site_typeFilter + "&year=" + yearFilter).success(function(data) {
                 amarChart = new Highcharts.Chart(format_data(data));
+                stockChart = new Highcharts.Chart(format_stock_data(data));
+
                 $('.reporting-rate').show();
                 $("#reporting-rate").html(data.report_rate);
 
