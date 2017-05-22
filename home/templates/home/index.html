@@ -406,6 +406,11 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                 },
 
                 yAxis: {
+                    labels: {
+                        formatter: function () {
+                            return this.value;
+                        }
+                    },
                     title: {
                         text: 'Cartons'
                     },
