@@ -20,7 +20,7 @@ def iso_year_start(iso_year):
     delta = timedelta(fourth_jan.isoweekday() - 1)
     return fourth_jan - delta
 
-# Beware for week 52 of 2016 is presented as 2017 (first week of year)
+# Beware of week 52 of 2016 is presented as 2017 (first week of year)
 def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = iso_year_start(iso_year)
@@ -31,11 +31,15 @@ def weeks_for_year(year):
     last_week = date(year, 12, 28)
     return last_week.isocalendar()[1]
 
-# kind = national, state, LGA or site
-# num is the siteid
+# kind = the level -  national, state, LGA or site
+# num is the state_num, lga_num or siteid
+# preferable to be explict than implicit
+# for example
+# present results on state level with state_num of 2
+# present results on lga level with lga_num of 202
+# present results on site level with siteid of 202110001
 
-# this will also be stock reporting by week
-
+# The rate_by_week function is used by program and stock reporting
 def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
     # this is national level, no query
     if kind is None:
@@ -56,7 +60,8 @@ def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
     year, week, _ = date.today().isocalendar()
     current_week = Week(year, week)
     
-    # since how many week this report is about
+    # Calculate since_x_weeks
+    # Can we use same variable for both program and stock reports ?  if we work with incomplete data, use fillna ?
     df_queried['since_x_weeks'] = df_queried['iso_year_weeknum'].map(lambda x: current_week - x)
     df_stock_queried['since_x_weeks'] = df_stock_queried['iso_year_weeknum'].map(lambda x: current_week - x)
 
@@ -69,6 +74,8 @@ def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
 
 
     #FIXME add stock reports to algorithm to determine active sites.
+    # Site Active True False should go in the site database
+    # State and LGA are always considered active, should always receive reports, but we do not report as active or inactive
     active_sites = df_queried.query('since_x_weeks<=8')\
                              .query('siteid>101110001')\
                              .groupby(['siteid', 'type'])\
@@ -103,7 +110,7 @@ def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
                                         .sort_values(by='weeknum', ascending=False)\
                                         .drop_duplicates(['siteid'], keep='first')
 
-        latest_stock_report = grab_first_if_exists(latest_stock['rutf_bal_carton'].tolist())
+        latest_stock_report = grab_first_if_exists(latest_stock['rutf_bal'].tolist())
         latest_stock_report_weeknum = grab_first_if_exists(latest_stock['weeknum'].tolist())
 
     # for National, State, and LGA level
@@ -113,8 +120,9 @@ def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
 
     print(kind, latest_stock_report, latest_stock_report_weeknum)
 
+    # Admissions and stock balance by week
     adm_by_week = df_queried['amar'].groupby([df_queried['year'], df_queried['weeknum']]).sum()
-    stock_by_week = df_stock_queried['rutf_bal_carton'].groupby([df_stock_queried['year'], df_stock_queried['weeknum']]).sum()
+    stock_by_week = df_stock_queried['rutf_bal'].groupby([df_stock_queried['year'], df_stock_queried['weeknum']]).sum()
 
 
     # Median RUTF use over past 8 weeks by week
@@ -128,12 +136,15 @@ def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
             break
 
         # FIXME window is broken because the dataframe is filtered already by year and the window will break at the beginning of the year
+        # when the number of remaining weeks in the dataframe is less than 8.
+        # run the two weeks margin calculation on the entire clean dataframe and store result in tuple?
 
         two_weeks_margin.append([
-            df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_used_carton'].median(),
+            df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_out'].median(),
             df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['iso_year_weeknum'].max()
         ])
 
+    # two_weeks_margin code does not correctly append result to correct week
     two_weeks_margin = reversed(two_weeks_margin)
 
     # filter by one site
@@ -170,16 +181,25 @@ def adm(request):
     df = pd.read_sql_query("select * from program;", con=engine)
     # STOCK DATA
     df_stock = pd.read_sql_query("select * from stock;", con=engine)
+    # REMOVE THIS WHEN DATA CLEANING IS DONE.
+    # this should be in import stock
+    # All data should be cleaned in advance.
+    df_stock['rutf_out'] = df_stock['rutf_used_carton'] + (df_stock['rutf_used_sachet'] / 150)
+    df_stock['rutf_bal'] = df_stock['rutf_bal_carton'] + (df_stock['rutf_bal_sachet'] / 150)
+
+    # F75 sachets per carton - 120
+    df_stock['f75_bal'] = df_stock['f75_bal_carton'] + (df_stock['f75_bal_sachet'] / 120)
+    # F100 sachets per carton - 90
+    df_stock['f100_bal'] = df_stock['f100_bal_carton'] + (df_stock['f100_bal_sachet'] / 90)
+
     # WAREHOUSE DATA
     # df_warehouse= pd.read_sql_query("select * from warehouse;", con=engine)
 
 
-    # REMOVE THIS WHEN DATA CLEANING IS DONE.
-    # this should be in load_data
-    # All data should be cleaned in advance.
+
     df_filtered = df
     df_stock_filtered = df_stock
-    # REMOVE THIS WHEN DATA CLEANING IS DONE.
+
 
     current_year, current_week, _ = date.today().isocalendar()
 
