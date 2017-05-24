@@ -300,7 +300,7 @@ def adm(request):
             recent_stock_report.append({
                 "state": row['state'],
                 "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
-                "balance": int(row['rutf_bal']) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+                "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
             })
 
     else:
@@ -309,7 +309,7 @@ def adm(request):
         data_type, num = request.GET['site_filter'].split('-', 1)
         # add name to datatype here
 
-        # Always sanitize input for securitya
+        # Always sanitize input for security
         # ideally we should use a django form here
         assert num.isdigit()
 
@@ -326,6 +326,33 @@ def adm(request):
             first_admin = First_admin.objects.get(state_num=num)
             title = "%s %s" % (first_admin.state, data_type.capitalize())
 
+            # most recent stock reports
+            lga_df = df_warehouse_filtered.sort_values(by=['year', 'weeknum'], ascending=[0,0]).drop_duplicates(subset='siteid')
+
+            all_program_lgas = pd.read_sql_query("select * from registration;", con=engine)
+            all_program_lgas = all_program_lgas.sort_values(by=['lga_num', 'siteid'], ascending=[1, 1]).drop_duplicates(subset='lga_num')
+            merge_lga = pd.merge(left=all_program_lgas, right=lga_df, left_on='lga_num', right_on='siteid', how='outer')
+            merge_lga['lga_num'] = pd.to_numeric(merge_lga['lga_num'], errors='coerce')
+            merge_lga = merge_lga.query('lga_num==lga_num')
+            merge_lga['lga_num'] = merge_lga['lga_num'].astype('int')
+            # FIXME do data cleaning remove future reports
+            merge_lga = merge_lga.query('lga_num>=200')
+            # Add site name from postgres
+            merge_lga.loc[:, 'lga'] = merge_lga['lga_num'].map(lambda x: Second_admin.objects.get(lga_num=x)
+                    .lga.strip() + " LGA" if Second_admin.objects.filter(lga_num=x) else "")
+
+            # Query one state
+            # must put the string equation in parentheses to add the %n to string first
+            merge_lga = merge_lga.query('state_num==%s' % num)
+
+            for index, row in merge_lga.iterrows():
+                recent_stock_report.append({
+                    "state": row['lga'],
+                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
+                    #int(row['year']) if row['year'] == row['year'] else "No Data",
+                    "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+                })
+
         elif data_type == "lga":
             kind = "lga_num"
             number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
@@ -335,6 +362,29 @@ def adm(request):
             second_admin = Second_admin.objects.get(lga_num=num)
             title = "%s-LGA %s" % (second_admin.lga.title(),
                                    second_admin.state_num.state.title())
+
+            # Most recent stock report - LGA
+            # select one LGA
+            site_df = df_stock_filtered.query('lga_num==%s' % num)
+            # FIXME don't hardcode week number and do data cleaning instead in the future
+            site_df = site_df.query('siteid>201000000').query('weeknum<22 & year==2017')
+            site_df['rutf_bal'] = site_df['rutf_bal_carton'] + (site_df['rutf_bal_sachet'] / 150)
+            # Must add in most recent reports for stabilization centers also
+            site_df = site_df.query('type=="OTP"')
+            site_df = site_df.sort_values(by=['year', 'weeknum', 'type'], ascending=[0, 0, 0])
+            site_df = site_df.drop_duplicates(subset=['siteid', 'type'])
+            # Add site name from postgres
+            site_df.loc[:, 'sitename'] = site_df['siteid'].map(lambda x: Site.objects.get(siteid=x)
+                                    .sitename.strip() if Site.objects.filter(siteid=x) else "")
+
+            for index, row in site_df.iterrows():
+                recent_stock_report.append({
+                    "state": row['sitename'],
+                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
+                    #int(row['year']) if row['year'] == row['year'] else "No Data",
+                    "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+                })
+
 
         elif data_type == "site":
             # result = rate_by_week(result, df_filtered, 'siteid')
