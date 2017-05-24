@@ -62,7 +62,7 @@
 
     <div class="reporting-rate">
         <center>
-            <h4>Program Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
+            <h4>Program Reporting rate: <span id="program-reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
         </center>
     </div>
 
@@ -456,7 +456,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         <tr>\
             <th>State</th>\
             <th>Week Number</th>\
-            <th>Balance</th>\
+            <th>RUTF Balance</th>\
         </tr>\
         {{#.}}\
         <tr>\
@@ -467,6 +467,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         {{/.}}\
         </table>')
 
+        // initialization of the page
         $.getJSON("/adm/").success(function(data) {
             amarChart = new Highcharts.Chart(format_data(data));
             stockChart = new Highcharts.Chart(format_stock_data(data));
@@ -474,7 +475,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             $("#last-reports-table").html(table_template(data.recent_stock_report));
 
             $('.reporting-rate').show();
-            $("#reporting-rate").html(data.report_rate);
+            $("#program-reporting-rate").html(data.report_rate);
 
             $("#latest_stock_report").html(data.latest_stock_report);
             $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
@@ -502,8 +503,10 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                 amarChart = new Highcharts.Chart(format_data(data));
                 stockChart = new Highcharts.Chart(format_stock_data(data));
 
+                $("#last-reports-table").html(table_template(data.recent_stock_report));
+
                 $('.reporting-rate').show();
-                $("#reporting-rate").html(data.report_rate);
+                $("#program-reporting-rate").html(data.report_rate);
 
                 $("#latest_stock_report").html(data.latest_stock_report);
                 $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
