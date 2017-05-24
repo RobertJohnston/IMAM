@@ -62,29 +62,40 @@
 
     <div class="reporting-rate">
         <center>
-            <h4>Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
-
-            <div class="panel panel-default sites-panel">
-                <table class="table">
-                    <tr>
-                        <td>Active sites</td><td class="centered"> <span id="number_of_active_sites" class="label label-success">X</span></td>
-                    </tr>
-                    <tr>
-                        <td>Inactive sites</td><td class="centered"><span id="number_of_inactive_sites"  class="label label-warning">X</span></td>
-                    </tr>
-                </table>
-            </div>
-
-            <h3>Current stocks: <span id="latest_stock_report"></span> Cartons  - Week number <span id="latest_stock_report_weeknum"></span></h3>
-            <p>(add State and LGA Results)</p>
+            <h4>Program Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
         </center>
     </div>
 
+    <div class="row">
+        <div class="col-md-12">
+             <div class="panel panel-default stock-report-panel">
+                    <table class="table">
+                        <tr>
+                            <td class="centered">Active sites <span id="number_of_active_sites" class="label label-success">X</span></td>
+                            <td class="centered">Inactive sites <span id="number_of_inactive_sites"  class="label label-warning">X</span></td>
+                        </tr>
+                    </table>
+             </div>
+        </div>
+    </div>
+
+
     <div id="stock-chart">
+        <div class="loader-wrapper">
+        </div>
+    </div>
+
+    <div class="reporting-rate">
+        <center>
+            <h4>Stock Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
+        </center>
+        <p>Most Recent Stock Reports</p>
+        <div id="last-reports-table"></div>
+
     </div>
 
     <script>
-
+{% verbatim %}
 /* Start of workaround for fixing the tooltips to one column at a time*/
 var Pointer = Highcharts.Pointer.prototype;
 Highcharts.Point.prototype.onMouseOver = function(e) {
@@ -440,9 +451,27 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             }
         }
 
+        var table_template = Handlebars.compile('\
+        <table class="table table-bordered">\
+        <tr>\
+            <th>State</th>\
+            <th>Week Number</th>\
+            <th>Balance</th>\
+        </tr>\
+        {{#.}}\
+        <tr>\
+            <td>{{ state }}</td>\
+            <td>{{ weeknum }}</td>\
+            <td>{{ balance }}</td>\
+        </tr>\
+        {{/.}}\
+        </table>')
+
         $.getJSON("/adm/").success(function(data) {
             amarChart = new Highcharts.Chart(format_data(data));
             stockChart = new Highcharts.Chart(format_stock_data(data));
+
+            $("#last-reports-table").html(table_template(data.recent_stock_report));
 
             $('.reporting-rate').show();
             $("#reporting-rate").html(data.report_rate);
@@ -451,6 +480,9 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
             $("#number_of_active_sites").html(data.number_of_active_sites);
             $("#number_of_inactive_sites").html(data.number_of_inactive_sites);
+        }).error(function() {
+            console.log("Error while fetching chart data:");
+            console.log(arguments);
         });
 
         // on select event - run code in {} below
@@ -489,6 +521,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
 
         $("#filter-by-year").on("select2:select", updateGraph);
 
+{% endverbatim %}
     </script>
 
 
