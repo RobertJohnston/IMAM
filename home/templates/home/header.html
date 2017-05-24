@@ -10,6 +10,7 @@
 
 	<!--Include Jquery and highcharts library-->
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+	<script src="{% static 'home/js/handlebars-v4.0.10.js' %}"></script>
 	<script src="https://code.highcharts.com/highcharts.js"></script>
 	<script src="https://code.highcharts.com/modules/exporting.js"></script>
 
@@ -73,6 +74,12 @@
 	.sites-panel {
 		margin: auto;
 		width: 200px;
+	}
+
+	.stock-report-panel {
+		margin: auto;
+		max-width: 400px;
+		margin-bottom: 20px;
 	}
 
 	@media (max-width: 768px) {
