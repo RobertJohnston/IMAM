@@ -40,7 +40,7 @@ def weeks_for_year(year):
 # present results on site level with siteid of 202110001
 
 # The rate_by_week function is used by program and stock reporting
-def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
+def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=None, num=None):
     # this is national level, no query
     if kind is None:
         df_queried = df_filtered
@@ -118,34 +118,80 @@ def rate_by_week(df_filtered, df_stock_filtered, kind=None, num=None):
         latest_stock_report = None
         latest_stock_report_weeknum = None
 
-    print(kind, latest_stock_report, latest_stock_report_weeknum)
-
     # Admissions and stock balance by week
     adm_by_week = df_queried['amar'].groupby([df_queried['year'], df_queried['weeknum']]).sum()
-    stock_by_week = df_stock_queried['rutf_bal'].groupby([df_stock_queried['year'], df_stock_queried['weeknum']]).sum()
+
+    if kind in ("lga_num", "state_num", None):
+        if kind is not None:
+            site_df = df_stock_queried.query('siteid > 200000000').query("%s==%s" % (kind, num))
+            df_warehouse_queried = df_warehouse_filtered.query("siteid==%s" % num)
+            stock_by_week = df_warehouse_queried['rutf_bal'].groupby([df_warehouse_queried['year'], df_warehouse_queried['weeknum']]).sum()
+        else:
+            site_df = df_stock_queried
+            df_warehouse_queried = df_warehouse_filtered
+            stock_by_week = []
 
 
-    # Median RUTF use over past 8 weeks by week
-    max_since_x_weeks = df_stock_queried['since_x_weeks'].max()
 
-    two_weeks_margin = []
+        two_weeks_margin = {}
 
-    for i in sorted(df_stock_queried['since_x_weeks'].unique()):
-        # only valid if year == 2016
-        if i > (max_since_x_weeks - 7):
-            break
+        max_since_x_weeks = site_df['since_x_weeks'].max()
 
-        # FIXME window is broken because the dataframe is filtered already by year and the window will break at the beginning of the year
-        # when the number of remaining weeks in the dataframe is less than 8.
-        # run the two weeks margin calculation on the entire clean dataframe and store result in tuple?
+        for i in sorted(site_df['since_x_weeks'].unique()):
+            if i > max_since_x_weeks:
+                break
 
-        two_weeks_margin.append([
-            df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_out'].median(),
-            df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['iso_year_weeknum'].max()
-        ])
+            isoweek = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i)).groupby('siteid')['iso_year_weeknum'].max().max()
+            rutf_out = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i)).groupby('siteid')['rutf_used_carton'].median().sum()
 
-    # two_weeks_margin code does not correctly append result to correct week
-    two_weeks_margin = reversed(two_weeks_margin)
+            isoweek = iso_to_gregorian(isoweek.year, isoweek.week)
+
+            if isoweek not in two_weeks_margin:
+                two_weeks_margin[isoweek] = rutf_out if rutf_out == rutf_out else 0
+            else:
+                two_weeks_margin[isoweek] = two_weeks_margin[isoweek] + (rutf_out if rutf_out == rutf_out else 0)
+
+        #
+        # for siteid in df_stock_queried.query('siteid > 200000000').query("%s==%s" % (kind, num))['siteid'].unique():
+        #     site_df = df_stock_queried.query('siteid==%s' % siteid)
+        #     max_since_x_weeks = site_df['since_x_weeks'].max()
+        #
+        #     for i in sorted(site_df['since_x_weeks'].unique()):
+        #         if i > max_since_x_weeks:
+        #             break
+        #
+        #         isoweek = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['iso_year_weeknum'].max()
+        #         rutf_out = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_used_carton'].median()
+        #
+        #         isoweek = iso_to_gregorian(isoweek.year, isoweek.week)
+        #         print siteid, isoweek, rutf_out
+        #         # print iso_year_weeknum, iso_to_gregorian(iso_year_weeknum.year, iso_year_weeknum.week)
+        #         if isoweek not in two_weeks_margin:
+        #             two_weeks_margin[isoweek] = rutf_out if rutf_out == rutf_out else 0
+        #         else:
+        #             two_weeks_margin[isoweek] = two_weeks_margin[isoweek] + (rutf_out if rutf_out == rutf_out else 0)
+
+
+    else:  # site situation
+        stock_by_week = df_stock_queried['rutf_bal'].groupby([df_stock_queried['year'], df_stock_queried['weeknum']]).sum()
+
+        # Median RUTF use over past 8 weeks by week
+        max_since_x_weeks = df_stock_queried['since_x_weeks'].max()
+
+        # calculate the 2 weeks margin using a moving window
+        two_weeks_margin = {}
+
+        for i in sorted(df_stock_queried['since_x_weeks'].unique()):
+            # only valid if year == 2016
+            if i > max_since_x_weeks:
+                break
+
+            # FIXME window is broken because the dataframe is filtered already by year and the window will break at the beginning of the year
+            # when the number of remaining weeks in the dataframe is less than 8.
+            # run the two weeks margin calculation on the entire clean dataframe and store result in tuple?
+
+            iso_year_weeknum = df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['iso_year_weeknum'].max()
+            two_weeks_margin[iso_to_gregorian(iso_year_weeknum.year, iso_year_weeknum.week)] = df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_out'].median()
 
     # filter by one site
     # percentage of complete reporting for one site
@@ -181,25 +227,24 @@ def adm(request):
     df = pd.read_sql_query("select * from program;", con=engine)
     # STOCK DATA
     df_stock = pd.read_sql_query("select * from stock;", con=engine)
+
     # REMOVE THIS WHEN DATA CLEANING IS DONE.
     # this should be in import stock
     # All data should be cleaned in advance.
-    df_stock['rutf_out'] = df_stock['rutf_used_carton'] + (df_stock['rutf_used_sachet'] / 150)
-    df_stock['rutf_bal'] = df_stock['rutf_bal_carton'] + (df_stock['rutf_bal_sachet'] / 150)
-
+    df_stock['rutf_out'] = df_stock['rutf_used_carton'] + (df_stock['rutf_used_sachet'] / 150.)
+    df_stock['rutf_bal'] = df_stock['rutf_bal_carton'] + (df_stock['rutf_bal_sachet'] / 150.)
     # F75 sachets per carton - 120
-    df_stock['f75_bal'] = df_stock['f75_bal_carton'] + (df_stock['f75_bal_sachet'] / 120)
+    df_stock['f75_bal'] = df_stock['f75_bal_carton'] + (df_stock['f75_bal_sachet'] / 120.)
     # F100 sachets per carton - 90
-    df_stock['f100_bal'] = df_stock['f100_bal_carton'] + (df_stock['f100_bal_sachet'] / 90)
+    df_stock['f100_bal'] = df_stock['f100_bal_carton'] + (df_stock['f100_bal_sachet'] / 90.)
 
     # WAREHOUSE DATA
-    # df_warehouse= pd.read_sql_query("select * from warehouse;", con=engine)
-
+    df_warehouse = pd.read_sql_query("select * from warehouse;", con=engine)
 
 
     df_filtered = df
     df_stock_filtered = df_stock
-
+    df_warehouse_filtered = df_warehouse
 
     current_year, current_week, _ = date.today().isocalendar()
 
@@ -209,11 +254,9 @@ def adm(request):
     # Filter by Year
     df_filtered = df_filtered.query("year==%s" % request.GET.get("year", current_year))
     df_stock_filtered = df_stock_filtered.query("year==%s" % request.GET.get("year", current_year))
-
+    df_warehouse_filtered = df_warehouse_filtered.query("year==%s" % request.GET.get("year", current_year))
 
     # Filter by Site Type (all, outpatients OTP, inpatients IPF or SC)
-        # There is no data in type var of ALL only OTP and SC
-
     if "site_type" not in request.GET or request.GET['site_type'] == "All" or request.GET['site_type'] not in ("OTP", "SC"):
         df_filtered = df_filtered
         df_stock_filtered = df_stock_filtered
@@ -240,9 +283,25 @@ def adm(request):
     if "site_filter" not in request.GET or request.GET['site_filter'] in ("", "null"):
         number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week,\
         defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, report_rate,\
-        stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered)
+        stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered)
 
         title = "National Level"
+
+        # list of most recent stock reports from states
+
+        
+        state_df = df_warehouse_filtered.sort_values(by=['year', 'weeknum'], ascending=[0, 0]).drop_duplicates(subset='siteid')
+        state_df = state_df.query('siteid<40').query('siteid>1')
+        all_states = pd.read_sql_query("select * from first_admin;", con=engine)
+        merge_states = pd.merge(left=all_states, right=state_df, left_on='state_num', right_on='siteid', how='outer')
+
+        recent_stock_report = []
+        for index, row in merge_states.iterrows():
+            recent_stock_report.append({
+                "state": row['state'],
+                "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
+                "balance": int(row['rutf_bal']) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+            })
 
     else:
         # request format is: state-23, lga-333, siteid-101110001
@@ -250,15 +309,18 @@ def adm(request):
         data_type, num = request.GET['site_filter'].split('-', 1)
         # add name to datatype here
 
-        # Always sanitize input for security
+        # Always sanitize input for securitya
         # ideally we should use a django form here
         assert num.isdigit()
+
+        # stock reports for state, lga and site
+        recent_stock_report = []
 
         if data_type == "state":
             kind = "state_num"
             number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
             dmed_rate_by_week, tout_rate_by_week, report_rate,\
-            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, kind, num)
+            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             # in line below, django expects only one equal sign to get value.
             first_admin = First_admin.objects.get(state_num=num)
@@ -268,7 +330,7 @@ def adm(request):
             kind = "lga_num"
             number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
             dmed_rate_by_week, tout_rate_by_week, report_rate, \
-            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, kind, num)
+            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             second_admin = Second_admin.objects.get(lga_num=num)
             title = "%s-LGA %s" % (second_admin.lga.title(),
@@ -279,7 +341,7 @@ def adm(request):
             kind = "siteid"
             number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
             dmed_rate_by_week, tout_rate_by_week, report_rate, \
-            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, kind, num)
+            stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             site_level = Site.objects.get(siteid=num)
             title = "%s,  %s-LGA %s " % (site_level.sitename,
@@ -327,9 +389,10 @@ def adm(request):
         return filled_list
 
     adm_by_week = fill_empty_entries(adm_by_week)
-    stock_by_week = fill_empty_entries(stock_by_week)
-    # FIXME fill blanks
-    two_weeks_margin = [x[0] for x in two_weeks_margin]
+    stock_by_week = fill_empty_entries(stock_by_week) if len(stock_by_week) else []
+
+    # here two_weeks_maring is a dictionary where the keys are timestamp like in the categories list
+    two_weeks_margin = [two_weeks_margin.get(x) for x in categories]
     dead_rate_by_week = fill_empty_entries(dead_rate_by_week)
     defu_rate_by_week = fill_empty_entries(defu_rate_by_week)
     dmed_rate_by_week = fill_empty_entries(dmed_rate_by_week)
@@ -356,6 +419,7 @@ def adm(request):
         "latest_stock_report": latest_stock_report,
         "latest_stock_report_weeknum": latest_stock_report_weeknum,
         "report_rate": "%2.1f" % report_rate,
+        "recent_stock_report": recent_stock_report,
         "title": title,
         "date": date.today().strftime("%d-%m-%Y"),
     }))
