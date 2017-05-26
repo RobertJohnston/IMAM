@@ -13,6 +13,7 @@ from sqlalchemy import create_engine
 
 from models import First_admin, Second_admin, Site
 
+
 # can put in utilities.py
 def iso_year_start(iso_year):
     "The gregorian calendar date of the first day of the given ISO year"
@@ -20,21 +21,23 @@ def iso_year_start(iso_year):
     delta = timedelta(fourth_jan.isoweekday() - 1)
     return fourth_jan - delta
 
-# Beware of week 52 of 2016 is presented as 2017 (first week of year)
+
+# Beware of week 52 of 2016 when presented as 2017 (first week of year)
 def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = iso_year_start(iso_year)
     return int((year_start + timedelta(days=iso_day - 1, weeks=iso_week - 1)).strftime('%s') + '000')
 
 
+# calculates the last weeknum for any given year (some years have 52 others have 53)
 def weeks_for_year(year):
     last_week = date(year, 12, 28)
     return last_week.isocalendar()[1]
 
+
 # kind = the level -  national, state, LGA or site
 # num is the state_num, lga_num or siteid
-# preferable to be explict than implicit
-# for example
+# preferable to be explict than implicit, for example:
 # present results on state level with state_num of 2
 # present results on lga level with lga_num of 202
 # present results on site level with siteid of 202110001
@@ -66,16 +69,18 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
     df_stock_queried['since_x_weeks'] = df_stock_queried['iso_year_weeknum'].map(lambda x: current_week - x)
 
     # percentage of complete reporting
+    #FIXME change report_rate to program_report_rate
     report_rate = df_queried.query('since_x_weeks>0').query('since_x_weeks<=8').groupby(df_queried['siteid'])[
         'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
 
+    #FIXME add stock_report_rate to graph
     stock_report_rate = df_stock_queried.query('since_x_weeks>0').query('since_x_weeks<=8').groupby(df_stock_queried['siteid'])[
         'weeknum'].count().map(lambda x: (x / 8.) * 100).mean()
 
 
     #FIXME add stock reports to algorithm to determine active sites.
-    # Site Active True False should go in the site database
-    # State and LGA are always considered active, should always receive reports, but we do not report as active or inactive
+    # Last_seen should go in the site database - then query site database if last_seen < 8 weeks = Active
+    # State and LGA are always considered active, should always receive reports, but are not reported as active or inactive
     active_sites = df_queried.query('since_x_weeks<=8')\
                              .query('siteid>101110001')\
                              .groupby(['siteid', 'type'])\
@@ -98,6 +103,8 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
         number_of_inactive_sites = None
         number_of_active_sites = None
 
+
+    # FIXME REMOVE
     # most recent stock report and week number
     if kind == 'siteid':
         def grab_first_if_exists(value_in_list):
@@ -117,6 +124,8 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
     else:
         latest_stock_report = None
         latest_stock_report_weeknum = None
+
+
 
     # Admissions and stock balance by week
     adm_by_week = df_queried['amar'].groupby([df_queried['year'], df_queried['weeknum']]).sum()
@@ -150,7 +159,7 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
                 two_weeks_margin[isoweek] = two_weeks_margin[isoweek] + (rutf_out if rutf_out == rutf_out else 0)
 
 
-    else:  # site situation
+    else:  # site level
         stock_by_week = df_stock_queried['rutf_bal'].groupby([df_stock_queried['year'], df_stock_queried['weeknum']]).sum()
 
         # Median RUTF use over past 8 weeks by week
@@ -164,12 +173,15 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
             if i > max_since_x_weeks:
                 break
 
-            # FIXME window is broken because the dataframe is filtered already by year and the window will break at the beginning of the year
-            # when the number of remaining weeks in the dataframe is less than 8.
+            # FIXME
+            # 8 week window is cut into less than 8 weeks when the dataframe is filtered by year
+            # producing medians based on 7,6,5,4,3,2,1 weeks - Can see effect of median distorted by extreme values
             # run the two weeks margin calculation on the entire clean dataframe and store result in tuple?
+            # run the two weeks margin calculation on the entire clean dataframe before running year filter?
 
             iso_year_weeknum = df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['iso_year_weeknum'].max()
-            two_weeks_margin[iso_to_gregorian(iso_year_weeknum.year, iso_year_weeknum.week)] = df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_out'].median()
+            two_weeks_margin[iso_to_gregorian(iso_year_weeknum.year, iso_year_weeknum.week)] =\
+                df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_out'].median()
 
     # filter by one site
     # percentage of complete reporting for one site
@@ -185,16 +197,10 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
     dmed_rate_by_week = df_queried['dmed'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_discharge * 100
     tout_rate_by_week = df_queried['tout'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_cout * 100
 
-    # convert NaN to None using numpy
-    # dead_rate_by_week = np.where(dead_rate_by_week != dead_rate_by_week, None, dead_rate_by_week)
-    # defu_rate_by_week = np.where(defu_rate_by_week != defu_rate_by_week, None, defu_rate_by_week)
-    # dmed_rate_by_week = np.where(dmed_rate_by_week != dmed_rate_by_week, None, dmed_rate_by_week)
-    # tout_rate_by_week = np.where(tout_rate_by_week != tout_rate_by_week, None, tout_rate_by_week)
-
     return number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
-           dmed_rate_by_week, tout_rate_by_week, report_rate,\
-           stock_by_week, two_weeks_margin, latest_stock_report, latest_stock_report_weeknum
-
+           dmed_rate_by_week, tout_rate_by_week, report_rate, stock_by_week, two_weeks_margin,\
+           latest_stock_report, latest_stock_report_weeknum
+           #FIXME Remove last two variables
 
 # Query database and create data for admissions graph
 def adm(request):
@@ -250,10 +256,8 @@ def adm(request):
 
     # Total Discharges from program
     df_filtered['total_discharges'] = df_filtered.dcur + df_filtered.dead + df_filtered.defu + df_filtered.dmed
-    # Error message - Try using.loc[row_indexer, col_indexer] = value instead
-    # Not clear since this is creating a new variable
 
-    # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - tout
+    # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - Tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
 
 
@@ -266,8 +270,6 @@ def adm(request):
         title = "National Level"
 
         # list of most recent stock reports from states
-
-        
         state_df = df_warehouse_filtered.sort_values(by=['year', 'weeknum'], ascending=[0, 0]).drop_duplicates(subset='siteid')
         state_df = state_df.query('siteid<40').query('siteid>1')
         all_states = pd.read_sql_query("select * from first_admin;", con=engine)
