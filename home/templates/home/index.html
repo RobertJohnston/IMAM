@@ -89,14 +89,16 @@
         <center>
             <h4>Stock Reporting rate: <span id="reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
         </center>
-        <p>Most Recent Stock Reports</p>
+        <p>Recent Stock Reports</p>
         <div id="last-reports-table"></div>
 
     </div>
 
     <script>
+
 {% verbatim %}
 /* Start of workaround for fixing the tooltips to one column at a time*/
+
 var Pointer = Highcharts.Pointer.prototype;
 Highcharts.Point.prototype.onMouseOver = function(e) {
   var point = this,
@@ -171,7 +173,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
       hoverPoints: hoverPoints
     };
   }
-  /* End of Workaround */
+ /* End of Workaround */
 
         function ISO8601_week_no(dt) {
             var tdt = new Date(dt.valueOf());
@@ -196,7 +198,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                     y: 10
                 },
                 xAxis: [{
-
                     // highcharts automatically knows the first of 2 # in series is x axis.
                     labels: {
                         formatter: function() {
@@ -219,7 +220,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                  credits: {
                     enabled: false
                 },
-
                 yAxis: [{ // Primary yAxis
                     labels: {
                         format: '{value}',
@@ -233,7 +233,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                             color: Highcharts.getOptions().colors[1]
                         }
                     }
-
                 }, { // Secondary yAxis
                     min: 0,
                     max: 100,
@@ -258,7 +257,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                     } */
                     xDateFormat: '%e %b %Y'
                 },
-
                 legend: {
                     layout: 'vertical',
                     align: 'left',
@@ -272,7 +270,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                     backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
                     // Change Highcharts code if the legend overlaps the columns
                 },
-
                 "series":[{
                     "name":"Admissions",
                     type: 'column',
@@ -307,7 +304,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
                 }, {
-
                     name: 'Non-recovered Rate',
                     type: 'line',
                     yAxis: 1,
@@ -330,7 +326,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                         pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y:,.1f}</b> %<br/>'
                     }
                 }],
-
                 "chart":{"renderTo":"admissions-chart"},
             }
         }
@@ -340,7 +335,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                     title: {
                     text: data.title + "<br>Stock Balance by Week"
                 },
-
                 subtitle: {
                     text: 'IMAM Nigeria ' + data.date,
                     align: 'right',
@@ -348,16 +342,13 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                     x: -50,
                     y: 10
                 },
-
                 chart: {
                     type: 'column',
                     renderTo: "stock-chart"
                 },
-
                 credits: {
                     enabled: false
                 },
-
                 tooltip: {
                     shared: true,
                     /* formatter: function() {
@@ -365,7 +356,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                     } */
                     xDateFormat: '%e %b %Y'
                 },
-
                 legend: {
                     layout: 'vertical',
                     align: 'left',
@@ -379,7 +369,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                     backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
                     // Change Highcharts code if the legend overlaps the columns
                 },
-
                 xAxis: [{
 
                     // highcharts automatically knows the first of 2 # in series is x axis.
@@ -401,7 +390,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                         text: 'Week Number'
                     },
                 }],
-
                 plotOptions: {
                     column: {
                         dataLabels: {
@@ -415,7 +403,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                         }
                     },
                 },
-
                 yAxis: {
                     labels: {
                         formatter: function () {
@@ -426,7 +413,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                         text: 'Cartons'
                     },
                 },
-
                 "series":[{
                     "name":"RUTF",
                     type: 'column',
@@ -454,13 +440,13 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         var table_template = Handlebars.compile('\
         <table class="table table-bordered">\
         <tr>\
-            <th>State</th>\
+            <th>Site</th>\
             <th>Week Number</th>\
             <th>RUTF Balance</th>\
         </tr>\
         {{#.}}\
         <tr>\
-            <td>{{ state }}</td>\
+            <td>{{ site }}</td>\
             <td>{{ weeknum }}</td>\
             <td>{{ balance }}</td>\
         </tr>\
@@ -497,7 +483,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
 
             //  run spinner
             $("#admissions-chart").html('<div class="loader-wrapper"><div class="loader"></div></div>');
-            $('.reporting-rate').hide();
+            $('.program-reporting-rate').hide();
 
             $.getJSON("/adm/?site_filter=" + siteFilter + "&site_type=" + site_typeFilter + "&year=" + yearFilter).success(function(data) {
                 amarChart = new Highcharts.Chart(format_data(data));
