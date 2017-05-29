@@ -104,6 +104,15 @@ class Command(BaseCommand):
                     # FIXME
                     #Add data cleaning
 
+                    # if siteid = one of list below then add to import normal stock data not warehouse data
+                    # better to identify all siteids > 3699
+                    # 3508110034
+                    # 3502110031
+                    # 3319110014 - error in registration - siteid does not exist
+                    # 3301110008
+                    # 827110013
+                    # 821110053
+
                     # Introducing Year for X axis
                     # Remember that this code is running in a loop over all data in the api call
                     stock_in_db.year = stock_in_db.last_seen.isocalendar()[0]
