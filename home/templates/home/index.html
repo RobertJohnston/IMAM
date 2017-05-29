@@ -56,44 +56,41 @@
         </select>
     </div>
 
-    <div id="admissions-chart">
-        <div class="loader-wrapper">
-            <div class="loader"></div>
+    <div class="loader-wrapper">
+        <div class="loader"></div>
+    </div>
+
+    <div id="page-data">
+        <div id="admissions-chart"></div>
+
+        <div class="reporting-rate">
+            <center>
+                <h4>Program Reporting rate: <span id="program-reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
+            </center>
         </div>
-    </div>
 
-    <div class="reporting-rate">
-        <center>
-            <h4>Program Reporting rate: <span id="program-reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
-        </center>
-    </div>
-
-    <div class="row">
-        <div class="col-md-12">
-             <div class="panel panel-default stock-report-panel">
-                    <table class="table">
-                        <tr>
-                            <td class="centered">Active sites <span id="number_of_active_sites" class="label label-success">X</span></td>
-                            <td class="centered">Inactive sites <span id="number_of_inactive_sites"  class="label label-warning">X</span></td>
-                        </tr>
-                    </table>
-             </div>
+        <div class="row">
+            <div class="col-md-12">
+                 <div class="panel panel-default stock-report-panel">
+                        <table class="table">
+                            <tr>
+                                <td class="centered">Active sites <span id="number_of_active_sites" class="label label-success">X</span></td>
+                                <td class="centered">Inactive sites <span id="number_of_inactive_sites"  class="label label-warning">X</span></td>
+                            </tr>
+                        </table>
+                 </div>
+            </div>
         </div>
-    </div>
 
+        <div id="stock-chart"></div>
 
-    <div id="stock-chart">
-        <div class="loader-wrapper">
+        <div class="reporting-rate">
+            <center>
+                <h4>Stock Reporting rate: <span id="stock-reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
+            </center>
+            <!--Most recent stock reports at state, lga or site level -->
+            <div id="last-reports-table"></div>
         </div>
-    </div>
-
-    <div class="reporting-rate">
-        <center>
-            <h4>Stock Reporting rate: <span id="stock-reporting-rate"></span> % (over past 8 weeks in active sites)</h4>
-        </center>
-        <p>Recent Stock Reports</p>
-        <!--Most recent stock reports at state, lga or site level -->
-        <div id="last-reports-table"></div>
     </div>
 
     <script>
@@ -440,6 +437,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         }
 
         var table_template = Handlebars.compile('\
+        <p>Recent Stock Reports</p>\
         <table class="table table-bordered">\
         <tr>\
             <th>Site</th>\
@@ -455,23 +453,38 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         {{/.}}\
         </table>')
 
-        // initialization of the page
-        $.getJSON("/adm/").success(function(data) {
+        renderPageData = function(data) {
             amarChart = new Highcharts.Chart(format_data(data));
             stockChart = new Highcharts.Chart(format_stock_data(data));
 
             $("#last-reports-table").html(table_template(data.recent_stock_report));
 
-            $('.reporting-rate').show();
-            $("#program-reporting-rate").html(data.report_rate);
 
-            // these two data points are no longer used
-            $("#latest_stock_report").html(data.latest_stock_report);
-            $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
+            $("#program-reporting-rate").html(data.report_rate);
 
             $("#number_of_active_sites").html(data.number_of_active_sites);
             $("#number_of_inactive_sites").html(data.number_of_inactive_sites);
-        }).error(function() {
+
+            if (data.management_level === 'national') {
+                $('#stock-chart').hide();
+            } else {
+                $('#stock-chart').show();
+            }
+
+            if (data.management_level === 'site') {
+                $('#last-reports-table').hide();
+            } else {
+                $('#last-reports-table').show();
+            }
+
+            $("#stock-reporting-rate").html(data.stock_report_rate);
+
+            $('.loader-wrapper').hide();
+            $('#page-data').show();
+        }
+
+        // initialization of the page
+        $.getJSON("/adm/").success(renderPageData).error(function() {
             console.log("Error while fetching chart data:");
             console.log(arguments);
         });
@@ -485,28 +498,14 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             var yearFilter = $("#filter-by-year").val();
 
             //  run spinner
-            $("#admissions-chart").html('<div class="loader-wrapper"><div class="loader"></div></div>');
-            $('.reporting-rate').hide();
-            // CHECK CODE BELOW - WORKING?
-            $('.stock-chart').hide();
-            $('.last-reports-table').hide();
+            $('#page-data').hide();
+            $('.loader-wrapper').show();
 
-            $.getJSON("/adm/?site_filter=" + siteFilter + "&site_type=" + site_typeFilter + "&year=" + yearFilter).success(function(data) {
-                amarChart = new Highcharts.Chart(format_data(data));
-                stockChart = new Highcharts.Chart(format_stock_data(data));
-
-                $("#last-reports-table").html(table_template(data.recent_stock_report));
-
-                $('.reporting-rate').show();
-                $("#program-reporting-rate").html(data.report_rate);
-
-                $("#latest_stock_report").html(data.latest_stock_report);
-                $("#latest_stock_report_weeknum").html(data.latest_stock_report_weeknum);
-                $("#number_of_active_sites").html(data.number_of_active_sites);
-                $("#number_of_inactive_sites").html(data.number_of_inactive_sites);
-            }).error(function() {
-                console.log("Error while fetching chart data:");
-                console.log(arguments);
+            $.getJSON("/adm/?site_filter=" + siteFilter + "&site_type=" + site_typeFilter + "&year=" + yearFilter)
+                .success(renderPageData)
+                .error(function() {
+                    console.log("Error while fetching chart data:");
+                    console.log(arguments);
             });
         }
 
