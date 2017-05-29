@@ -14,13 +14,26 @@ from uuid import UUID
 # imports program data from RapidPro API, cleans data and saves to Postgres
 
 # FIXME change data entry to accept all data
-# and clean data immediately after
-# create variable valid (true/false)
-# Data errors such as strings instead of integers are not available
+# and clean data  after
+# Recommendation from Laurent:
+# 1 -  to import data as JSON
+# 2 -  import to Postgres as raw data
+# 3 -  do data cleaning as save as clean data
+
+# Currently Data errors such as strings instead of integers are not available
 # Other data entry mistakes such as aberrant values are still visible.
 
 class Command(BaseCommand):
     help = 'Imports program data to SQL through API'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='all',
+            default=False,
+            help='Import all data',
+        )
 
     # A command must define handle
     def handle(self, *args, **options):
@@ -30,9 +43,20 @@ class Command(BaseCommand):
 
         last_update_time = LastUpdatedAPICall.objects.filter(kind="program").first()
 
-        if last_update_time:
-            clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4', after=last_update_time.timestamp)
-        else:
+        # Code below is explicitly describing all possible four conditions.
+        # T/T   T/F    F/T    F/F
+        if options['all'] and last_update_time:
+            clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4')
+
+        elif options['all'] and not last_update_time:
+            clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4')
+            last_update_time = LastUpdatedAPICall(kind="program")
+
+        elif not options['all'] and last_update_time:
+            clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4',
+                                               after=last_update_time.timestamp)
+
+        elif not options['all'] and not last_update_time:
             clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4')
             last_update_time = LastUpdatedAPICall(kind="program")
 

@@ -13,6 +13,15 @@ from uuid import UUID
 class Command(BaseCommand):
     help = 'Loads registration data to SQL through API'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='all',
+            default=False,
+            help='Import all data',
+        )
+
     # A command must define handle
     def handle(self, *args, **options):
         client = TembaClient('rapidpro.io', open('token').read().strip())
@@ -20,15 +29,26 @@ class Command(BaseCommand):
         # Check in PostGreSQL database for last timestamp of API call
         last_update_time = LastUpdatedAPICall.objects.filter(kind="contact").first()
 
-        if last_update_time:
+        # Code below is explicitly describing all possible four conditions.
+        # T/T   T/F    F/T    F/F
+        if options['all'] and last_update_time:
+            clients_from_api = client.get_contacts(group='Nut Personnel')
+
+        elif options['all'] and not last_update_time:
+            clients_from_api = client.get_contacts(group='Nut Personnel')
+            last_update_time = LastUpdatedAPICall(kind="contact")
+
+        elif not options['all'] and last_update_time:
             clients_from_api = client.get_contacts(group='Nut Personnel', after=last_update_time.timestamp)
-        else:
+
+        elif not options['all'] and not last_update_time:
             clients_from_api = client.get_contacts(group='Nut Personnel')
             last_update_time = LastUpdatedAPICall(kind="contact")
 
         last_update_time.timestamp = datetime.now()
 
         a = 0
+
         for contact_batch in clients_from_api.iterfetches(retry_on_rate_exceed=True):
             # Optimization tool - transaction.atomic -is turned on
             with transaction.atomic():
