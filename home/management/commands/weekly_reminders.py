@@ -114,8 +114,9 @@ class Command(BaseCommand):
         # must loop over the data in the pandas series to assign the new variable with isocalendar
         # warehouse['year'] = warehouse.last_seen.isocalendar()[0]
 
-        warehouse['year'] = warehouse['last_seen'].map(lambda x: x.isocalendar()[0])
-        print(warehouse['year'].value_counts())
+        # we are doing this during importation already
+        # warehouse['year'] = warehouse['last_seen'].map(lambda x: x.isocalendar()[0])
+        # print(warehouse['year'].value_counts())
 
         # FIXME - add cleaning to importation
         # Weeknum data are not clean - not int
@@ -146,9 +147,12 @@ class Command(BaseCommand):
 
         # Merge siteID with first and second that all inactive sites are included in the analysis
 
-        warehouse_stomiss = warehouse.query('since_x_weeks>0').query('since_x_weeks<=8').query('siteid<101110001').groupby(
-            ['siteid', 'type'])['weeknum'].unique().map(
-            lambda x: list(sorted(set(range(week - 8, week)) - set(x)))).to_frame()
+        warehouse_stomiss = warehouse.query('since_x_weeks>0')\
+                                     .query('since_x_weeks<=8')\
+                                     .query('siteid<101110001')\
+                                     .groupby(['siteid', 'type'])['weeknum']\
+                                     .unique().map(lambda x: list(sorted(set(range(week - 8, week)) - set(x))))\
+                                     .to_frame()
 
         warehouse_stomiss = warehouse_stomiss.reset_index()
         warehouse_stomiss = warehouse_stomiss.rename(index=str, columns={"weeknum": "missing_stock"})
@@ -181,6 +185,8 @@ class Command(BaseCommand):
         # merge with contacts
         contacts = pd.read_sql_query("select * from registration;", con=engine)
 
+        # FIXME ensure that we include all LGAs and State warehouses even if they are inactive
+
         # If using same code as implementation - then add type
         warehouse_reminders = pd.merge(supervision_stomiss, contacts, on=['siteid'])
 
@@ -202,15 +208,35 @@ class Command(BaseCommand):
         writer.close()
 
         def send_reminders(row_in_df):
-            print "Sending message '%s' to '%s' (%s)" % (row_in_df['message'], row_in_df['name'], row_in_df['contact_uuid'])
+            print "[%s/%s %s] Sending message '%s' to '%s' (%s)" % (
+                loop_informations["remaining"],
+                loop_informations["total_number"],
+                loop_informations["current"],
+                row_in_df['message'],
+                row_in_df['name'],
+                row_in_df['contact_uuid']
+            )
             # API CALL - send_reminders
             # Uncomment to activate the API
             client.create_broadcast(row_in_df['message'], contacts=[row_in_df['contact_uuid']])
+            loop_informations["remaining"] -= 1
 
         reminders_timer = datetime.now()
+
+        loop_informations = {
+            "remaining": len(reminders_sites),
+            "current": "sites",
+            "total_number": len(reminders_sites),
+        }
+
         # Send reminders to API for implementation sites
         reminders_sites.apply(send_reminders, axis=1)
         # Send reminders to API for warehouses
+
+        loop_informations["remaining"] = len(warehouse_reminders)
+        loop_informations["total_number"] = len(warehouse_reminders)
+        loop_informations["current"] = "warehouse"
+
         warehouse_reminders.apply(send_reminders, axis=1)
 
         print datetime.now().strftime('Weekly reminders sent at %d %b %Y %-H:%M:%S'), 'Took %s time to talk to the API' % (datetime.now() - reminders_timer)
