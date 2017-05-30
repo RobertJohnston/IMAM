@@ -29,7 +29,7 @@ def iso_to_gregorian(iso_year, iso_week, iso_day=1):
     return int((year_start + timedelta(days=iso_day - 1, weeks=iso_week - 1)).strftime('%s') + '000')
 
 
-# calculates the last weeknum for any given year (some years have 52 others have 53)
+# Code to calculate the last weeknum for any given year (some years have 52 others have 53)
 def weeks_for_year(year):
     last_week = date(year, 12, 28)
     return last_week.isocalendar()[1]
@@ -111,9 +111,11 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
 
     if kind in ("lga_num", "state_num", None):
         if kind is not None:
-            site_df = df_stock_queried.query('siteid > 200000000').query("%s==%s" % (kind, num))
+            site_df = df_stock_queried.query('siteid > 199990999').query("%s==%s" % (kind, num))
             df_warehouse_queried = df_warehouse_filtered.query("siteid==%s" % num)
-            stock_by_week = df_warehouse_queried['rutf_bal'].groupby([df_warehouse_queried['year'], df_warehouse_queried['weeknum']]).sum()
+            stock_by_week = df_warehouse_queried['rutf_bal'].groupby([df_warehouse_queried['year'],\
+                                                                      df_warehouse_queried['weeknum']])\
+                                                                      .sum()
         else:
             site_df = df_stock_queried
             df_warehouse_queried = df_warehouse_filtered
@@ -345,12 +347,6 @@ def adm(request):
                 })
 
 
-
-
-
-
-
-
         elif data_type == "site":
             # result = rate_by_week(result, df_filtered, 'siteid')
             kind = "siteid"
@@ -392,18 +388,13 @@ def adm(request):
     adm_by_week = fill_empty_entries(adm_by_week)
     stock_by_week = fill_empty_entries(stock_by_week) if len(stock_by_week) else []
 
-    # here two_weeks_maring is a dictionary where the keys are timestamp like in the categories list
+    # here two_weeks_margin is a dictionary where the keys are timestamp like in the categories list
     two_weeks_margin = [two_weeks_margin.get(x) if x == x else None for x in categories]
+
     dead_rate_by_week = fill_empty_entries(dead_rate_by_week)
     defu_rate_by_week = fill_empty_entries(defu_rate_by_week)
     dmed_rate_by_week = fill_empty_entries(dmed_rate_by_week)
     tout_rate_by_week = fill_empty_entries(tout_rate_by_week)
-
-    # adm_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in adm_by_week.index], adm_by_week.values.tolist()))
-    # dead_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dead_rate_by_week.index], dead_rate_by_week.values.tolist()))
-    # defu_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in defu_rate_by_week.index], defu_rate_by_week.values.tolist()))
-    # dmed_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in dmed_rate_by_week.index], dmed_rate_by_week.values.tolist()))
-    # tout_rate_by_week = list(zip([iso_to_gregorian(x[0], x[1]) for x in tout_rate_by_week.index], tout_rate_by_week.values.tolist()))
 
     # return HttpResponse(json.dumps(result)
     return HttpResponse(json.dumps({
