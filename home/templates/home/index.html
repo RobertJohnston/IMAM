@@ -459,7 +459,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
 
             $("#last-reports-table").html(table_template(data.recent_stock_report));
 
-
             $("#program-reporting-rate").html(data.report_rate);
 
             $("#number_of_active_sites").html(data.number_of_active_sites);
@@ -492,9 +491,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         // on select event - run code in {} below
         updateGraph = function (e) {
             var siteFilter = $("#filter-by-site").val();
-
             var site_typeFilter = $("#filter-by-site-type").val();
-
             var yearFilter = $("#filter-by-year").val();
 
             //  run spinner
@@ -517,11 +514,6 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
 
 {% endverbatim %}
     </script>
-
-
-<!--{% include "home/includes/htmlsnippet.html" %}-->
-
-<!--htmlsnippet could include an error message that is repeated on many different pages. -->
 
 {% endblock %}
 
