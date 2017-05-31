@@ -15,6 +15,22 @@ class LastUpdatedAPICall(models.Model):
     def __unicode__(self):
         return u"%s: %s" % (self.kind, self.timestamp  )
 
+# Import JSON data from API
+class JsonRegistration(models.Model):
+    uuid = models.CharField(editable=False, max_length=36, primary_key=True)
+    json = models.TextField()
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    modified_on = models.DateTimeField(auto_now=True)
+
+
+class JsonProgram(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    json = models.TextField()
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    modified_on = models.DateTimeField(auto_now=True)
+
 
 # Registration
 class Registration(models.Model):
