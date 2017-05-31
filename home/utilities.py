@@ -1,5 +1,7 @@
 # utilities to use in views.py
 
+from datetime import date, timedelta
+
 def iso_year_start(iso_year):
     "The gregorian calendar date of the first day of the given ISO year"
     fourth_jan = date(iso_year, 1, 4)
