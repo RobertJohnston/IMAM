@@ -4,9 +4,8 @@ from django.db import models
 
 
 # Load of initial data done with django custom commands
-# use - python manage.py load_data
+# use - python manage.py load_data to load data from xls
 
-# how do we load the raw data once and then start to use the api after ?
 
 class LastUpdatedAPICall(models.Model):
     kind = models.CharField(max_length=255, unique=True)
@@ -19,7 +18,6 @@ class LastUpdatedAPICall(models.Model):
 class JsonRegistration(models.Model):
     uuid = models.CharField(editable=False, max_length=36, primary_key=True)
     json = models.TextField()
-
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
 
@@ -27,9 +25,35 @@ class JsonRegistration(models.Model):
 class JsonProgram(models.Model):
     id = models.BigIntegerField(primary_key=True)
     json = models.TextField()
-
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
+
+
+class JsonStock(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    json = models.TextField()
+    created_on = models.DateTimeField(auto_now_add=True)
+    modified_on = models.DateTimeField(auto_now=True)
+
+
+class JsonWarehouse(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    json = models.TextField()
+    created_on = models.DateTimeField(auto_now_add=True)
+    modified_on = models.DateTimeField(auto_now=True)
+
+
+class RawRegistration(models.Model):
+    uuid = models.CharField(editable=False, max_length=36, primary_key=True)
+    urn = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=300)
+    groups = models.CharField(max_length=1000, null=True, blank=True)
+    siteid = models.CharField(max_length=300, null=True, blank=True)
+    type = models.CharField(max_length=20, null=True, blank=True)
+    first_seen = models.DateTimeField(null=True, blank=True)
+    last_seen =  models.DateTimeField(null=True, blank=True)
+    post = models.CharField(max_length=30, null=True, blank=True)
+    mail = models.CharField(max_length=60, null=True, blank=True)
 
 
 # Registration
@@ -40,6 +64,8 @@ class Registration(models.Model):
     # Do not import URN as phone number field - leave in RapidPro format
     # urn = models.PhoneNumberField()
     urn = models.CharField(max_length=50, unique=True)
+
+    # Strip dot from right side of name.
     name = models.CharField(max_length=300)
     groups = models.CharField(max_length=1000, null=True, blank=True)
     siteid = models.BigIntegerField()
