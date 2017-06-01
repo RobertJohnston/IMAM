@@ -55,6 +55,50 @@ class RawRegistration(models.Model):
     post = models.CharField(max_length=30, null=True, blank=True)
     mail = models.CharField(max_length=60, null=True, blank=True)
 
+# Raw Program data
+class RawProgram(models.Model):
+    contact_uuid = models.TextField(blank=True, null=True)
+    urn = models.TextField()
+    name = models.TextField(blank=True, null=True)
+    groups = models.TextField(blank=True, null=True)
+    role = models.TextField(blank=True, null=True)
+    siteid = models.BigIntegerField(blank=True, null=True)
+    first_seen = models.DateTimeField()
+    last_seen = models.DateTimeField(blank=True, null=True)
+    weeknum = models.BigIntegerField(blank=True, null=True)
+    type = models.TextField(blank=True, null=True)
+    age_group = models.TextField(blank=True, null=True)
+    beg = models.BigIntegerField(blank=True, null=True)
+    amar = models.BigIntegerField(blank=True, null=True)
+    tin = models.BigIntegerField(blank=True, null=True)
+    dcur = models.BigIntegerField(blank=True, null=True)
+    dead = models.BigIntegerField(blank=True, null=True)
+    defu = models.BigIntegerField(blank=True, null=True)
+    dmed = models.BigIntegerField(blank=True, null=True)
+    tout = models.BigIntegerField(blank=True, null=True)
+    confirm = models.TextField(blank=True, null=True)
+    state_num = models.BigIntegerField(blank=True, null=True)
+    lga_num = models.BigIntegerField(blank=True, null=True)
+    year = models.BigIntegerField(blank=True, null=True)
+    last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
+    rep_year_wn = models.TextField(blank=True, null=True)
+    rep_weeknum = models.BigIntegerField(blank=True, null=True)
+    last_seen_dotw = models.BigIntegerField(blank=True, null=True)
+    last_seen_hour = models.BigIntegerField(blank=True, null=True)
+    year_weeknum = models.TextField(blank=True, null=True)
+    iso_rep_year_wn = models.TextField(blank=True, null=True)
+    iso_year_weeknum = models.TextField(blank=True, null=True)
+    iso_diff = models.BigIntegerField(blank=True, null=True)
+
+
+class RawStock(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    name = models.CharField(max_length=80)
+    first_seen = models.DateTimeField()
+    last_seen = models.DateTimeField()
+
+
+
 
 # Registration
 class Registration(models.Model):
