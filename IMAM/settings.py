@@ -116,6 +116,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+
+#  API uuids for API calls
+API_BASE_URL = "https://rapidpro.io"
+PROGRAM_UUID =   "a9eed2f3-a92c-48dd-aa10-4f139b1171a4"
+STOCK_UUID =     "a678268d-0e42-43f1-82cd-aa12117d145d"
+WAREHOUSE_UUID = "5f2027ce-092f-4712-9b1c-79cddd232fa9"
+
+
 try:
     from local_settings import *
 except ImportError:
