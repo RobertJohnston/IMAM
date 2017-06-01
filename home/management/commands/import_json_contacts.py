@@ -54,22 +54,24 @@ class Command(BaseCommand):
         page_url_to_process = api_base_url + "/api/v2/contacts.json?"
 
         while page_url_to_process:
-            response = requests.get(page_url_to_process + "&group=%s" % quote('Nut Personnel'), headers={"Authorization": "Token %s" % token})
-            # Must include Nut Personnel in ?Query to filter for personnel of IMAM program
+            with transaction.atomic():
 
-            assert response.status_code == 200, "%s: %s" % (response.status_code, response.content)
+                response = requests.get(page_url_to_process + "&group=%s" % quote('Nut Personnel'), headers={"Authorization": "Token %s" % token})
+                # Must include Nut Personnel in ?Query to filter for personnel of IMAM program
 
-            for api_contact in response.json()['results']:
-                uuid = api_contact['uuid']
-                print(uuid)
+                assert response.status_code == 200, "%s: %s" % (response.status_code, response.content)
 
-                if JsonRegistration.objects.filter(uuid=uuid):
-                    in_db_contact = JsonRegistration.objects.get(uuid=uuid)
-                else:
-                    in_db_contact = JsonRegistration()
-                    in_db_contact.uuid = uuid
+                for api_contact in response.json()['results']:
+                    uuid = api_contact['uuid']
+                    print(uuid)
 
-                in_db_contact.json = json.dumps(api_contact, indent=4)
-                in_db_contact.save()
+                    if JsonRegistration.objects.filter(uuid=uuid):
+                        in_db_contact = JsonRegistration.objects.get(uuid=uuid)
+                    else:
+                        in_db_contact = JsonRegistration()
+                        in_db_contact.uuid = uuid
 
-            page_url_to_process = response.json()['next']
+                    in_db_contact.json = json.dumps(api_contact, indent=4)
+                    in_db_contact.save()
+
+                page_url_to_process = response.json()['next']
