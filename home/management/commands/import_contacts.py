@@ -92,6 +92,8 @@ class Command(BaseCommand):
                         strip_siteid = filter(lambda x: x.isdigit(), contact.fields['siteid'].replace('O', '0').replace('o', '0'))
                         contact_in_db.siteid = int(strip_siteid)
 
+                        # Remove leading zeros if exist
+
                     contact_in_db.type = contact.fields['type']
                     # First Seen
                     contact_in_db.first_seen = contact.created_on
@@ -119,6 +121,8 @@ class Command(BaseCommand):
 
                     # Create state_num and LGA_num
                     # Implementation and LGA level
+
+
                     if len(str(contact_in_db.siteid)) == 9 or len(str(contact_in_db.siteid)) == 3:
                         contact_in_db.state_num = int(str(contact_in_db.siteid)[:1])
                         contact_in_db.lga_num = int(str(contact_in_db.siteid)[:3])
