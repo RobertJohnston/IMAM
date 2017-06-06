@@ -4,11 +4,15 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 # Import contacts from RawRegistration
+# NOTE
 # RapidPro manages the contacts so that there is only one contact per phone number.
-# We do not need to sort and take the most recent entry.
+# Currently, we do not need to sort and take the most recent entry.
+# If we find that there have been a lot of changes of SiteID in contacts over time, then we will need to import the
+# runs of the Registration flow and record the data of change of the SiteID. From the date of change of SiteID,
+# we will stitch together the data from the beginning of the data collection.
 
 class Command(BaseCommand):
-    help = 'Loads program data to SQL through API'
+    help = 'Loads contact data to from raw contacts to clean contacts'
 
     # A command must define handle
     def handle(self, *args, **options):
