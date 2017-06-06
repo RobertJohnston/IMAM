@@ -8,7 +8,7 @@ from home.models import JsonProgram, LastUpdatedAPICall
 program_uuid = "a9eed2f3-a92c-48dd-aa10-4f139b1171a4"
 
 class Command(BaseCommand):
-    help = 'Loads program data to SQL through API'
+    help = 'Imports program data into JSON format from API'
 
     # A command must define handle
     def handle(self, *args, **options):
@@ -16,6 +16,7 @@ class Command(BaseCommand):
         api_base_url = "https://rapidpro.io"
 
         page_url_to_process = api_base_url + "/api/v2/runs.json?flow=%s" % program_uuid
+        a = 0
 
         while page_url_to_process:
             with transaction.atomic():
@@ -25,7 +26,8 @@ class Command(BaseCommand):
 
                 for api_program in response.json()['results']:
                     id = api_program['id']
-                    print(id)
+                    print("id %s  count %s" %(id, a))
+                    a +=1
 
                     if JsonProgram.objects.filter(id=id):
                         in_db_program = JsonProgram.objects.get(id=id)
