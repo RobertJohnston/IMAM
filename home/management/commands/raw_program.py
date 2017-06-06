@@ -22,19 +22,20 @@ class Command(BaseCommand):
             for json_program_row in JsonProgram.objects.all().iterator():
                 # do this to avoid excessive memory consumption because django is
                 # keeping track of every queries in memory for debugging purpose
-                # according to memory_profile it doesn't seems to change anything
+                # according to memory_profile commenting out db.reset.queries() doesn't seems to change anything
                 # db.reset_queries()
 
                 id = json_program_row.id
                 a -= 1
 
+                #FIXME follow model in import contacts
                 # Update program
                 if RawProgram.objects.filter(id=id):
-                    print("update Program id %s" % id)
+                    # print("update Program id %s" % id)
                     raw_program = RawProgram.objects.get(id=id)
                 # Create contact
                 else:
-                    print("create Program id %s" % id)
+                    # print("create Program id %s" % id)
                     raw_program = RawProgram()
                     raw_program.id = id
 
@@ -42,13 +43,14 @@ class Command(BaseCommand):
                 json_data = json.loads(json_program_row.json)
 
                 if "weeknum" not in json_data['values']:
-                    print("Weeknum not in JSON data values for program data entry")
+                    print("Weeknum not in JSON data values for program data entry SKIPPED")
                     continue
 
                 # Import contacts
                 raw_program.contact_uuid = json_data['contact']['uuid']
 
                 if raw_program.contact_uuid not in contact_cache:
+                    # This is case with someone who has not completed registration but sends initial data
                     continue
                 else:
                     contact = contact_cache[raw_program.contact_uuid]
@@ -79,33 +81,34 @@ class Command(BaseCommand):
                 # OUTPATIENTS
                 if raw_program.type == "OTP" :
                     raw_program.age_group = "6-59m"
-                    raw_program.beg =  json_data['values']['beg_o']['value'] if 'beg_o' in json_data['values'] else None
-                    raw_program.amar = json_data['values']['amar_o']['value'] if 'amar_o' in json_data['values'] else None
-                    raw_program.tin  = json_data['values']['tin_o']['value'] if 'tin_o' in json_data['values'] else None
-                    raw_program.dcur = json_data['values']['dcur_o']['value'] if 'dcur_o' in json_data['values'] else None
-                    raw_program.dead = json_data['values']['dead_o']['value'] if 'dead_o' in json_data['values'] else None
-                    raw_program.defu = json_data['values']['defu_o']['value'] if 'defu_o' in json_data['values'] else None
-                    raw_program.dmed = json_data['values']['dmed_o']['value'] if 'dmed_o' in json_data['values'] else None
-                    raw_program.tout = json_data['values']['tout_o']['value'] if 'tout_o' in json_data['values'] else None
+
+                    varlist = ('beg_o', 'amar_o', 'tin_o', 'dcur_o', 'dead_o', 'defu_o', 'dmed_o', 'tout_o')
+
                 # INPATIENTS
                 elif raw_program.type == "SC":
-                    raw_program.age_group = json_data['values']['age_group']['category'] if 'age_group' in json_data['values'] else None
-                    raw_program.beg =  json_data['values']['beg_i']['value'] if 'beg_i' in json_data['values'] else None
-                    raw_program.amar = json_data['values']['amar_i']['value'] if 'amar_i' in json_data['values'] else None
-                    raw_program.tin  = json_data['values']['tin_i']['value'] if 'tin_i' in json_data['values'] else None
-                    raw_program.dcur = json_data['values']['dcur_i']['value'] if 'dcur_i' in json_data['values'] else None
-                    raw_program.dead = json_data['values']['dead_i']['value'] if 'dead_i' in json_data['values'] else None
-                    raw_program.defu = json_data['values']['defu_i']['value'] if 'defu_i' in json_data['values'] else None
-                    raw_program.dmed = json_data['values']['dmed_i']['value'] if 'dmed_i' in json_data['values'] else None
-                    raw_program.tout = json_data['values']['tout_i']['value'] if 'tout_i' in json_data['values'] else None
+
+                    raw_program.age_group = json_data['values']['age_group']['category'] if 'age_group' in json_data[
+                        'values'] else None
+
+                    varlist = ('beg_i', 'amar_i', 'tin_i', 'dcur_i', 'dead_i', 'defu_i', 'dmed_i', 'tout_i')
+
+                else:
+                    varlist = ()
+
+                for var in varlist:
+                    raw_var = var[:-2]
+                    setattr(raw_program, raw_var, json_data['values'][var]['value']\
+                        if var in json_data['values'] else None)
 
                 raw_program.first_seen = json_data['created_on']
                 raw_program.last_seen = json_data['modified_on']
 
                 raw_program.confirm = json_data['values']['confirm']['category']  if 'confirm' in json_data['values'] else None
+
                 # state_num
                 # lga_num
                 # year
+
                 # last_seen_weeknum
                 # rep_year_wn
                 # rep_weeknum
@@ -117,5 +120,7 @@ class Command(BaseCommand):
                 # iso_diff
                 # since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
-                print("countdown-%s  Name-%s" % (a, raw_program.name))
+                print("countdown-%s" % a)
                 raw_program.save()
+
+
