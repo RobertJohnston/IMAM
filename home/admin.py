@@ -28,7 +28,7 @@ class Second_adminAdmin(admin.ModelAdmin):
     list_display = ('lga_num', 'lga', 'state_num')
 
 class SiteAdmin(admin.ModelAdmin):
-    list_display = ('sitename', 'siteid', 'state_num', 'lga_num', 'ward', 'x_long', 'y_lat', 'notes')
+    list_display = ('sitename', 'siteid', 'ward', 'x_long', 'y_lat', 'notes')
     # add opening date, closing date
 
 admin.site.register(Registration, RegistrationAdmin)
