@@ -22,6 +22,15 @@ class Command(BaseCommand):
                 stock_data = RawStock()
                 stock_data.id =  json_stock_row.id
                 stock_data.name = api_data['contact']['name']
+
+                # Custom data entry for supervision program reports
+                # if there is an entry in Protype (True) then supervisor sent data for implementation site
+                if json_data['values']['stositeid']['value']:
+                    raw_stock.type = json_data['values']['stotype']['category']
+                    raw_stock.siteid = json_data['values']['stositeid']['value']
+
+
+
                 stock_data.first_seen =  json_stock_row.created_on
                 stock_data.last_seen =  json_stock_row.modified_on
 
@@ -29,4 +38,8 @@ class Command(BaseCommand):
                 print("count-%s  name-%s" % (a, stock_data.name))
 
              # bulk insert could be an option
+
+
+
+
 

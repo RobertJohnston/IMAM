@@ -8,13 +8,14 @@ from django.db import transaction
 
 
 class Command(BaseCommand):
-    help = 'Loads program data to SQL through API'
+    help = 'Imports RawRegistration data from JsonRegistration'
 
     # A command must define handle
     def handle(self, *args, **options):
         with transaction.atomic():
             a = JsonRegistration.objects.all().count()
             for json_contact_row in JsonRegistration.objects.all():
+
                 uuid = json_contact_row.uuid
                 a -= 1
 
