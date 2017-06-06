@@ -248,6 +248,8 @@ def adm(request):
         for index, row in merge_states.iterrows():
             recent_stock_report.append({
                 "site": row['state'],
+                "siteid": row['state_num'],
+                "kind": "state",
                 "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
                 "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
             })
@@ -295,9 +297,12 @@ def adm(request):
                     .lga.strip() + " LGA" if Second_admin.objects.filter(lga_num=x) else "")
             # Query one state - query is completed above on the registration date - so all sites are included
             # merge_lga = merge_lga.query('state_num==%s' % num)
+
             for index, row in merge_lga.iterrows():
                 recent_stock_report.append({
                     "site": row['lga'],
+                    "siteid": row['lga_num'],
+                    "kind": "lga",
                     "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
                     #int(row['year']) if row['year'] == row['year'] else "No Data",
                     "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
@@ -329,6 +334,8 @@ def adm(request):
             for index, row in site_df.iterrows():
                 recent_stock_report.append({
                     "site": row['sitename'],
+                    "siteid": row['siteid'],
+                    "kind": "site",
                     "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
                     #"year": int(row['year']) if row['year'] == row['year'] else "No Data",
                     "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
