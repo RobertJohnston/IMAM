@@ -17,6 +17,7 @@ class Command(BaseCommand):
         api_base_url = "https://rapidpro.io"
 
         page_url_to_process = api_base_url + "/api/v2/runs.json?flow=%s" % stock_uuid
+        a = 0
 
         while page_url_to_process:
             with transaction.atomic():
@@ -27,7 +28,8 @@ class Command(BaseCommand):
 
                 for api_stock in response.json()['results']:
                     id = api_stock['id']
-                    print(id)
+                    print("id %s  count %s" % (id, a))
+                    a += 1
 
                     if JsonStock.objects.filter(id=id):
                         in_db_stock = JsonStock.objects.get(id=id)
@@ -39,7 +41,7 @@ class Command(BaseCommand):
                     in_db_stock.save()
 
                 page_url_to_process = response.json()['next']
-                print(page_url_to_process)
+                # print(page_url_to_process)
 
 
 
