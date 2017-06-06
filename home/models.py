@@ -55,40 +55,45 @@ class RawRegistration(models.Model):
     post = models.CharField(max_length=30, null=True, blank=True)
     mail = models.CharField(max_length=60, null=True, blank=True)
 
+
 # Raw Program data
 class RawProgram(models.Model):
     contact_uuid = models.TextField(blank=True, null=True)
-    urn = models.TextField()
-    name = models.TextField(blank=True, null=True)
-    groups = models.TextField(blank=True, null=True)
-    role = models.TextField(blank=True, null=True)
-    siteid = models.BigIntegerField(blank=True, null=True)
+    urn     = models.TextField()
+    name    = models.TextField(blank=True, null=True)
+    groups  = models.TextField(blank=True, null=True)
+    role    = models.TextField(blank=True, null=True)
+    siteid  = models.TextField(blank=True, null=True)
     first_seen = models.DateTimeField()
     last_seen = models.DateTimeField(blank=True, null=True)
-    weeknum = models.BigIntegerField(blank=True, null=True)
-    type = models.TextField(blank=True, null=True)
+    weeknum = models.TextField(blank=True, null=True)
+    type    = models.TextField(blank=True, null=True)
     age_group = models.TextField(blank=True, null=True)
-    beg = models.BigIntegerField(blank=True, null=True)
-    amar = models.BigIntegerField(blank=True, null=True)
-    tin = models.BigIntegerField(blank=True, null=True)
-    dcur = models.BigIntegerField(blank=True, null=True)
-    dead = models.BigIntegerField(blank=True, null=True)
-    defu = models.BigIntegerField(blank=True, null=True)
-    dmed = models.BigIntegerField(blank=True, null=True)
-    tout = models.BigIntegerField(blank=True, null=True)
+    # INPATIENTS and OUTPATIENTS
+    beg   = models.TextField(blank=True, null=True)
+    amar  = models.TextField(blank=True, null=True)
+    tin   = models.TextField(blank=True, null=True)
+    dcur  = models.TextField(blank=True, null=True)
+    dead  = models.TextField(blank=True, null=True)
+    defu  = models.TextField(blank=True, null=True)
+    dmed  = models.TextField(blank=True, null=True)
+    tout  = models.TextField(blank=True, null=True)
+
     confirm = models.TextField(blank=True, null=True)
-    state_num = models.BigIntegerField(blank=True, null=True)
-    lga_num = models.BigIntegerField(blank=True, null=True)
-    year = models.BigIntegerField(blank=True, null=True)
-    last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
-    rep_year_wn = models.TextField(blank=True, null=True)
-    rep_weeknum = models.BigIntegerField(blank=True, null=True)
-    last_seen_dotw = models.BigIntegerField(blank=True, null=True)
-    last_seen_hour = models.BigIntegerField(blank=True, null=True)
-    year_weeknum = models.TextField(blank=True, null=True)
-    iso_rep_year_wn = models.TextField(blank=True, null=True)
-    iso_year_weeknum = models.TextField(blank=True, null=True)
-    iso_diff = models.BigIntegerField(blank=True, null=True)
+
+    # state_num = models.TextField(blank=True, null=True)
+    # lga_num   = models.TextField(blank=True, null=True)
+    # year      = models.TextField(blank=True, null=True)
+
+    # last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
+    # rep_year_wn = models.TextField(blank=True, null=True)
+    # rep_weeknum = models.BigIntegerField(blank=True, null=True)
+    # last_seen_dotw = models.BigIntegerField(blank=True, null=True)
+    # last_seen_hour = models.BigIntegerField(blank=True, null=True)
+    # year_weeknum = models.TextField(blank=True, null=True)
+    # iso_rep_year_wn = models.TextField(blank=True, null=True)
+    # iso_year_weeknum = models.TextField(blank=True, null=True)
+    # iso_diff = models.BigIntegerField(blank=True, null=True)
 
 
 class RawStock(models.Model):
@@ -98,6 +103,26 @@ class RawStock(models.Model):
     last_seen = models.DateTimeField()
 
 
+    rutf_in          = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_used_carton = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_used_sachet = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f75_bal_carton   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f75_bal_sachet   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f100_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f100_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+
+    state_num = models.BigIntegerField(blank=True, null=True)
+    lga_num = models.BigIntegerField(blank=True, null=True)
+
+
+# FIXME
+class RawWarehouse(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    name = models.CharField(max_length=80)
+    first_seen = models.DateTimeField()
+    last_seen = models.DateTimeField()
 
 
 # Registration
@@ -108,8 +133,6 @@ class Registration(models.Model):
     # Do not import URN as phone number field - leave in RapidPro format
     # urn = models.PhoneNumberField()
     urn = models.CharField(max_length=50, unique=True)
-
-    # Strip dot from right side of name.
     name = models.CharField(max_length=300)
     groups = models.CharField(max_length=1000, null=True, blank=True)
     siteid = models.BigIntegerField()
@@ -150,6 +173,7 @@ class Program(models.Model):
     type = models.TextField(blank=True, null=True)
     age_group = models.TextField(blank=True, null=True)
 
+    # Convert the inpatients and outpatients data into generic form
     beg = models.BigIntegerField(blank=True, null=True)
     amar = models.BigIntegerField(blank=True, null=True)
     tin = models.BigIntegerField(blank=True, null=True)
@@ -208,15 +232,15 @@ class Stock(models.Model):
     weeknum = models.IntegerField()
     year = models.BigIntegerField()
 
-    rutf_in = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    rutf_in          = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     rutf_used_carton = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     rutf_used_sachet = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    rutf_bal_carton = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    rutf_bal_sachet =  models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f75_bal_carton =   models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f75_bal_sachet =   models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f100_bal_carton =  models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f100_bal_sachet =  models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    rutf_bal_carton  = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    rutf_bal_sachet  = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f75_bal_carton   = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f75_bal_sachet   = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f100_bal_carton  = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    f100_bal_sachet  = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
 
     state_num = models.BigIntegerField(blank=True, null=True)
     lga_num = models.BigIntegerField(blank=True, null=True)
@@ -296,14 +320,14 @@ class Site(models.Model):
     x_long = models.IntegerField(blank=True, null=True)
     y_lat = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-
-    # add OPENING DATE variable
     # add CLOSING DATE variable
+    # closing_date = models.DateField(blank=True, null=True)
+    # Site IDs are loaded in from excel. They are not taken from RapidPro, so they will not be rewritten regularly.
 
     class Meta:
-        managed = False
         # This is reference of Django to Postgres
         db_table = 'site'
+        managed = False
 
     def __unicode__(self):
         return "Site {}".format(self.sitename)
