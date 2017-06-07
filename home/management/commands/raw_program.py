@@ -1,25 +1,59 @@
 import json
 from django import db
-from home.models import Registration, JsonProgram, RawProgram
+from home.models import Registration, JsonProgram, RawProgram, LastUpdatedAPICall
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from datetime import datetime
 # from isoweek import Week
 
-# create model for RawProgram, make migrations, migrate
 
 class Command(BaseCommand):
     help = 'Imports RawRegistration data from JsonRegistration'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='all',
+            default=False,
+            help='Import all data',
+        )
 
     # A command must define handle
     def handle(self, *args, **options):
         with transaction.atomic():
 
+            last_update_time = LastUpdatedAPICall.objects.filter(kind="raw_program").first()
+
+            # Code below is explicitly describing all possible four conditions of two booleans
+            if options['all'] and last_update_time:
+                RawProgram.objects.all().delete()
+                data_to_process = JsonProgram.objects.all()
+
+            elif options['all'] and not last_update_time:
+                RawProgram.objects.all().delete()
+                data_to_process = JsonProgram.objects.all()
+                last_update_time = LastUpdatedAPICall(kind="raw_program")
+
+            elif not options['all'] and last_update_time:
+                # Start from end of attempt to load data: GET all data since timestamp of last time
+                data_to_process = JsonProgram.objects.filter(modified_on__gte=last_update_time.timestamp)
+
+            elif not options['all'] and not last_update_time:
+                RawProgram.objects.all().delete()
+                data_to_process = JsonProgram.objects.all()
+                last_update_time = LastUpdatedAPICall(kind="raw_program")
+
+            last_update_time.timestamp = datetime.now()
+
+            # Change to countdown
+            a = JsonProgram.objects.all().count()
+
             contact_cache = {}
             for contact in Registration.objects.all():
                 contact_cache[contact.contact_uuid] = contact
 
-            a = JsonProgram.objects.all().count()
-            for json_program_row in JsonProgram.objects.all().iterator():
+            for json_program_row in data_to_process.iterator():
                 # do this to avoid excessive memory consumption because django is
                 # keeping track of every queries in memory for debugging purpose
                 # according to memory_profile commenting out db.reset.queries() doesn't seems to change anything
@@ -28,7 +62,6 @@ class Command(BaseCommand):
                 id = json_program_row.id
                 a -= 1
 
-                #FIXME follow model in import contacts
                 # Update program
                 if RawProgram.objects.filter(id=id):
                     # print("update Program id %s" % id)
@@ -44,6 +77,7 @@ class Command(BaseCommand):
 
                 if "weeknum" not in json_data['values']:
                     print("Weeknum not in JSON data values for program data entry SKIPPED")
+                    # Data entries where Pro was selected but there are no data entered.
                     continue
 
                 # Import contacts
@@ -81,7 +115,6 @@ class Command(BaseCommand):
                 # OUTPATIENTS
                 if raw_program.type == "OTP" :
                     raw_program.age_group = "6-59m"
-
                     varlist = ('beg_o', 'amar_o', 'tin_o', 'dcur_o', 'dead_o', 'defu_o', 'dmed_o', 'tout_o')
 
                 # INPATIENTS
@@ -89,7 +122,6 @@ class Command(BaseCommand):
 
                     raw_program.age_group = json_data['values']['age_group']['category'] if 'age_group' in json_data[
                         'values'] else None
-
                     varlist = ('beg_i', 'amar_i', 'tin_i', 'dcur_i', 'dead_i', 'defu_i', 'dmed_i', 'tout_i')
 
                 else:
@@ -99,6 +131,7 @@ class Command(BaseCommand):
                     raw_var = var[:-2]
                     setattr(raw_program, raw_var, json_data['values'][var]['value']\
                         if var in json_data['values'] else None)
+
 
                 raw_program.first_seen = json_data['created_on']
                 raw_program.last_seen = json_data['modified_on']
@@ -124,3 +157,4 @@ class Command(BaseCommand):
                 raw_program.save()
 
 
+        last_update_time.save()
