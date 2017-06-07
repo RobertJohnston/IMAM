@@ -74,6 +74,8 @@ class Command(BaseCommand):
 
                 # the API response is a list in a list
                 # to interpret this you have to loop over the content
+
+                # DO NOT NEED TO SAVE CONFIRM
                 for program in program_batch:
                     if 'confirm' not in program.values or program.values['confirm'].category != 'Yes':
                         print('     Not CONFIRMED %s') % program.contact.name
@@ -234,7 +236,7 @@ class Command(BaseCommand):
                         print('     Future reporting WEEKNUM (%s) current weeknum (%s)' % (program_in_db.weeknum, rep_weeknum))
                         continue
 
-                    # Delete all future reporting -before 12 PM on the first day of the report week.
+                    # Delete all future reporting - before 12 PM on the first day of the report week.
                     last_seen_dotw = program_in_db.last_seen.isocalendar()[2]
                     last_seen_hour = program_in_db.last_seen.hour
 
