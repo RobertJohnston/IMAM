@@ -30,6 +30,11 @@ class Command(BaseCommand):
                     raw_stock.siteid = json_data['values']['stositeid']['value']
 
 
+                # Data errors to detect
+                # Double entry of stocks - cartons = sachets * 150
+                # Entry of confirmed excessive numbers
+                # Entry of decimal points
+
 
                 stock_data.first_seen =  json_stock_row.created_on
                 stock_data.last_seen =  json_stock_row.modified_on
