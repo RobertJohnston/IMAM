@@ -34,10 +34,10 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
         df_queried = df_filtered.query('%s==%s' % (kind, num))
         df_stock_queried = df_stock_filtered.query('%s==%s' % (kind, num))
 
-    df_queried['year_weeknum'] = zip(df_queried['year'], df_queried['weeknum'])
+    df_queried['year_weeknum'] = zip(df_queried['year'].map(int), df_queried['weeknum'].map(int))
     df_queried['iso_year_weeknum'] = df_queried['year_weeknum'].map(lambda x: Week(x[0], x[1]))
 
-    df_stock_queried['year_weeknum'] = zip(df_stock_queried['year'], df_stock_queried['weeknum'])
+    df_stock_queried['year_weeknum'] = zip(df_stock_queried['year'].map(int), df_stock_queried['weeknum'].map(int))
     df_stock_queried['iso_year_weeknum'] = df_stock_queried['year_weeknum'].map(lambda x: Week(x[0], x[1]))
 
     year, week, _ = date.today().isocalendar()
