@@ -122,7 +122,9 @@ class Command(BaseCommand):
                         raise Exception()
 
                     program_in_db.weeknum = program.values['weeknum'].value
-                    program_in_db.role = program.values['role'].value
+
+                    if 'role' in program.values:
+                        program_in_db.role = program.values['role'].value
                     # age_group = models.TextField(blank=True, null=True)
 
                     # in theory, if we take the category of variable type or protype, then only 2 answers should be OTP or SC
