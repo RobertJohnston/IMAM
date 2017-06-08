@@ -250,6 +250,10 @@ class Command(BaseCommand):
                          ]
         site = site.reindex(columns=columnsTitles)
 
+        # TODO somehow the merge procuded situation where the siteid can be NaN and that breaked everything
+        # this is probably du to non matching data
+        imam_supervision = imam_supervision.query('siteid == siteid')
+
         # add sitenames
         imam_supervision['sitename'] = imam_supervision['siteid'].map(
             lambda x: Site.objects.get(siteid=x).sitename.strip() if Site.objects.filter(siteid=x) else "")
