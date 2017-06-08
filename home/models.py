@@ -177,7 +177,8 @@ class Program(models.Model):
     first_seen = models.DateTimeField()
     last_seen = models.DateTimeField(blank=True, null=True)
 
-    weeknum = models.BigIntegerField(blank=True, null=True)
+    weeknum = models.BigIntegerField()
+
     type = models.TextField(blank=True, null=True)
     age_group = models.TextField(blank=True, null=True)
 
@@ -196,7 +197,7 @@ class Program(models.Model):
     state_num = models.BigIntegerField(blank=True, null=True)
     lga_num = models.BigIntegerField(blank=True, null=True)
 
-    year = models.BigIntegerField(blank=True, null=True)
+    year = models.BigIntegerField()
 
     last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
     rep_year_wn = models.TextField(blank=True, null=True)
