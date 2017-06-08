@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'leaflet',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -123,6 +124,12 @@ PROGRAM_UUID =   "a9eed2f3-a92c-48dd-aa10-4f139b1171a4"
 STOCK_UUID =     "a678268d-0e42-43f1-82cd-aa12117d145d"
 WAREHOUSE_UUID = "5f2027ce-092f-4712-9b1c-79cddd232fa9"
 
+
+LEAFLET_CONFIG = {
+    # 'SPATIAL_EXTENT': (12.96, 5.6432, 6.9552, 14.459772),
+    'DEFAULT_CENTER': (11.9, 8.4),
+    'DEFAULT_ZOOM': 7,
+}
 
 try:
     from local_settings import *
