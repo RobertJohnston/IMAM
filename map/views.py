@@ -1,5 +1,9 @@
+import json
+
 from django.shortcuts import render
 from django.http import HttpResponse
+
+from home.models import Site
 
 import time
 
@@ -13,3 +17,7 @@ def map(request):
     # after the template dir add the map dir to correctly identify the path
 
 
+def sites_gps_data(request):
+    data = [{"sitename": x.sitename, "x_long": x.x_long, "y_lat": x.y_lat}
+        for x in Site.objects.filter(x_long__isnull=False, y_lat__isnull=False)]
+    return HttpResponse(json.dumps(data, indent=4))
