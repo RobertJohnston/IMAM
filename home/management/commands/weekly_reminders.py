@@ -29,7 +29,7 @@ class Command(BaseCommand):
         df = pd.read_sql_query("select * from program;", con=engine)
 
 
-        df['year_weeknum'] = zip(df['year'], df['weeknum'])
+        df['year_weeknum'] = zip(df['year'].map(int), df['weeknum'].map(int))
         df['iso_year_weeknum'] = df['year_weeknum'].map(lambda x: Week(x[0], x[1]))
 
         year, week, _ = date.today().isocalendar()
@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
         # Create missing stock reports
         stock = pd.read_sql_query("select * from stock;", con=engine)
-        stock['year_weeknum'] = zip(stock['year'], stock['weeknum'])
+        stock['year_weeknum'] = zip(stock['year'].map(int), stock['weeknum'].map(int))
         stock['iso_year_weeknum'] = stock['year_weeknum'].map(lambda x: Week(x[0], x[1]))
 
         # since how many week this report is about
@@ -82,11 +82,16 @@ class Command(BaseCommand):
         # Merge with all contacts
         contacts = pd.read_sql_query("select * from registration;", con=engine)
         reminders = pd.merge(missing_reports, contacts, on=['siteid', 'type'])
-        reminders.sort()
+        # reminders.sort()
 
         sites = pd.read_sql_query("select * from site;", con=engine)
 
         reminders_sites = pd.merge(reminders, sites, on=['siteid'])
+
+        # pandas as some bug and doesn't managed to convert datetime that has timezone
+        # to some internal format when we do the apply bellow
+        reminders_sites['first_seen'] = reminders_sites['first_seen'].map(lambda x: x.replace(tzinfo=None))
+        reminders_sites['last_seen'] = reminders_sites['last_seen'].map(lambda x: x.replace(tzinfo=None))
 
         # Create reminders message
         reminders_sites['message'] = ""
@@ -190,6 +195,11 @@ class Command(BaseCommand):
         # If using same code as implementation - then add type
         warehouse_reminders = pd.merge(supervision_stomiss, contacts, on=['siteid'])
 
+        # pandas as some bug and doesn't managed to convert datetime that has timezone
+        # to some internal format when we do the apply bellow
+        warehouse_reminders['first_seen'] =  warehouse_reminders['first_seen'].map(lambda x: x.replace(tzinfo=None))
+        warehouse_reminders['last_seen'] =  warehouse_reminders['last_seen'].map(lambda x: x.replace(tzinfo=None))
+
         warehouse_reminders['message'] = ""
 
         def create_message(row_in_df):
@@ -202,7 +212,7 @@ class Command(BaseCommand):
         # FIXME merge reminders_sites and warehouse_reminders
         # for export in excel just in case we need to use old back system of sending reminders through import contacts
         filename = "Weekly Reminders.xlsx"
-        writer = pd.ExcelWriter(filename, engine='xlsxwriter')
+        writer = pd.ExcelWriter(filename, engine='xlsxwriter', options={'remove_timezone': True})
         reminders_sites.to_excel(writer, 'Sheet1')
         writer.save()
         writer.close()
