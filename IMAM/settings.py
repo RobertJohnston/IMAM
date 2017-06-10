@@ -127,8 +127,10 @@ WAREHOUSE_UUID = "5f2027ce-092f-4712-9b1c-79cddd232fa9"
 
 LEAFLET_CONFIG = {
     # 'SPATIAL_EXTENT': (12.96, 5.6432, 6.9552, 14.459772),
-    'DEFAULT_CENTER': (11.9, 8.4),
+    'DEFAULT_CENTER': (11.9, 9),
     'DEFAULT_ZOOM': 7,
+    'MIN_ZOOM': 3,
+    'RESET_VIEW': False,
 }
 
 try:
