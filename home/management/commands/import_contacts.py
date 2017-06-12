@@ -72,7 +72,7 @@ class Command(BaseCommand):
 
                     # if there is no siteid of contact then skip to next contact in contact_batch
                     if not contact.fields['siteid']:
-                        print ("No siteid for %s, skip" % contact.name)
+                        print ("No siteid for %s, skip" % contact.name.encode('UTF-8'))
                         continue
 
                     contact_in_db.urn = contact.urns[0].lstrip('tel:')
