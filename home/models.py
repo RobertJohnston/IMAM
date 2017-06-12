@@ -61,10 +61,14 @@ class RawRegistration(models.Model):
 
 # Raw Program data
 class RawProgram(models.Model):
+    id = models.BigIntegerField(primary_key=True)
     contact_uuid = models.TextField(blank=True, null=True)
     urn     = models.TextField()
     name    = models.TextField(blank=True, null=True)
-    role    = models.TextField(blank=True, null=True)
+
+    # Delete role - This is unncessary and not included with improved RapidPro flow for program,stock,warehouse
+    # role    = models.TextField(blank=True, null=True)
+
     siteid  = models.TextField(blank=True, null=True)
     # From API
     first_seen = models.DateTimeField()
@@ -87,55 +91,52 @@ class RawProgram(models.Model):
     tout  = models.TextField(blank=True, null=True)
     confirm = models.TextField(blank=True, null=True)
 
-    # state_num = models.TextField(blank=True, null=True)
-    # lga_num   = models.TextField(blank=True, null=True)
-    # year      = models.TextField(blank=True, null=True)
-
-    # last_seen_weeknum = models.BigIntegerField(blank=True, null=True)
-    # rep_year_wn = models.TextField(blank=True, null=True)
-    # rep_weeknum = models.BigIntegerField(blank=True, null=True)
-    # last_seen_dotw = models.BigIntegerField(blank=True, null=True)
-    # last_seen_hour = models.BigIntegerField(blank=True, null=True)
-    # year_weeknum = models.TextField(blank=True, null=True)
-    # iso_rep_year_wn = models.TextField(blank=True, null=True)
-    # iso_year_weeknum = models.TextField(blank=True, null=True)
-    # iso_diff = models.BigIntegerField(blank=True, null=True)
-
 
 class RawStock(models.Model):
     id = models.BigIntegerField(primary_key=True)
-    name = models.CharField(max_length=80)
+    contact_uuid = models.TextField(blank=True, null=True)
+    urn     = models.TextField()
+    name    = models.TextField(blank=True, null=True)
+    siteid  = models.TextField(blank=True, null=True)
+    type = models.TextField(blank=True, null=True)
+    weeknum = models.TextField(blank=True, null=True)
+    # from the API
     first_seen = models.DateTimeField()
     last_seen = models.DateTimeField()
-
-    rutf_in          = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_used_carton = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_used_sachet = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    f75_bal_carton   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    f75_bal_sachet   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    f100_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    f100_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-
-    state_num = models.BigIntegerField(blank=True, null=True)
-    lga_num = models.BigIntegerField(blank=True, null=True)
     # Timestamps from our database
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
+    # OUTPATIENTS
+    rutf_in          = models.TextField(blank=True, null=True)
+    rutf_used_carton = models.TextField(blank=True, null=True)
+    rutf_used_sachet = models.TextField(blank=True, null=True)
+    rutf_bal_carton  = models.TextField(blank=True, null=True)
+    rutf_bal_sachet  = models.TextField(blank=True, null=True)
+    # INPATIENTS
+    f75_bal_carton   = models.TextField(blank=True, null=True)
+    f75_bal_sachet   = models.TextField(blank=True, null=True)
+    f100_bal_carton  = models.TextField(blank=True, null=True)
+    f100_bal_sachet  = models.TextField(blank=True, null=True)
 
 
-
-# FIXME
 class RawWarehouse(models.Model):
     id = models.BigIntegerField(primary_key=True)
-    name = models.CharField(max_length=80)
+    contact_uuid = models.TextField(blank=True, null=True)
+    urn     = models.TextField()
+    name    = models.TextField(blank=True, null=True)
+    siteid  = models.TextField(blank=True, null=True)
+    weeknum = models.TextField(blank=True, null=True)
+    # from the API
     first_seen = models.DateTimeField()
     last_seen = models.DateTimeField()
     # Timestamps from our database
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
 
+    rutf_in  = models.TextField(blank=True, null=True)
+    rutf_out = models.TextField(blank=True, null=True)
+    rutf_bal = models.TextField(blank=True, null=True)
+    # Currently there is no tracking of F100 or F75 at LGA and State Level
 
 
 # Registration
@@ -168,6 +169,7 @@ class Registration(models.Model):
 
 # Program data
 class Program(models.Model):
+    # FIXME - need id or index?
     contact_uuid = models.TextField(blank=True, null=True)
     urn = models.TextField()
     name = models.TextField(blank=True, null=True)
@@ -176,6 +178,8 @@ class Program(models.Model):
 
     first_seen = models.DateTimeField()
     last_seen = models.DateTimeField(blank=True, null=True)
+    # These timestamps are stored in PostGres as timestamp with timezone.
+    # the +2 is the difference between UTC and Nigeria time.
 
     weeknum = models.BigIntegerField()
 
@@ -220,8 +224,7 @@ class Program(models.Model):
 
 # Stock data
 class Stock(models.Model):
-    # change index to id
-    index = models.BigIntegerField(primary_key=True)
+    id = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     urn = models.TextField()
     name = models.CharField(max_length=100)
@@ -242,15 +245,15 @@ class Stock(models.Model):
     weeknum = models.IntegerField()
     year = models.BigIntegerField()
 
-    rutf_in          = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    rutf_used_carton = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    rutf_used_sachet = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    rutf_bal_carton  = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    rutf_bal_sachet  = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f75_bal_carton   = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f75_bal_sachet   = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f100_bal_carton  = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    f100_bal_sachet  = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    rutf_in          = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_used_carton = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_used_sachet = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f75_bal_carton   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f75_bal_sachet   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f100_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f100_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     state_num = models.BigIntegerField(blank=True, null=True)
     lga_num = models.BigIntegerField(blank=True, null=True)
