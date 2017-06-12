@@ -71,13 +71,13 @@ class Command(BaseCommand):
                         continue
 
                     # if id of stock exists then update the row
-                    if Stock.objects.filter(index=stock.id).exists():
-                        stock_in_db = Stock.objects.get(index=stock.id)
+                    if Stock.objects.filter(id=stock.id).exists():
+                        stock_in_db = Stock.objects.get(id=stock.id)
 
                     # if id of stock data doesn't exist then create a new row.
                     else:
                         stock_in_db = Stock()
-                        stock_in_db.index = stock.id
+                        stock_in_db.id = stock.id
 
                     contact = contact_cache[stock.contact.uuid]
                     stock_in_db.contact_uuid = stock.contact.uuid
@@ -103,17 +103,17 @@ class Command(BaseCommand):
 
 
                     if stock_in_db.type == 'OTP':
-                        stock_in_db.rutf_in = stock.values['rutf_in'].value
-                        stock_in_db.rutf_used_carton = stock.values['rutf_used_carton'].value
-                        stock_in_db.rutf_used_sachet = stock.values['rutf_used_sachet'].value
-                        stock_in_db.rutf_bal_carton = stock.values['rutf_bal_carton'].value
-                        stock_in_db.rutf_bal_sachet = stock.values['rutf_bal_sachet'].value
+                        stock_in_db.rutf_in = stock.values['rutf_in'].value if stock.values['rutf_in'].value < 9999 else None
+                        stock_in_db.rutf_used_carton = stock.values['rutf_used_carton'].value if stock.values['rutf_used_carton'].value < 9999 else None
+                        stock_in_db.rutf_used_sachet = stock.values['rutf_used_sachet'].value if stock.values['rutf_used_sachet'].value < 9999 else None
+                        stock_in_db.rutf_bal_carton = stock.values['rutf_bal_carton'].value   if stock.values['rutf_bal_carton'].value < 9999 else None
+                        stock_in_db.rutf_bal_sachet = stock.values['rutf_bal_sachet'].value   if stock.values['rutf_bal_sachet'].value < 9999 else None
                     elif stock_in_db.type == 'SC':
                         # for stabilization center only balance
-                        stock_in_db.f100_bal_carton = stock.values['f100_bal_carton'].value
-                        stock_in_db.f100_bal_sachet = stock.values['f100_bal_sachet'].value
-                        stock_in_db.f75_bal_carton = stock.values['f75_bal_carton'].value
-                        stock_in_db.f75_bal_sachet = stock.values['f75_bal_sachet'].value
+                        stock_in_db.f100_bal_carton = stock.values['f100_bal_carton'].value if stock.values['f100_bal_carton'].value < 9999 else None
+                        stock_in_db.f100_bal_sachet = stock.values['f100_bal_sachet'].value if stock.values['f100_bal_sachet'].value < 9999 else None
+                        stock_in_db.f75_bal_carton = stock.values['f75_bal_carton'].value   if stock.values['f75_bal_carton'].value < 9999 else None
+                        stock_in_db.f75_bal_sachet = stock.values['f75_bal_sachet'].value   if stock.values['f75_bal_sachet'].value < 9999 else None
                     else:
                         raise Exception()
 
