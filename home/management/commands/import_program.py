@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 # DO NOT NEED TO SAVE CONFIRM
                 for program in program_batch:
                     if 'confirm' not in program.values or program.values['confirm'].category != 'Yes':
-                        print('     Not CONFIRMED %s') % program.contact.name
+                        print('     Not CONFIRMED %s' % program.contact.name.encode('UTF-8'))
                         continue
 
                     # if id of program exists then update the row
