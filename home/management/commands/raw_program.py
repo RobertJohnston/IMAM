@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 class Command(BaseCommand):
-    help = 'Imports RawRegistration data from JsonRegistration'
+    help = 'Imports RawProgram data from JsonProgram'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -47,20 +47,20 @@ class Command(BaseCommand):
             last_update_time.timestamp = datetime.now()
 
             # Change to countdown
-            a = JsonProgram.objects.all().count()
+            counter= JsonProgram.objects.all().count()
 
             contact_cache = {}
             for contact in Registration.objects.all():
                 contact_cache[contact.contact_uuid] = contact
 
             for json_program_row in data_to_process.iterator():
-                # do this to avoid excessive memory consumption because django is
+                # Use db.reset queries - to avoid excessive memory consumption because django is
                 # keeping track of every queries in memory for debugging purpose
                 # according to memory_profile commenting out db.reset.queries() doesn't seems to change anything
                 # db.reset_queries()
 
                 id = json_program_row.id
-                a -= 1
+                counter-= 1
 
                 # Update program
                 if RawProgram.objects.filter(id=id):
@@ -81,6 +81,7 @@ class Command(BaseCommand):
                     continue
 
                 # Import contacts
+                # FIXME is this a setattrib error?
                 raw_program.contact_uuid = json_data['contact']['uuid']
 
                 if raw_program.contact_uuid not in contact_cache:
@@ -111,6 +112,17 @@ class Command(BaseCommand):
                     raw_program.siteid = None
                     raw_program.type  = None
 
+                #FIXME - make more explicit
+                # def clean(value_to_clean):
+                #     try:
+                #         return int(float(value_to_clean))
+                #     except ValueError:
+                #         print("Fail to convert '%s' as a number" % (value_to_clean))
+                #         return None
+
+                # Data cleaning for inpatients and outpatients
+                # program_in_db.weeknum = clean(program_row.weeknum)
+
 
                 # OUTPATIENTS
                 if raw_program.type == "OTP" :
@@ -119,7 +131,6 @@ class Command(BaseCommand):
 
                 # INPATIENTS
                 elif raw_program.type == "SC":
-
                     raw_program.age_group = json_data['values']['age_group']['category'] if 'age_group' in json_data[
                         'values'] else None
                     varlist = ('beg_i', 'amar_i', 'tin_i', 'dcur_i', 'dead_i', 'defu_i', 'dmed_i', 'tout_i')
@@ -153,7 +164,7 @@ class Command(BaseCommand):
                 # iso_diff
                 # since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
-                print("countdown-%s" % a)
+                print("countdown-%s" % counter)
                 raw_program.save()
 
 
