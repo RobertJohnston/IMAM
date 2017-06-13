@@ -15,14 +15,12 @@
     {% leaflet_map "map" callback="window.map_init_basic" %}
 </div>
 
-    <!--<div id="demoMap" style="height:250px"></div>-->
-    <!--<script src="OpenLayers.js">-->
+    <!--https://github.com/lvoogdt/Leaflet.awesome-markers-->
+    <!--http://ionicons.com/-->
+    <!--for otp (ion-medkit)-->
+    <!--for SC  (ion-ios-home)-->
 
-    <!--<script>-->
-        <!--map = new OpenLayers.Map("demoMap");-->
-        <!--map.addLayer(new OpenLayers.Layer.OSM());-->
-        <!--map.zoomToMaxExtent();-->
-    <!--</script>-->
+<link rel="stylesheet" href="{% static 'home/css/leaflet.awesome-markers.css' %}">
 
 <style>
     #map {
@@ -30,18 +28,81 @@
     }
 </style>
 
+<script src="{% static 'home/js/leaflet.awesome-markers.js' %}"></script>
+
 <script>
+
+    var otpMarker = L.AwesomeMarkers.icon({
+        icon: 'plus-square',
+        markerColor: 'orange',
+        prefix: 'fa',
+        iconColor: 'white'
+    });
+
+    var scMarker = L.AwesomeMarkers.icon({
+        icon: 'h-square',
+        markerColor: 'darkred',
+        prefix: 'fa',
+        iconColor: 'white'
+    });
+
+    var blankMarker = L.AwesomeMarkers.icon({
+        icon: '',
+        markerColor: 'cadetblue',
+        prefix: 'fa',
+        iconColor: 'white'
+    });
+
+    var activeMarker = L.icon({
+        // = L.AwesomeMarkers.icon({
+        iconUrl: 'http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-1-Left-Pink-icon.png',
+        iconSize:     [38, 35], // size of the icon
+        iconAnchor:   [38, 35], // point of the icon which will correspond to marker's location
+        // icon: '',
+        // markerColor: 'green',
+        // prefix: 'fa',
+        // iconColor: 'white'
+    });
+
+    var inactiveMarker = L.AwesomeMarkers.icon({
+        icon: 'close',
+        markerColor: 'gray',
+        prefix: 'fa',
+        iconColor: 'white'
+    });
+
     function map_init_basic (map, options) {
+        var sitesType = L.layerGroup();
+        var sitesActive = L.layerGroup();
+
         $.getJSON('/map/sites.json').success(function(data) {
             for (var i = 0; i < data.length; ++i) {
-                L.marker([data[i].x_long, data[i].y_lat]).bindPopup(data[i].sitename).addTo(map);
+                if (data[i].sc) {
+                    L.marker([data[i].x_long, data[i].y_lat], {icon: scMarker}).bindPopup(data[i].sitename).addTo(sitesType);
+                } else if (data[i].otp) {
+                    L.marker([data[i].x_long, data[i].y_lat], {icon: otpMarker}).bindPopup(data[i].sitename).addTo(sitesType);
+                } else {
+                    L.marker([data[i].x_long, data[i].y_lat], {icon: inactiveMarker}).bindPopup(data[i].sitename).addTo(sitesType);
+                }
+
+                if (data[i].active) {
+                    L.marker([data[i].x_long, data[i].y_lat], {icon: activeMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
+                } else {
+                    L.marker([data[i].x_long, data[i].y_lat], {icon: inactiveMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
+                }
             }
+
+            L.control.layers({}, {"Type": sitesType, "Active": sitesActive}).addTo(map);
+
+            map.addLayer(sitesType);
         })
-
-
     }
+
 </script>
 {% endblock %}
+
+
+
 
 
 
