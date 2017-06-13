@@ -118,7 +118,7 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
                 break
 
             isoweek = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i)).groupby('siteid')['iso_year_weeknum'].max().max()
-            rutf_out = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i)).groupby('siteid')['rutf_used_carton'].median().sum()
+            rutf_out = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i)).groupby('siteid')['rutf_out'].median().sum()
 
             isoweek = iso_to_gregorian(isoweek.year, isoweek.week)
 
@@ -182,10 +182,6 @@ def adm(request):
     df_stock = pd.read_sql_query("select * from stock;", con=engine)
 
     # REMOVE THIS WHEN DATA CLEANING IS DONE.
-    # this should be in import stock
-    # All data should be cleaned in advance.
-    df_stock['rutf_out'] = df_stock['rutf_used_carton'] + (df_stock['rutf_used_sachet'] / 150.)
-    df_stock['rutf_bal'] = df_stock['rutf_bal_carton'] + (df_stock['rutf_bal_sachet'] / 150.)
     # F75 sachets per carton - 120
     df_stock['f75_bal'] = df_stock['f75_bal_carton'] + (df_stock['f75_bal_sachet'] / 120.)
     # F100 sachets per carton - 90
