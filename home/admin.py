@@ -11,8 +11,7 @@ class ProgramAdmin(admin.ModelAdmin):
     list_display = ('name', 'urn', 'siteid', 'type', 'weeknum', 'beg', 'amar')
 
 class StockAdmin(admin.ModelAdmin):
-    list_display = ('name', 'urn', 'siteid', 'type', 'weeknum', 'rutf_in',
-                    'rutf_used_carton', 'rutf_used_sachet')
+    list_display = ('name', 'urn', 'siteid', 'type', 'weeknum', 'rutf_in', 'rutf_out')
                     # ERRORS in STOCK import
                     #'rutf_bal_carton', 'rutf_used_sachet',
                     #'f75_bal_carton', 'f75_bal_carton', 'f100_bal_carton', 'f100_bal_carton', 'confirm')
