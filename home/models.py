@@ -229,9 +229,6 @@ class Stock(models.Model):
     urn = models.TextField()
     name = models.CharField(max_length=100)
     groups = models.CharField(max_length=100)
-
-    # if supervisor enters the data then don't forget to take data
-    # if supervisor enters the data than take SiteID from StoSiteID
     siteid = models.BigIntegerField()
 
     # if supervisor enters the data then take Type from stoType
@@ -245,11 +242,11 @@ class Stock(models.Model):
     weeknum = models.IntegerField()
     year = models.BigIntegerField()
 
-    rutf_in          = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_used_carton = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_used_sachet = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    rutf_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_in  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    rutf_out = models.DecimalField(max_digits=6, decimal_places=2,null=True, blank=True)
+    rutf_bal = models.DecimalField(max_digits=6, decimal_places=2,null=True, blank=True)
+
+    # FIXME
     f75_bal_carton   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     f75_bal_sachet   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     f100_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
@@ -300,7 +297,6 @@ class First_admin(models.Model):
     state_num = models.IntegerField(primary_key=True)
 
     class Meta:
-        managed = False
         db_table = 'first_admin'
 
     def __unicode__(self):
@@ -310,12 +306,11 @@ class First_admin(models.Model):
 # Second Admin IDs
 class Second_admin(models.Model):
     index = models.BigIntegerField()
-    state_num = models.ForeignKey(First_admin, db_column="state_num")
+    state_num = models.ForeignKey(First_admin)
     lga = models.TextField(blank=True, null=True)
     lga_num = models.IntegerField(primary_key=True)
 
     class Meta:
-        managed = False
         db_table = 'second_admin'
 
     def __unicode__(self):
@@ -327,22 +322,23 @@ class Site(models.Model):
     index = models.IntegerField()
     siteid = models.BigIntegerField(primary_key=True)
     sitename = models.TextField(blank=True, null=True)
-    # state_num = models.ForeignKey(First_admin, db_column="state_num")
-    # lga_num = models.ForeignKey(Second_admin, db_column="lga_num")
-    state_num = models.TextField()
-    lga_num = models.TextField()
+    state_num = models.ForeignKey(First_admin)
+    lga_num = models.ForeignKey(Second_admin)
     ward = models.TextField(blank=True, null=True)
     x_long = models.FloatField(blank=True, null=True)
     y_lat = models.FloatField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     # add CLOSING DATE variable
-    # closing_date = models.DateField(blank=True, null=True)
+    closing_date = models.DateField(blank=True, null=True)
     # Site IDs are loaded in from excel. They are not taken from RapidPro, so they will not be rewritten regularly.
+
+    otp = models.BooleanField(default=False)
+    sc = models.BooleanField(default=False)
 
     class Meta:
         # This is reference of Django to Postgres
         db_table = 'site'
-        managed = False
+        # using Pandas to upload the site data and then managed = False is problematic
 
     def __unicode__(self):
         return "Site {}".format(self.sitename)
