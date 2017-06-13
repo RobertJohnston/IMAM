@@ -1,9 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
-import pandas as pd
-from sqlalchemy import create_engine
-from django.conf import settings
-
-from load_data import assign_state_lga_num
+from django.core.management.base import BaseCommand
 
 # Site IDs data for the health care facilities for 12 northern Nigerian states
 
