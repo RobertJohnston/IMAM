@@ -75,10 +75,10 @@ class Command(BaseCommand):
                 # Create api_data from json_program_row to import to RawProgram
                 json_data = json.loads(json_program_row.json)
 
-                if "weeknum" not in json_data['values']:
-                    print("Weeknum not in JSON data values for program data entry SKIPPED")
-                    # Data entries where Pro was selected but there are no data entered.
-                    continue
+                # if "weeknum" not in json_data['values']:
+                #     print("Weeknum not in JSON data values for program data entry SKIPPED")
+                #     # Data entries where Pro was selected but there are no data entered.
+                #     continue
 
                 # Import contacts
                 # FIXME is this a setattrib error?
@@ -95,14 +95,22 @@ class Command(BaseCommand):
                 raw_program.name = json_data['contact']['name']
                 # raw_program.groups
 
-                # Role = Implementation or Supervision
+                # Role = Implementation or Supervision - this is unncessary to collect
                 raw_program.role = json_data['values']['role']['category'] if 'role' in json_data['values'] else None
                 raw_program.weeknum = json_data['values']['weeknum']['value'] if 'weeknum' in json_data['values'] else None
 
                 # Normal data entry for implementation reports
                 if "type" in json_data['values']:
                     raw_program.type = json_data['values']['type']['category']
-                    raw_program.siteid = contact.siteid
+
+                    # Data stitching to integrate SITEID is working in raw_program since 8th June 2017
+                    if 'siteid' in json_data['values'] and isinstance(json_data['values']['siteid']['value'], (int, float)):
+                        raw_program.siteid = json_data['values']['siteid']['value']
+                        print raw_program.siteid
+                    # code below brings siteid from contacts for old data entries before the corrections in RapidPro
+                    else:
+                        raw_program.siteid = contact.siteid
+
                 # Custom data entry for supervision program reports
                 # if there is an entry in Protype (True) then supervisor sent data for implementation site
                 elif "prositeid" in json_data['values']:
