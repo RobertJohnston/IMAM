@@ -117,6 +117,7 @@ class RawStock(models.Model):
     f75_bal_sachet   = models.TextField(blank=True, null=True)
     f100_bal_carton  = models.TextField(blank=True, null=True)
     f100_bal_sachet  = models.TextField(blank=True, null=True)
+    confirm = models.TextField(blank=True, null=True)
 
 
 class RawWarehouse(models.Model):
@@ -211,7 +212,6 @@ class Program(models.Model):
     year_weeknum = models.TextField(blank=True, null=True)
     iso_rep_year_wn = models.TextField(blank=True, null=True)
     iso_year_weeknum = models.TextField(blank=True, null=True)
-    iso_diff = models.BigIntegerField(blank=True, null=True)
     # since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
     class Meta:
