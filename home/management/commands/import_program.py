@@ -5,7 +5,7 @@ from django.db import transaction
 
 from temba_client.v2 import TembaClient
 from isoweek import Week
-from home.models import Program, Registration, LastUpdatedAPICall
+from home.models import Program, Registration, LastUpdatedAPICall, Site
 
 from uuid import UUID
 
@@ -40,6 +40,7 @@ class Command(BaseCommand):
         client = TembaClient('rapidpro.io', open('token').read().strip())
 
         contact_cache = {x.contact_uuid: x for x in Registration.objects.all()}
+        site_cache = {x.siteid: x for x in Site.objects.all()}
 
         last_update_time = LastUpdatedAPICall.objects.filter(kind="program").first()
 
@@ -59,6 +60,9 @@ class Command(BaseCommand):
         elif not options['all'] and not last_update_time:
             clients_from_api = client.get_runs(flow=u'a9eed2f3-a92c-48dd-aa10-4f139b1171a4')
             last_update_time = LastUpdatedAPICall(kind="program")
+        else:
+            raise Exception()
+            # This is unncessary in this context but good programming practice
 
         last_update_time.timestamp = datetime.now()
 
@@ -295,6 +299,19 @@ class Command(BaseCommand):
 
                     a += 1
                     print(a)
+
+                    # if we don't have the site in the database, skip for now
+                    if program_in_db.siteid not in site_cache:
+                        continue
+
+                    site = site_cache[program_in_db.siteid]
+
+                    if program_in_db.type == "OTP" and not site.otp:
+                        site.otp = True
+                        site.save()
+                    if program_in_db.type == "SC" and not site.sc:
+                        site.sc = True
+                        site.save()
 
         last_update_time.save()
 # Ensure that amar_i and all other inpatients variables are included
