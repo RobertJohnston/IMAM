@@ -6,7 +6,6 @@ from django.db import transaction
 from datetime import datetime
 
 
-
 class Command(BaseCommand):
     help = 'Loads RawStock data from JsonStock'
 
@@ -21,7 +20,7 @@ class Command(BaseCommand):
 
     # A command must define handle
     def handle(self, *args, **options):
-        #with transaction.atomic():
+        with transaction.atomic():
 
             last_update_time = LastUpdatedAPICall.objects.filter(kind="raw_stock").first()
 
@@ -44,44 +43,23 @@ class Command(BaseCommand):
                 data_to_process = JsonStock.objects.all()
                 last_update_time = LastUpdatedAPICall(kind="raw_stock")
 
+            else:
+                raise Exception()
+                # This is unncessary in this context but good programming practice
+
             last_update_time.timestamp = datetime.now()
 
             # Countdown ticker
-            a = JsonStock.objects.all().count()
+            counter= JsonStock.objects.all().count()
 
             contact_cache = {}
             for contact in Registration.objects.all():
                 contact_cache[contact.contact_uuid] = contact
 
-
-
-            for json_stock_row in data_to_process.iterator():
-                # Use db.reset queries - to avoid excessive memory consumption because django is
-                # keeping track of every queries in memory for debugging purpose
-                # according to memory_profile commenting out db.reset.queries() doesn't seems to change anything
-                # db.reset_queries()
-
-                id = json_stock_row.id
-                a -= 1
-
-                print id
-
-                # Update program
-                if RawStock.objects.filter(id=id):
-                    raw_stock = RawStock.objects.get(id=id)
-                    print raw_stock
-
-
-                # Create contact
-                else:
-                    raw_stock = RawStock()
-                    raw_stock.id = id
-
-
             for json_stock_row in data_to_process.iterator():
 
                 id = json_stock_row.id
-                a -= 1
+                counter -= 1
 
                 # Update stock
                 if RawStock.objects.filter(id=id):
@@ -94,11 +72,6 @@ class Command(BaseCommand):
                 # Create api_data from json_stock_row to import to RawStock
                 json_data = json.loads(json_stock_row.json)
 
-                if "weeknum" not in json_data['values']:
-                    print("Weeknum not in JSON data values for program data entry SKIPPED")
-                    # Data entries where Pro was selected but there are no data entered.
-                    continue
-
                 # Import contacts
                 raw_stock.contact_uuid = json_data['contact']['uuid']
 
@@ -110,35 +83,51 @@ class Command(BaseCommand):
                     contact = contact_cache[raw_stock.contact_uuid]
                     raw_stock.urn = contact.urn
 
+                raw_stock.name = json_data['contact']['name']
 
-                # Normal data entry for stock reports
-                if 'type' in json_data['values']:
-                    raw_stock.type = json_data['values']['type']['category']
-                    raw_stock.siteid = json_data['values']['siteid']['value']
+                # Normal data entry for stock reports - in program this is called 'type'
+                if 'route_by_type' in json_data['values']:
+                    raw_stock.type   = json_data['values']['route_by_type']['category']
+
+                    # raw_stock.siteid = json_data['values']['siteid']['value']
+
+                    # Data stitching to integrate SITEID is working in raw_program since 8th June 2017
+                    if 'siteid' in json_data['values'] and isinstance(json_data['values']['siteid']['value'], (int, float)):
+                        raw_stock.siteid = json_data['values']['siteid']['value']
+                        print raw_stock.siteid
+                    # code below brings siteid from contacts for old data entries before the corrections in RapidPro
+                    else:
+                        raw_stock.siteid = contact.siteid
+
                 # Custom data entry for supervision program reports
                 # if there is an entry in Protype (True) then supervisor sent data for implementation site
                 elif 'stotype' in json_data['values']:
-                    raw_stock.type = json_data['values']['stotype']['category']
-                    raw_stock.siteid = json_data['values']['stositeid']['value']
+                    raw_stock.type   = json_data['values']['stotype']['category']
+                    raw_stock.siteid = json_data['values']['stositeid']['value'] if 'stositeid' in json_data['values'] else None
+                    print("SUPERVISION DATA ENTRY with type %s and siteid %s" % (raw_stock.type, raw_stock.siteid))
                 else:
                     raw_stock.siteid = None
                     raw_stock.type = None
 
+                raw_stock.weeknum = json_data['values']['weeknum']['value']  if 'weeknum' in json_data['values'] else None
+                # In the RapidPro flow for stock, the collection of weeknum is after the filter for
+                # level (implementation or supervision, thus there is no need to include a skip
+                # if weeknum is not present
+
                 # OUTPATIENTS
                 if raw_stock.type == "OTP" :
-                    raw_stock.rutf_in  = json_data['values']['rutf_in ']['value']
-                    raw_stock.rutf_used_carton  = json_data['values']['rutf_used_carton ']['value']
-                    raw_stock.rutf_used_sachet  = json_data['values']['rutf_used_sachet ']['value']
-                    raw_stock.rutf_bal_carton  = json_data['values']['rutf_bal_carton ']['value']
-                    raw_stock.rutf_bal_sachet  = json_data['values']['rutf_bal_sachet ']['value']
+                    raw_stock.rutf_in           = json_data['values']['rutf_in']['value']          if 'rutf_in' in json_data['values'] else None
+                    raw_stock.rutf_used_carton  = json_data['values']['rutf_used_carton']['value'] if 'rutf_used_carton' in json_data['values'] else None
+                    raw_stock.rutf_used_sachet  = json_data['values']['rutf_used_sachet']['value'] if 'rutf_used_sachet' in json_data['values'] else None
+                    raw_stock.rutf_bal_carton   = json_data['values']['rutf_bal_carton']['value']  if 'rutf_bal_carton' in json_data['values'] else None
+                    raw_stock.rutf_bal_sachet   = json_data['values']['rutf_bal_sachet']['value']  if 'rutf_bal_sachet' in json_data['values'] else None
 
                 # INPATIENTS
                 elif raw_stock.type == "SC":
-                    raw_stock.f75_bal_carton  = json_data['values']['f75_bal_carton ']['values']
-                    raw_stock.f75_bal_sachet  = json_data['values']['f75_bal_sachet ']['values']
-                    raw_stock.f100_bal_carton  = json_data['values']['f100_bal_carton ']['values']
-                    raw_stock.f100_bal_sachet  = json_data['values']['f100_bal_sachet ']['values']
-
+                    raw_stock.f75_bal_carton    = json_data['values']['f75_bal_carton']['value']  if 'f75_bal_carton' in json_data['values'] else None
+                    raw_stock.f75_bal_sachet    = json_data['values']['f75_bal_sachet']['value']  if 'f75_bal_sachet' in json_data['values'] else None
+                    raw_stock.f100_bal_carton   = json_data['values']['f100_bal_carton']['value'] if 'f100_bal_carton' in json_data['values'] else None
+                    raw_stock.f100_bal_sachet   = json_data['values']['f100_bal_sachet']['value'] if 'f100_bal_sachet' in json_data['values'] else None
 
 
                 # Data errors to detect
@@ -147,11 +136,14 @@ class Command(BaseCommand):
                 # Entry of decimal points
 
 
-                raw_stock.first_seen =  json_stock_row.created_on
-                raw_stock.last_seen =  json_stock_row.modified_on
+                raw_stock.first_seen =  json_data['created_on']
+                raw_stock.last_seen =  json_data['modified_on']
+
+                if 'confirm' in json_data['values']:
+                    raw_stock.confirm = json_data['values']['confirm']['category']
 
                 raw_stock.save()
-                print("count-%s  name-%s" % (a, raw_stock.name))
+                print("count %s " % counter)
 
              # bulk insert could be an option
 
