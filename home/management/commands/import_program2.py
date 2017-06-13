@@ -3,9 +3,8 @@ from datetime import date, datetime
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from isoweek import Week
-from home.models import RawProgram, Program, LastUpdatedAPICall
+from home.models import RawProgram, Program, LastUpdatedAPICall, Site
 
-from uuid import UUID
 
 # import_program.py
 # to run python manage.py import_program
@@ -56,8 +55,13 @@ class Command(BaseCommand):
                 Program.objects.all().delete()
                 data_to_process = RawProgram.objects.all()
                 last_update_time = LastUpdatedAPICall(kind="program")
+            else:
+                raise Exception()
+                # This is unncessary in this context but good programming practice
 
             last_update_time.timestamp = datetime.now()
+
+            site_cache = {x.siteid: x for x in Site.objects.all()}
 
             a = RawProgram.objects.all().count()
 
@@ -235,6 +239,19 @@ class Command(BaseCommand):
                     oldest_program_report.delete()
 
                 # Variables to accelerate analysis
+
+                # if we don't have the site in the database, skip for now
+                if program_in_db.siteid not in site_cache:
+                    continue
+
+                site = site_cache[program_in_db.siteid]
+
+                if program_in_db.type == "OTP" and not site.otp:
+                    site.otp = True
+                    site.save()
+                if program_in_db.type == "SC" and not site.sc:
+                    site.sc = True
+                    site.save()
 
 
         last_update_time.save()
