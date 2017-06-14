@@ -1,13 +1,9 @@
-import math
-
 from datetime import date, datetime
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from isoweek import Week
 from home.models import RawStock, Stock, LastUpdatedAPICall, Site
-
-from uuid import UUID
 
 # import_stock.py
 # to run python manage.py import_stock
@@ -18,7 +14,7 @@ from uuid import UUID
 # 3 -  do data cleaning as save as clean data
 
 
-# Duplicate from import_program2
+# This code is duplicated in from import_program2 and import_warehouse2
 def clean(value_to_clean):
     try:
         return int(float(value_to_clean))
@@ -41,9 +37,11 @@ class Command(BaseCommand):
 
     # A command must define handle
     def handle(self, *args, **options):
-        with transaction.atomic():
+        # with transaction.atomic():
 
             last_update_time = LastUpdatedAPICall.objects.filter(kind="stock").first()
+
+            counter = RawStock.objects.all().count()
 
             # Code below is explicitly describing all possible four conditions of two booleans
             if options['all'] and last_update_time:
@@ -56,9 +54,10 @@ class Command(BaseCommand):
                 last_update_time = LastUpdatedAPICall(kind="stock")
 
             elif not options['all'] and last_update_time:
-                # Start from end of attempt to load data: GET all data since timestamp of last time
+                # Start from end of attempt to load data: GET all datcountersince timestamp of last time
                 # remember to use modified_on not last seen
                 data_to_process = RawStock.objects.filter(modified_on__gte=last_update_time.timestamp)
+                counter = RawStock.objects.filter(modified_on__gte=last_update_time.timestamp).count()
 
             elif not options['all'] and not last_update_time:
                 Stock.objects.all().delete()
@@ -72,13 +71,9 @@ class Command(BaseCommand):
 
             site_cache = {x.siteid: x for x in Site.objects.all()}
 
-            a = RawStock.objects.all().count()
-
-            for stock_row in data_to_process.iterator():
-                id = stock_row.id
-
-                # countdown counter
-                a -= 1
+            for row in data_to_process.iterator():
+                id = row.id
+                counter-= 1
 
                 # Update stock if id exists in Stock.objects
                 if Stock.objects.filter(id=id):
@@ -89,15 +84,15 @@ class Command(BaseCommand):
                     stock_in_db.id = id
 
                 # If not confirmed, skip row data, do not add to database
-                if stock_row.confirm != "Yes":
+                if row.confirm != "Yes":
                     print  "             unconfirmed"
                     continue
 
                 # SiteID
-                if clean(stock_row.siteid) is not None:
-                    stock_in_db.siteid = clean(stock_row.siteid)
+                if clean(row.siteid) is not None:
+                    stock_in_db.siteid = clean(row.siteid)
                 else:
-                    print '             bad siteid: %s' % stock_row.siteid
+                    print '             bad siteid: %s' % row.siteid
                     continue
 
                 # If SiteID was training data entry or is invalid - skip entire row
@@ -107,60 +102,62 @@ class Command(BaseCommand):
                     print '             too big siteid: %s' % stock_in_db.siteid
                     continue
 
-                stock_in_db.contact_uuid = stock_row.contact_uuid
-                stock_in_db.urn    = stock_row.urn
-                stock_in_db.name   = stock_row.name
+                stock_in_db.contact_uuid = row.contact_uuid
+                stock_in_db.urn    = row.urn
+                stock_in_db.name   = row.name
 
-                stock_in_db.first_seen = stock_row.first_seen
-                stock_in_db.last_seen = stock_row.last_seen
+                stock_in_db.first_seen = row.first_seen
+                stock_in_db.last_seen = row.last_seen
 
                 # Note, the in operator evaluates the details in the list of elements
-                if stock_row.type in ("OTP", "SC"):
-                    stock_in_db.type = stock_row.type
+                if row.type in ("OTP", "SC"):
+                    stock_in_db.type = row.type
                 else:
-                    print '             bad type %s' % stock_row.type
+                    print '             bad type %s' % row.type
                     continue
 
 
                 # Data cleaning for stock
                 # OUTPATIENTS
                 if  stock_in_db.type == "OTP" :
-                    stock_in_db.rutf_in    = clean(stock_row.rutf_in)
-                    stock_in_db.rutf_out  = round(clean(stock_row.rutf_used_carton) + clean(stock_row.rutf_used_sachet) / 150., 2)
-                    stock_in_db.rutf_bal   = round(clean(stock_row.rutf_bal_carton) + clean(stock_row.rutf_bal_sachet) / 150., 2)
+                    stock_in_db.rutf_in    = clean(row.rutf_in)
+                    stock_in_db.rutf_out  = round(clean(row.rutf_used_carton) + clean(row.rutf_used_sachet) / 150., 2)
+                    stock_in_db.rutf_bal   = round(clean(row.rutf_bal_carton) + clean(row.rutf_bal_sachet) / 150., 2)
 
                 #FIXME
                 # INPATIENTS
                 elif stock_in_db.type == "SC":
-                    stock_in_db.f75_bal_carton    = clean(stock_row.f75_bal_carton)
-                    stock_in_db.f75_bal_sachet    = clean(stock_row.f75_bal_sachet)
-                    stock_in_db.f100_bal_carton   = clean(stock_row.f100_bal_carton)
-                    stock_in_db.f100_bal_sachet   = clean(stock_row.f100_bal_sachet)
+                    stock_in_db.f75_bal_carton    = clean(row.f75_bal_carton)
+                    stock_in_db.f75_bal_sachet    = clean(row.f75_bal_sachet)
+                    stock_in_db.f100_bal_carton   = clean(row.f100_bal_carton)
+                    stock_in_db.f100_bal_sachet   = clean(row.f100_bal_sachet)
 
                 # Data errors to correct of delete
 
                 # Double counting
                 # If cartons>1 and cartons *150  = sachets +/- 150 then cartons = sachets/150
                 # RUTF_USED
-                if clean(stock_row.rutf_used_carton) is not None and clean(stock_row.rutf_used_sachet) is not None:
-                    if float(stock_row.rutf_used_carton) > 1 and (-150 < (float(stock_row.rutf_used_carton) * 150 - float(stock_row.rutf_used_sachet)) < 150):
-                        stock_in_db.rutf_out = round(float(stock_row.rutf_used_sachet) / 150., 2)
+                if clean(row.rutf_used_carton) is not None and clean(row.rutf_used_sachet) is not None:
+                    if float(row.rutf_used_carton) > 1 and (-150 < (float(row.rutf_used_carton) * 150 - float(row.rutf_used_sachet)) < 150):
+                        stock_in_db.rutf_out = round(float(row.rutf_used_sachet) / 150., 2)
                     # RUTF_BAL
-                    if float(stock_row.rutf_bal_carton) > 1 and (-150 < (float(stock_row.rutf_bal_carton) * 150 - float(stock_row.rutf_bal_sachet)) < 150):
-                        stock_in_db.rutf_bal = round(float(stock_row.rutf_bal_sachet) / 150., 2)
-                        # Entry of confirmed excessive numbers
-                    # Entry of decimal points
+                    if float(row.rutf_bal_carton) > 1 and (-150 < (float(row.rutf_bal_carton) * 150 - float(row.rutf_bal_sachet)) < 150):
+                        stock_in_db.rutf_bal = round(float(row.rutf_bal_sachet) / 150., 2)
 
-                if stock_in_db.rutf_bal > 9999:
-                    print '    carton number for rutf_bal is too big %s, skip' % stock_in_db.rutf_bal
-                    continue
 
+                # Entry of decimal points
+
+                # Entry of confirmed excessive numbers
                 if stock_in_db.rutf_in > 9999:
                     print '    carton number for rutf_in is too big %s, skip' % stock_in_db.rutf_in
                     continue
 
                 if stock_in_db.rutf_out > 9999:
                     print '    carton number for rutf_out is too big %s, skip' % stock_in_db.rutf_out
+                    continue
+
+                if stock_in_db.rutf_bal > 9999:
+                    print '    carton number for rutf_bal is too big %s, skip' % stock_in_db.rutf_bal
                     continue
 
 
@@ -180,7 +177,7 @@ class Command(BaseCommand):
                     print(stock_in_db.siteid)
                     raise Exception()
 
-                stock_in_db.weeknum = clean(stock_row.weeknum)
+                stock_in_db.weeknum = clean(row.weeknum)
 
                 # Double check
                 if stock_in_db.weeknum < 1 or stock_in_db.weeknum > 53:
@@ -211,7 +208,6 @@ class Command(BaseCommand):
                     stock_in_db.year -= 1
 
                 today_year = date.today().year
-                today_weeknum = date.today().isocalendar()[1]
                 rep_weeknum = stock_in_db.last_seen.isocalendar()[1]
 
                 # Stock reporting with RapidPro started in June 2016 (week 22)
@@ -254,14 +250,43 @@ class Command(BaseCommand):
                     ))
                     continue
 
-                year, week, dotw = date.today().isocalendar()
-                current_week = Week(year, week)
 
                 # Report is X weeks before current week number
                 # stock_in_db.since_x_weeks = current_week - iso_year_weeknum
 
-                print("count %s" % a)
+
+                # Variables to accelerate analysis
+
+                # if we don't have the site in the database, skip for now
+                if stock_in_db.siteid not in site_cache:
+                    continue
+
+                print("count %s" % counter)
                 stock_in_db.save()
+
+                site = site_cache[stock_in_db.siteid]
+
+                if stock_in_db.type == "OTP":
+                    if not site.otp:
+                        site.otp = True
+                        site.save()
+
+                    if site.latest_stock_report_otp is None or\
+                                    (site.latest_stock_report_otp.year, site.latest_stock_report_otp.weeknum)\
+                                        < (stock_in_db.year, stock_in_db.weeknum):
+                        site.latest_stock_report_otp = stock_in_db
+                        site.save()
+
+                if stock_in_db.type == "SC":
+                    if not site.sc:
+                        site.sc = True
+                        site.save()
+
+                    if site.latest_stock_report_sc is None or\
+                                    (site.latest_stock_report_sc.year, site.latest_stock_report_sc.weeknum)\
+                                        < (stock_in_db.year, stock_in_db.weeknum):
+                        site.latest_stock_report_sc = stock_in_db
+                        site.save()
 
                 # Drop duplicates
                 # if there is a duplicate for the same (siteid, type, weeknum, year) remove older report
@@ -273,16 +298,7 @@ class Command(BaseCommand):
                     print("     Drop Duplicate")
                     oldest_stock_report.delete()
 
-                # Variables to accelerate analysis
-
-                # if we don't have the site in the database, skip for now
-                if stock_in_db.siteid not in site_cache:
-                    continue
-
-                site = site_cache[stock_in_db.siteid]
-
-
-        last_update_time.save()
+        # last_update_time.save()
 
 
 
