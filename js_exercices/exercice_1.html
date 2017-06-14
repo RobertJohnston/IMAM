@@ -1,0 +1,105 @@
+<html>
+<head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Exercice 1</h1>
+
+
+     <p id="integer"> </p>
+
+    <button type="button" id="button" >Listen to me!</button>
+    <button type="button" id="buttoff" >Don't Touch!</button>
+
+    <ul>
+        <li>
+            <button type="button" id="amuseguele">First</button>
+        </li>
+        <li>
+            <button type="button" id="plat">Second</button>
+        </li>
+        <li>
+            <button type="button" id="fromage">Third</button>
+        </li>
+    </ul>
+
+    <img id="first" src='https://image.ibb.co/dbbekv/red_splash_vs.png' alt="amuse">
+    <img id="second" src='http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-1-Left-Pink-icon.png' >
+    <img id="third" src='http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-5-Chartreuse-icon.png' >
+
+    <p id="text"> </p>
+
+</body>
+
+<script>
+    var integer = 1;
+
+    // show integer in HTML
+    $("#integer").html(integer);
+
+    // Define Function
+    function onAction() {
+        integer +=1;
+    $("#integer").html(integer);
+    }
+
+    function decrease() {
+        integer -=1;
+        if (integer <0){
+            integer=0;
+        }
+    $("#integer").text(integer);
+    }
+
+
+    // Call function on click event
+    $('#button').click(onAction);
+
+    $('#buttoff').click(decrease);
+
+    // Hide all at load of page
+    $("#first").hide()
+    $("#second").hide()
+    $("#third").hide()
+
+
+    function show1() {
+    $("#first").show()
+    $("#second").hide()
+    $("#third").hide()
+    }
+
+    function show2() {
+    $("#first").hide()
+    $("#second").show()
+    $("#third").hide()
+    }
+
+    function show3() {
+    $("#first").hide()
+    $("#second").hide()
+    $("#third").show()
+    }
+
+    // show dishes
+    $('#amuseguele').click(show1);
+
+    $('#plat').click(show2);
+
+    $('#fromage').click(show3);
+
+
+
+
+
+
+    // Take element from HTML and add text
+    $( '#text' ).text();
+
+    // Add "Hoopla" to id='text'
+    $( "#text" ).html("Hoopla");
+
+
+
+</script>
+</html>
