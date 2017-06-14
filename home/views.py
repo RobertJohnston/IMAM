@@ -247,6 +247,7 @@ def adm(request):
                 "siteid": row['state_num'],
                 "kind": "state",
                 "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
+                "year": int(row['year']) if row['year'] == row['year'] else "",
                 "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
             })
 
