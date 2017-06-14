@@ -81,7 +81,7 @@ class Command(BaseCommand):
                 #     continue
 
                 # Import contacts
-                # FIXME is this a setattrib error?
+                # This is not a set attribute error because we are not using a var or object to represent the data
                 raw_program.contact_uuid = json_data['contact']['uuid']
 
                 if raw_program.contact_uuid not in contact_cache:

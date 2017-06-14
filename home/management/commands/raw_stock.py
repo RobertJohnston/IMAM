@@ -136,8 +136,8 @@ class Command(BaseCommand):
                 # Entry of decimal points
 
 
-                raw_stock.first_seen =  json_data['created_on']
-                raw_stock.last_seen =  json_data['modified_on']
+                raw_stock.first_seen = json_data['created_on']
+                raw_stock.last_seen = json_data['modified_on']
 
                 if 'confirm' in json_data['values']:
                     raw_stock.confirm = json_data['values']['confirm']['category']
