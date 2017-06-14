@@ -111,8 +111,24 @@ class Command(BaseCommand):
                         stock_in_db.rutf_bal_carton = stock.values['rutf_bal_carton'].value   if stock.values['rutf_bal_carton'].value < 9999 else None
                         stock_in_db.rutf_bal_sachet = stock.values['rutf_bal_sachet'].value   if stock.values['rutf_bal_sachet'].value < 9999 else None
 
-                        stock_in_db.rutf_out = stock_in_db.rutf_used_carton + (stock_in_db.rutf_used_sachet/150)
-                        stock_in_db.rutf_bal = stock_in_db.rutf_bal_carton + (stock_in_db.rutf_bal_sachet/150)
+                        if stock_in_db.rutf_used_carton and stock_in_db.rutf_used_sachet:
+                            stock_in_db.rutf_out = stock_in_db.rutf_used_carton + (stock_in_db.rutf_used_sachet/150)
+                        elif stock_in_db.rutf_used_carton:
+                            stock_in_db.rutf_out = stock_in_db.rutf_used_carton
+                        elif stock_in_db.rutf_used_sachet:
+                            stock_in_db.rutf_out = (stock_in_db.rutf_used_sachet / 150)
+                        else:
+                            stock_in_db.rutf_out = None
+
+                        if stock_in_db.rutf_bal_carton and stock_in_db.rutf_bal_sachet:
+                            stock_in_db.rutf_bal = stock_in_db.rutf_bal_carton + (stock_in_db.rutf_bal_sachet / 150)
+                        elif stock_in_db.rutf_bal_carton:
+                            stock_in_db.rutf_bal = stock_in_db.rutf_bal_carton
+                        elif stock_in_db.rutf_bal_sachet:
+                            stock_in_db.rutf_bal = (stock_in_db.rutf_bal_sachet / 150)
+                        else:
+                            stock_in_db.rutf_bal = None
+
 
                     elif stock_in_db.type == 'SC':
                         # for stabilization center only balance
