@@ -5,7 +5,7 @@ from django.db import transaction
 
 from temba_client.v2 import TembaClient
 from isoweek import Week
-from home.models import Stock, Registration, LastUpdatedAPICall
+from home.models import Stock, Registration, LastUpdatedAPICall, Site
 
 from uuid import UUID
 
@@ -50,6 +50,8 @@ class Command(BaseCommand):
             last_update_time = LastUpdatedAPICall(kind="stock")
 
         last_update_time.timestamp = datetime.now()
+
+        site_cache = {x.siteid: x for x in Site.objects.all()}
 
         a = 0
         # rapidpro expects a uuid to identify flow instead of a flow name
@@ -153,6 +155,30 @@ class Command(BaseCommand):
                         raise Exception()
 
                     stock_in_db.save()  # Drop duplicates
+
+                    site = site_cache[stock_in_db.siteid]
+
+                    if stock_in_db.type == "OTP":
+                        if not site.otp:
+                            site.otp = True
+                            site.save()
+
+                        if site.latest_stock_report_otp is None or \
+                                        (site.latest_stock_report_otp.year, site.latest_stock_report_otp.weeknum) \
+                                        < (stock_in_db.year, stock_in_db.weeknum):
+                            site.latest_stock_report_otp = stock_in_db
+                            site.save()
+
+                    if stock_in_db.type == "SC":
+                        if not site.sc:
+                            site.sc = True
+                            site.save()
+
+                        if site.latest_stock_report_sc is None or \
+                                        (site.latest_stock_report_sc.year, site.latest_stock_report_sc.weeknum) \
+                                        < (stock_in_db.year, stock_in_db.weeknum):
+                            site.latest_stock_report_sc = stock_in_db
+                            site.save()
 
                     # if there is a duplicate for the same (siteid, type, weeknum, year) remove older report
                     for oldest_stock_report in Stock.objects.filter(

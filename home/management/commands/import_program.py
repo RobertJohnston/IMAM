@@ -306,12 +306,27 @@ class Command(BaseCommand):
 
                     site = site_cache[program_in_db.siteid]
 
-                    if program_in_db.type == "OTP" and not site.otp:
-                        site.otp = True
-                        site.save()
-                    if program_in_db.type == "SC" and not site.sc:
-                        site.sc = True
-                        site.save()
+                    if program_in_db.type == "OTP":
+                        if not site.otp:
+                            site.otp = True
+                            site.save()
+
+                        if site.latest_program_report_otp is None or \
+                                        (site.latest_program_report_otp.year, site.latest_program_report_otp.weeknum) \
+                                        < (program_in_db.year, program_in_db.weeknum):
+                            site.latest_program_report_otp = program_in_db
+                            site.save()
+
+                    if program_in_db.type == "SC":
+                        if not site.sc:
+                            site.sc = True
+                            site.save()
+
+                        if site.latest_program_report_sc is None or \
+                                        (site.latest_program_report_sc.year, site.latest_program_report_sc.weeknum) \
+                                        < (program_in_db.year, program_in_db.weeknum):
+                            site.latest_program_report_sc = program_in_db
+                            site.save()
 
         last_update_time.save()
 # Ensure that amar_i and all other inpatients variables are included
