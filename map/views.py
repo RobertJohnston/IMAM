@@ -60,7 +60,9 @@ def sites_gps_data(request):
         "otp": x.otp,
         "sc": x.sc,
         "active": sites_latest_program_date.get(x.siteid, 999) <= 8,
-        "stock": float(x.latest_stock_report_otp.rutf_bal) if x.latest_stock_report_otp else None,
+        "stock": float(x.latest_stock_report_otp.rutf_bal)
+                 if x.latest_stock_report_otp and x.latest_stock_report_otp.rutf_bal is not None
+                 else None,
     } for x in Site.objects.filter(x_long__isnull=False, y_lat__isnull=False) if x.siteid in sites_has_program]
 
     return HttpResponse(json.dumps(data, indent=4))
