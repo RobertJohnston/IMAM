@@ -154,10 +154,10 @@ class Command(BaseCommand):
                     else:
                         raise Exception()
 
-                    site = site_cache[stock_in_db.siteid]
-
                     if stock_in_db.siteid not in site_cache:
                         continue
+
+                    site = site_cache[stock_in_db.siteid]
 
                     stock_in_db.save()  # Drop duplicates
 
