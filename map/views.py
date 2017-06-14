@@ -17,8 +17,6 @@ def map(request):
     adm_dict = {'date': time.strftime("%d/%m/%y")}
 
     return render(request, 'map/map.html', context=adm_dict )
-    #return render(request, 'map.html', {'content': ['Insert Map here']})
-    # after the template dir add the map dir to correctly identify the path
 
 
 def sites_gps_data(request):
@@ -61,7 +59,8 @@ def sites_gps_data(request):
         "y_lat": x.y_lat,
         "otp": x.otp,
         "sc": x.sc,
-        "active": sites_latest_program_date.get(x.siteid, 999) <= 8
+        "active": sites_latest_program_date.get(x.siteid, 999) <= 8,
+        "stock": float(x.latest_stock_report_otp.rutf_bal) if x.latest_stock_report_otp else None,
     } for x in Site.objects.filter(x_long__isnull=False, y_lat__isnull=False) if x.siteid in sites_has_program]
 
     return HttpResponse(json.dumps(data, indent=4))
