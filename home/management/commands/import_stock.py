@@ -103,13 +103,17 @@ class Command(BaseCommand):
                     else:
                         raise Exception()
 
-
+                    # FIXME probable error here with rutf_bal versus rutf_bal_carton & rutf_bal_sachet
                     if stock_in_db.type == 'OTP':
                         stock_in_db.rutf_in = stock.values['rutf_in'].value if stock.values['rutf_in'].value < 9999 else None
                         stock_in_db.rutf_used_carton = stock.values['rutf_used_carton'].value if stock.values['rutf_used_carton'].value < 9999 else None
                         stock_in_db.rutf_used_sachet = stock.values['rutf_used_sachet'].value if stock.values['rutf_used_sachet'].value < 9999 else None
                         stock_in_db.rutf_bal_carton = stock.values['rutf_bal_carton'].value   if stock.values['rutf_bal_carton'].value < 9999 else None
                         stock_in_db.rutf_bal_sachet = stock.values['rutf_bal_sachet'].value   if stock.values['rutf_bal_sachet'].value < 9999 else None
+
+                        stock_in_db.rutf_out = stock_in_db.rutf_used_carton + (stock_in_db.rutf_used_sachet/150)
+                        stock_in_db.rutf_bal = stock_in_db.rutf_bal_carton + (stock_in_db.rutf_bal_sachet/150)
+
                     elif stock_in_db.type == 'SC':
                         # for stabilization center only balance
                         stock_in_db.f100_bal_carton = stock.values['f100_bal_carton'].value if stock.values['f100_bal_carton'].value < 9999 else None
