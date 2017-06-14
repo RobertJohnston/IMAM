@@ -10,30 +10,17 @@
     <title>Add map here</title>
 
     <!--<img src="{% static 'map/img/red-splash-small.png' %}" class="responsive-img" style='max-height:60px;' alt="splash">-->
+<p>
+    <div class="btn-group" role="group">
+        <button class="btn btn-default" id="sitetype">Site Type</button>
+        <button class="btn btn-default" id="active">Active</button>
+        <button class="btn btn-default" id="stocks">Stocks</button>
+        <button class="btn btn-default disabled" id="sphere">Sphere</button>
+        <button class="btn btn-default disabled" id="dataquality">Data Quality</button>
+    </div>
+</p>
 
 <div id="map-wrapper">
-
-
-
-
-
-    <ul id="ul_inline-block">
-        <li>
-            <button id="sitetype">Site Type</button>
-        </li>
-        <li>
-            <button id="active">Active</button>
-        </li>
-        <li>
-            <button id="stocks">Stocks</button>
-        </li>
-        <li>
-            <button id="sphere">Sphere</button>
-        </li>
-        <li>
-            <button id="dataquality">Data Quality</button>
-        </li>
-    </ul>
 
     {% leaflet_map "map" callback="window.map_init_basic" %}
 </div>
