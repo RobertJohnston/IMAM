@@ -154,9 +154,12 @@ class Command(BaseCommand):
                     else:
                         raise Exception()
 
-                    stock_in_db.save()  # Drop duplicates
-
                     site = site_cache[stock_in_db.siteid]
+
+                    if stock_in_db.siteid not in site_cache:
+                        continue
+
+                    stock_in_db.save()  # Drop duplicates
 
                     if stock_in_db.type == "OTP":
                         if not site.otp:

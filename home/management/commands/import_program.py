@@ -284,6 +284,10 @@ class Command(BaseCommand):
                     elif program_in_db.type == "SC":
                         program_in_db.age_group = program.values['age_group'].category
 
+                    # if we don't have the site in the database, skip for now
+                    if program_in_db.siteid not in site_cache:
+                        continue
+
                     program_in_db.save()
 
                     # Drop duplicates
