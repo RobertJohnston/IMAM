@@ -139,6 +139,50 @@ class Command(BaseCommand):
                     # df = df.query('year >= 2016')
                     # remove future reports
 
+
+                    today_year = date.today().year
+                    today_weeknum = date.today().isocalendar()[1]
+                    rep_weeknum = stock_in_db.last_seen.isocalendar()[1]
+
+                    # Stock reporting with RapidPro started in June 2016 (week 22)
+                    if stock_in_db.year == 2016 and stock_in_db.weeknum < 22:
+                        print('     Training data - (%s %s)' % (stock_in_db.year, stock_in_db.weeknum))
+                        continue
+
+                    # Remove any cases from 2015
+
+                    # Remove future reporting - recent data cannot surpass current year.
+                    if stock_in_db.year > today_year:
+                        print('     Future reporting YEAR (%s)' % (stock_in_db.year))
+                        continue
+                    # Remove future reporting - program data cannot surpass report WN and current year.
+                    if stock_in_db.year == today_year and stock_in_db.weeknum > rep_weeknum :
+                        print('     Future reporting WEEKNUM (%s) current weeknum (%s)' % (stock_in_db.weeknum, rep_weeknum))
+                        continue
+
+                    # Delete all future reporting - before 12 PM on the first day of the report week.
+                    last_seen_dotw = stock_in_db.last_seen.isocalendar()[2]
+                    last_seen_hour = stock_in_db.last_seen.hour
+
+                    if last_seen_dotw == 1 and last_seen_hour < 12 and rep_weeknum == stock_in_db.weeknum:
+                        print('     Monday AM reporting (%s)' % (stock_in_db.last_seen.strftime("%d-%m-%Y %H:%M:%S")))
+                        continue
+
+                    rep_year_wn = stock_in_db.last_seen.isocalendar()
+                    iso_rep_year_wn = Week(int(rep_year_wn[0]), int(rep_year_wn[1]))
+                    iso_year_weeknum = Week(int(stock_in_db.year), int(stock_in_db.weeknum))
+
+                    stock_in_db.iso_diff = (iso_year_weeknum - iso_rep_year_wn)
+
+                    # remove reports for 8 weeks prior to report date
+                    if stock_in_db.iso_diff < -8:
+                        print('     ISO DIFF: %s, last_seen: %s, last_seen_weeknum: %s, weeknum: %s, year: %s)' % (
+                            stock_in_db.iso_diff, stock_in_db.last_seen.strftime("%d-%m-%Y"),
+                            last_seen_weeknum, int(stock_in_db.weeknum), stock_in_db.year,
+                        ))
+                        continue
+
+
                     # Create state_num and LGA_num
                     # Implementation and LGA level
                     if len(str(contact.siteid)) == 9 or len(str(contact.siteid)) == 3:
