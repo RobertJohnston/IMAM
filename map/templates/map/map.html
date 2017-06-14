@@ -18,11 +18,21 @@
 
 
     <ul id="ul_inline-block">
-        <li><a id="sitetype"    href="#">Site Type</a></li>
-        <li><a id="active"      href="#">Active</a></li>
-        <li><a id="sphere"      href="#">Sphere</a></li>
-        <li><a id="stocks"      href="#">Stocks</a></li>
-        <li><a id="dataquality" href="#">Data Quality</a></li>
+        <li>
+            <button id="sitetype">Site Type</button>
+        </li>
+        <li>
+            <button id="active">Active</button>
+        </li>
+        <li>
+            <button id="stocks">Stocks</button>
+        </li>
+        <li>
+            <button id="sphere">Sphere</button>
+        </li>
+        <li>
+            <button id="dataquality">Data Quality</button>
+        </li>
     </ul>
 
     {% leaflet_map "map" callback="window.map_init_basic" %}
@@ -83,14 +93,15 @@
 
     var stockoutMarker = L.icon({
         iconUrl: 'https://image.ibb.co/dbbekv/red_splash_vs.png',
+        // FIXME cannot access static/map
         //iconUrl: ('static/map/img/red-splash-small.png'),
         iconSize:     [25, 27], // size of the icon
         iconAnchor:   [25, 27], // point of the icon which will correspond to marker's location
     });
 
     var lowstockMarker = L.AwesomeMarkers.icon({
-        icon: 'exclamation-marker',
-        markerColor: 'yellow',
+        icon: 'exclamation-triangle',
+        markerColor: 'pink',
         prefix: 'fa',
         iconColor: 'white'
     });
@@ -105,6 +116,7 @@
     function map_init_basic (map, options) {
         var sitesType = L.layerGroup();
         var sitesActive = L.layerGroup();
+        var sitesStockout = L.layerGroup();
 
         $.getJSON('/map/sites.json').success(function(data) {
             for (var i = 0; i < data.length; ++i) {
@@ -122,20 +134,56 @@
                     L.marker([data[i].x_long, data[i].y_lat], {icon: inactiveMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
                 }
 
-                // if (data[i].stockout) {
-                //     L.marker([data[i].x_long, data[i].y_lat], {icon: stockoutMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
-                // } else {
-                //     L.marker([data[i].x_long, data[i].y_lat], {icon: lowstockMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
-                // } else {
-                //     L.marker([data[i].x_long, data[i].y_lat], {icon: repleteMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
-                // }
+                if (data[i].stock < 1) {
+                    L.marker([data[i].x_long, data[i].y_lat], {icon: stockoutMarker}).bindPopup(data[i].sitename + "- stock: " + data[i].stock).addTo(sitesStockout);
+                } else if (data[i].stock < 2) {
+                    L.marker([data[i].x_long, data[i].y_lat], {icon: lowstockMarker}).bindPopup(data[i].sitename + "- stock: " + data[i].stock).addTo(sitesStockout);
+                } else {
+                     L.marker([data[i].x_long, data[i].y_lat], {icon: repleteMarker}).bindPopup(data[i].sitename + "- stock: " + data[i].stock).addTo(sitesStockout);
+                }
             }
 
-            L.control.layers({}, {"Type": sitesType, "Active": sitesActive}).addTo(map);
+            L.control.layers({}, {"Type": sitesType, "Active": sitesActive, "Stockout": sitesStockout}).addTo(map);
 
             map.addLayer(sitesType);
+
+
+
+            function showType() {
+                map.addLayer(sitesType);
+                map.removeLayer(sitesActive);
+                map.removeLayer(sitesStockout);
+            }
+
+            function showActive() {
+                map.removeLayer(sitesType);
+                map.addLayer(sitesActive);
+                map.removeLayer(sitesStockout);
+            }
+
+            function showStock() {
+                map.removeLayer(sitesType);
+                map.removeLayer(sitesActive);
+                map.addLayer(sitesStockout);
+            }
+
+            /*
+            function showSphere() {
+            }
+
+            function showQuality() {
+            }
+            */
+
+            $("#sitetype").click(showType)
+            $("#active").click(showActive)
+            $("#stocks").click(showStock)
+            // $("#sphere").click(showSphere)
+            // $("#dataquality").click(showQuality)
+
         })
     }
+
 
 </script>
 {% endblock %}
