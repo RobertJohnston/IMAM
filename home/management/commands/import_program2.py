@@ -63,13 +63,13 @@ class Command(BaseCommand):
 
             site_cache = {x.siteid: x for x in Site.objects.all()}
 
-            a = RawProgram.objects.all().count()
+            counter = RawProgram.objects.all().count()
 
             for program_row in data_to_process.iterator():
                 id = program_row.id
 
                 # countdown counter
-                a -= 1
+                counter -= 1
 
                 # Update program if id exists in Program.objects
                 if Program.objects.filter(id=id):
@@ -100,7 +100,7 @@ class Command(BaseCommand):
                 program_in_db.contact_uuid = program_row.contact_uuid
                 program_in_db.urn    = program_row.urn
                 program_in_db.name   = program_row.name
-                program_in_db.role   = program_row.role
+                # program_in_db.role   = program_row.role
 
                 program_in_db.first_seen = program_row.first_seen
                 program_in_db.last_seen = program_row.last_seen
@@ -219,14 +219,42 @@ class Command(BaseCommand):
                     ))
                     continue
 
-                year, week, dotw = date.today().isocalendar()
-                current_week = Week(year, week)
 
                 # Report is X weeks before current week number
                 # program_in_db.since_x_weeks = current_week - iso_year_weeknum
 
-                print("count %s" % a)
+                # Variables to accelerate analysis
+
+                # if we don't have the site in the database, skip for now
+                if program_in_db.siteid not in site_cache:
+                    continue
+
+                site = site_cache[program_in_db.siteid]
+
+                print("count %s" % counter)
                 program_in_db.save()
+
+                if program_in_db.type == "OTP":
+                    if not site.otp:
+                        site.otp = True
+                        site.save()
+
+                    if site.latest_program_report_otp is None or\
+                                    (site.latest_program_report_otp.year, site.latest_program_report_otp.weeknum)\
+                                        < (program_in_db.year, program_in_db.weeknum):
+                        site.latest_program_report_otp = program_in_db
+                        site.save()
+
+                if program_in_db.type == "SC":
+                    if not site.sc:
+                        site.sc = True
+                        site.save()
+
+                    if site.latest_program_report_sc is None or\
+                                    (site.latest_program_report_sc.year, site.latest_program_report_sc.weeknum)\
+                                        < (program_in_db.year, program_in_db.weeknum):
+                        site.latest_program_report_sc = program_in_db
+                        site.save()
 
                 # Drop duplicates
                 # if there is a duplicate for the same (siteid, type, weeknum, year) remove older report
@@ -238,23 +266,9 @@ class Command(BaseCommand):
                     print("     Drop Duplicate")
                     oldest_program_report.delete()
 
-                # Variables to accelerate analysis
-
-                # if we don't have the site in the database, skip for now
-                if program_in_db.siteid not in site_cache:
-                    continue
-
-                site = site_cache[program_in_db.siteid]
-
-                if program_in_db.type == "OTP" and not site.otp:
-                    site.otp = True
-                    site.save()
-                if program_in_db.type == "SC" and not site.sc:
-                    site.sc = True
-                    site.save()
 
 
-        last_update_time.save()
+            last_update_time.save()
 
 
 
