@@ -111,8 +111,6 @@
                     L.marker([data[i].x_long, data[i].y_lat], {icon: scMarker}).bindPopup(data[i].sitename).addTo(sitesType);
                 } else if (data[i].otp) {
                     L.marker([data[i].x_long, data[i].y_lat], {icon: otpMarker}).bindPopup(data[i].sitename).addTo(sitesType);
-                } else {
-                    L.marker([data[i].x_long, data[i].y_lat], {icon: inactiveMarker}).bindPopup(data[i].sitename).addTo(sitesType);
                 }
 
                 if (data[i].active) {
