@@ -12,6 +12,19 @@
     <!--<img src="{% static 'map/img/red-splash-small.png' %}" class="responsive-img" style='max-height:60px;' alt="splash">-->
 
 <div id="map-wrapper">
+
+
+
+
+
+    <ul id="ul_inline-block">
+        <li><a id="sitetype"    href="#">Site Type</a></li>
+        <li><a id="active"      href="#">Active</a></li>
+        <li><a id="sphere"      href="#">Sphere</a></li>
+        <li><a id="stocks"      href="#">Stocks</a></li>
+        <li><a id="dataquality" href="#">Data Quality</a></li>
+    </ul>
+
     {% leaflet_map "map" callback="window.map_init_basic" %}
 </div>
 
@@ -32,11 +45,15 @@
 
 <script>
 
-    var otpMarker = L.AwesomeMarkers.icon({
-        icon: 'plus-square',
-        markerColor: 'orange',
-        prefix: 'fa',
-        iconColor: 'white'
+
+    var otpMarker = L.icon({
+        iconUrl: "https://image.ibb.co/izhTCk/healthcenter.png",
+        iconSize:     [25, 22], // size of the icon
+        iconAnchor:   [25, 22], // point of the icon which will correspond to marker's location
+        // icon: 'plus-square',
+        // markerColor: 'orange',
+        // prefix: 'fa',
+        // iconColor: 'white'
     });
 
     var scMarker = L.AwesomeMarkers.icon({
@@ -46,16 +63,9 @@
         iconColor: 'white'
     });
 
-    var blankMarker = L.AwesomeMarkers.icon({
-        icon: '',
-        markerColor: 'cadetblue',
-        prefix: 'fa',
-        iconColor: 'white'
-    });
-
     var activeMarker = L.icon({
-        // = L.AwesomeMarkers.icon({
-        iconUrl: 'http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-1-Left-Pink-icon.png',
+        // iconUrl: 'http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-1-Left-Pink-icon.png',
+        iconUrl:    'http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-5-Chartreuse-icon.png',
         iconSize:     [38, 35], // size of the icon
         iconAnchor:   [38, 35], // point of the icon which will correspond to marker's location
         // icon: '',
@@ -67,6 +77,27 @@
     var inactiveMarker = L.AwesomeMarkers.icon({
         icon: 'close',
         markerColor: 'gray',
+        prefix: 'fa',
+        iconColor: 'white'
+    });
+
+    var stockoutMarker = L.icon({
+        iconUrl: 'https://image.ibb.co/dbbekv/red_splash_vs.png',
+        //iconUrl: ('static/map/img/red-splash-small.png'),
+        iconSize:     [25, 27], // size of the icon
+        iconAnchor:   [25, 27], // point of the icon which will correspond to marker's location
+    });
+
+    var lowstockMarker = L.AwesomeMarkers.icon({
+        icon: 'exclamation-marker',
+        markerColor: 'yellow',
+        prefix: 'fa',
+        iconColor: 'white'
+    });
+
+    var repleteMarker = L.AwesomeMarkers.icon({
+        icon: 'thumbs-up',
+        markerColor: 'green',
         prefix: 'fa',
         iconColor: 'white'
     });
@@ -90,6 +121,14 @@
                 } else {
                     L.marker([data[i].x_long, data[i].y_lat], {icon: inactiveMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
                 }
+
+                // if (data[i].stockout) {
+                //     L.marker([data[i].x_long, data[i].y_lat], {icon: stockoutMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
+                // } else {
+                //     L.marker([data[i].x_long, data[i].y_lat], {icon: lowstockMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
+                // } else {
+                //     L.marker([data[i].x_long, data[i].y_lat], {icon: repleteMarker}).bindPopup(data[i].sitename).addTo(sitesActive);
+                // }
             }
 
             L.control.layers({}, {"Type": sitesType, "Active": sitesActive}).addTo(map);
