@@ -17,7 +17,8 @@ xlrd
 IMAM_state_lga_test.xlsx
 IMAM_state_supervision.xlsx
 
-home/fixtures/sites.json
+home/fixtures/
+home/migrations/[^_]*
 double_reporting.txt
 
 
