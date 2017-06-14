@@ -127,6 +127,8 @@ class RawWarehouse(models.Model):
     name    = models.TextField(blank=True, null=True)
     siteid  = models.TextField(blank=True, null=True)
     weeknum = models.TextField(blank=True, null=True)
+    confirm = models.TextField(blank=True, null=True)
+
     # from the API
     first_seen = models.DateTimeField()
     last_seen = models.DateTimeField()
@@ -264,7 +266,7 @@ class Stock(models.Model):
 
 # Warehouse data  - State and LGA Stock data
 class Warehouse(models.Model):
-    index = models.BigIntegerField(primary_key=True)
+    id = models.BigIntegerField(primary_key=True)
     contact_uuid = models.UUIDField(editable=False)
     # problem to add phone number field to tools
     # urn = models.PhoneNumberField()
@@ -331,6 +333,11 @@ class Site(models.Model):
     # add CLOSING DATE variable
     closing_date = models.DateField(blank=True, null=True)
     # Site IDs are loaded in from excel. They are not taken from RapidPro, so they will not be rewritten regularly.
+
+    latest_program_report_otp = models.ForeignKey(Program, null=True, related_name="site_otp_set")
+    latest_program_report_sc = models.ForeignKey(Program, null=True, related_name="site_sc_set")
+    latest_stock_report_otp = models.ForeignKey(Stock, null=True, related_name="site_otp_set")
+    latest_stock_report_sc = models.ForeignKey(Stock, null=True, related_name="site_sc_set")
 
     otp = models.BooleanField(default=False)
     sc = models.BooleanField(default=False)
