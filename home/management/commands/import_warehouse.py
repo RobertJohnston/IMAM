@@ -76,14 +76,14 @@ class Command(BaseCommand):
                         continue
 
                     # if id of stock exists then update the row
-                    # Warehouse.index is in the Postgres.  stock.id is in the API
-                    if Warehouse.objects.filter(index=stock.id).exists():
-                        stock_in_db = Warehouse.objects.get(index=stock.id)
+                    # Warehouse.id is in the Postgres.  stock.id is in the API
+                    if Warehouse.objects.filter(id=stock.id).exists():
+                        stock_in_db = Warehouse.objects.get(id=stock.id)
 
                     # if id of stock data doesn't exist then create a new row.
                     else:
                         stock_in_db = Warehouse()
-                        stock_in_db.index = stock.id
+                        stock_in_db.id = stock.id
 
                     contact = contact_cache[stock.contact.uuid]
                     stock_in_db.contact_uuid = stock.contact.uuid
