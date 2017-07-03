@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
             last_update_time.timestamp = datetime.now()
 
-            site_cache = {x.siteid: x for x in Site.objects.all()}
+            # site_cache = {x.siteid: x for x in Site.objects.all()}
 
             for row in data_to_process.iterator():
                 id = row.id
@@ -258,13 +258,13 @@ class Command(BaseCommand):
                 # Variables to accelerate analysis
 
                 # if we don't have the site in the database, skip for now
-                if stock_in_db.siteid not in site_cache:
+                if not Site.objects.filter(siteid=stock_in_db.siteid).exists():
                     continue
 
                 print("count %s" % counter)
                 stock_in_db.save()
 
-                site = site_cache[stock_in_db.siteid]
+                site = Site.objects.get(siteid=stock_in_db.siteid)
 
                 if stock_in_db.type == "OTP":
                     if not site.otp:

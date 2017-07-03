@@ -61,7 +61,7 @@ class Command(BaseCommand):
 
             last_update_time.timestamp = datetime.now()
 
-            site_cache = {x.siteid: x for x in Site.objects.all()}
+            # site_cache = {x.siteid: x for x in Site.objects.all()}
 
             counter = RawProgram.objects.all().count()
 
@@ -226,10 +226,10 @@ class Command(BaseCommand):
                 # Variables to accelerate analysis
 
                 # if we don't have the site in the database, skip for now
-                if program_in_db.siteid not in site_cache:
+                if not Site.objects.filter(siteid=program_in_db.siteid).exists():
                     continue
 
-                site = site_cache[program_in_db.siteid]
+                site = Site.objects.get(siteid=program_in_db.siteid)
 
                 print("count %s" % counter)
                 program_in_db.save()

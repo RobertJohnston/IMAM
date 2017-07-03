@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
         last_update_time.timestamp = datetime.now()
 
-        site_cache = {x.siteid: x for x in Site.objects.all()}
+        # site_cache = {x.siteid: x for x in Site.objects.all()}
 
         a = 0
         # rapidpro expects a uuid to identify flow instead of a flow name
@@ -218,10 +218,10 @@ class Command(BaseCommand):
                     else:
                         raise Exception()
 
-                    if stock_in_db.siteid not in site_cache:
+                    if not Site.objects.filter(siteid=stock_in_db.siteid).exists():
                         continue
 
-                    site = site_cache[stock_in_db.siteid]
+                    site = Site.objects.get(siteid=stock_in_db.siteid)
 
                     stock_in_db.save()  # Drop duplicates
 

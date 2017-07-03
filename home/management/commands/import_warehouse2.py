@@ -63,8 +63,6 @@ class Command(BaseCommand):
 
             last_update_time.timestamp = datetime.now()
 
-            site_cache = {x.siteid: x for x in Site.objects.all()}
-
             for row in data_to_process.iterator():
                 id = row.id
                 counter -= 1
