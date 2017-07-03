@@ -40,7 +40,7 @@ class Command(BaseCommand):
         client = TembaClient('rapidpro.io', open('token').read().strip())
 
         contact_cache = {x.contact_uuid: x for x in Registration.objects.all()}
-        site_cache = {x.siteid: x for x in Site.objects.all()}
+        # site_cache = {x.siteid: x for x in Site.objects.all()}
 
         last_update_time = LastUpdatedAPICall.objects.filter(kind="program").first()
 
@@ -285,7 +285,7 @@ class Command(BaseCommand):
                         program_in_db.age_group = program.values['age_group'].category
 
                     # if we don't have the site in the database, skip for now
-                    if program_in_db.siteid not in site_cache:
+                    if not Site.objects.filter(siteid=program_in_db.siteid):
                         continue
 
                     program_in_db.save()
@@ -314,10 +314,10 @@ class Command(BaseCommand):
                     print(a)
 
                     # if we don't have the site in the database, skip for now
-                    if program_in_db.siteid not in site_cache:
+                    if not Site.objects.filter(siteid=program_in_db.siteid).exists():
                         continue
 
-                    site = site_cache[program_in_db.siteid]
+                    site = Site.objects.get(siteid=program_in_db.siteid)
 
                     if program_in_db.type == "OTP":
                         if not site.otp:
