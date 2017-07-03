@@ -298,6 +298,15 @@ class Command(BaseCommand):
                         weeknum=program_in_db.weeknum,
                         type=program_in_db.type).order_by('-last_seen')[1:]:
 
+                        # Django "Nullable Foreign Key" with on_delete=models.SET_NULL is not working so we use this code to complete the same task
+                        for s in Site.objects.filter(latest_program_report_otp_id=oldest_program_report.id):
+                            s.latest_program_report_otp = None
+                            s.save()
+
+                        for s in Site.objects.filter(latest_program_report_sc_id=oldest_program_report.id):
+                            s.latest_program_report_sc = None
+                            s.save()
+
                         print("     Drop Duplicate")
                         oldest_program_report.delete()
 

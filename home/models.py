@@ -334,10 +334,10 @@ class Site(models.Model):
     closing_date = models.DateField(blank=True, null=True)
     # Site IDs are loaded in from excel. They are not taken from RapidPro, so they will not be rewritten regularly.
 
-    latest_program_report_otp = models.ForeignKey(Program, models.SET_NULL, null=True, related_name="site_otp_set")
-    latest_program_report_sc = models.ForeignKey(Program, models.SET_NULL, null=True, related_name="site_sc_set")
-    latest_stock_report_otp = models.ForeignKey(Stock, models.SET_NULL, null=True, related_name="site_otp_set")
-    latest_stock_report_sc = models.ForeignKey(Stock, models.SET_NULL, null=True, related_name="site_sc_set")
+    latest_program_report_otp = models.ForeignKey(Program, on_delete=models.SET_NULL, null=True, related_name="site_otp_set")
+    latest_program_report_sc = models.ForeignKey(Program, on_delete=models.SET_NULL, null=True, related_name="site_sc_set")
+    latest_stock_report_otp = models.ForeignKey(Stock, on_delete=models.SET_NULL, null=True, related_name="site_otp_set")
+    latest_stock_report_sc = models.ForeignKey(Stock, on_delete=models.SET_NULL, null=True, related_name="site_sc_set")
 
     otp = models.BooleanField(default=False)
     sc = models.BooleanField(default=False)
