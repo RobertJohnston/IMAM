@@ -10,11 +10,14 @@ from django.conf import settings
 from django.core import management
 
 from home.models import Program
+from home.utilities import exception_to_sentry
+
 
 class Command(BaseCommand):
     help = 'Imports program data to SQL through API'
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         management.call_command('import_contacts')
         management.call_command('import_program')

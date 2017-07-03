@@ -4,6 +4,7 @@ from home.models import Registration, JsonWarehouse, RawWarehouse, LastUpdatedAP
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from datetime import datetime
+from home.utilities import exception_to_sentry
 
 
 class Command(BaseCommand):
@@ -19,6 +20,7 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
 

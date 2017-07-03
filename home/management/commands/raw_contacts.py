@@ -3,6 +3,7 @@ from home.models import JsonRegistration, RawRegistration
 from django.core.management.base import BaseCommand
 
 from django.db import transaction
+from home.utilities import exception_to_sentry
 
 # create model for RawRegistration
 
@@ -11,6 +12,7 @@ class Command(BaseCommand):
     help = 'Imports RawRegistration data from JsonRegistration'
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
             a = JsonRegistration.objects.all().count()

@@ -8,7 +8,7 @@ from isoweek import Week
 from home.models import Warehouse, Registration, LastUpdatedAPICall
 
 from uuid import UUID
-
+from home.utilities import exception_to_sentry
 
 # to run:
 #  python manage.py import_warehouse or
@@ -32,6 +32,7 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         client = TembaClient('rapidpro.io', open('token').read().strip())
 

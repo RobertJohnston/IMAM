@@ -7,6 +7,8 @@ from temba_client.v2 import TembaClient
 from isoweek import Week
 from home.models import Program, Registration, LastUpdatedAPICall, Site
 
+from home.utilities import exception_to_sentry
+
 from uuid import UUID
 
 # import_program.py
@@ -36,6 +38,7 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         client = TembaClient('rapidpro.io', open('token').read().strip())
 

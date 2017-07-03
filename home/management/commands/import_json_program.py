@@ -7,6 +7,9 @@ from home.models import JsonProgram, LastUpdatedAPICall
 from datetime import datetime
 from django.conf import settings
 
+from home.utilities import exception_to_sentry
+
+
 class Command(BaseCommand):
     help = 'Imports program data into JSON format from API'
 
@@ -20,6 +23,7 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
 

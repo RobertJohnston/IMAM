@@ -6,6 +6,7 @@ from django.db import transaction
 from home.models import JsonWarehouse, LastUpdatedAPICall
 from datetime import datetime
 from django.conf import settings
+from home.utilities import exception_to_sentry
 
 class Command(BaseCommand):
     help = 'Loads warehouse data to SQL through API'
@@ -20,6 +21,7 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
 

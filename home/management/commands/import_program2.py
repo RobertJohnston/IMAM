@@ -1,9 +1,13 @@
+import re
 from datetime import date, datetime
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from isoweek import Week
 from home.models import RawProgram, Program, LastUpdatedAPICall, Site
+
+from home.utilities import clean
+from home.utilities import exception_to_sentry
 
 
 # import_program.py
@@ -31,10 +35,11 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
 
-            last_update_time = LastUpdatedAPICall.objects.filter(kind="program").first()
+            last_update_time = LastUpdatedAPICall.objects.filter(kind="program2").first()
 
             # Code below is explicitly describing all possible four conditions of two booleans
             if options['all'] and last_update_time:
@@ -44,7 +49,7 @@ class Command(BaseCommand):
             elif options['all'] and not last_update_time:
                 Program.objects.all().delete()
                 data_to_process = RawProgram.objects.all()
-                last_update_time = LastUpdatedAPICall(kind="program")
+                last_update_time = LastUpdatedAPICall(kind="program2")
 
             elif not options['all'] and last_update_time:
                 # Start from end of attempt to load data: GET all data since timestamp of last time
@@ -54,7 +59,7 @@ class Command(BaseCommand):
             elif not options['all'] and not last_update_time:
                 Program.objects.all().delete()
                 data_to_process = RawProgram.objects.all()
-                last_update_time = LastUpdatedAPICall(kind="program")
+                last_update_time = LastUpdatedAPICall(kind="program2")
             else:
                 raise Exception()
                 # This is unncessary in this context but good programming practice
@@ -64,6 +69,8 @@ class Command(BaseCommand):
             # site_cache = {x.siteid: x for x in Site.objects.all()}
 
             counter = RawProgram.objects.all().count()
+
+            data_to_process = data_to_process.order_by('-last_seen')
 
             for program_row in data_to_process.iterator():
                 id = program_row.id
@@ -83,18 +90,22 @@ class Command(BaseCommand):
                 if program_row.confirm == "Yes":
                     program_in_db.confirm = program_row.confirm
                 else:
+                    print("skip because unconfirmed, %s" % program_row)
                     continue
 
                 # SiteID
-                if program_row.siteid.isdigit():
-                    program_in_db.siteid = int(program_row.siteid)
+                # need to have standardized int data for siteid before entering into the program db
+                if clean(program_row.siteid):
+                    program_in_db.siteid = clean(program_row.siteid)
                 else:
+                    print("skip because bad siteid: %s, %s" % (program_row.siteid, program_row))
                     continue
 
                 # If SiteID was training data entry or is invalid - skip entire row
                 # No siteids exist between 3699 and 101110001
                 # SiteIDs in Abia state - 101110001 to <200000000
                 if program_in_db.siteid < 200000000:
+                    print("skip because siteid greater than 200000000, %s" % program_row)
                     continue
 
                 program_in_db.contact_uuid = program_row.contact_uuid
@@ -109,16 +120,11 @@ class Command(BaseCommand):
                 if program_row.type in ("OTP", "SC"):
                     program_in_db.type = program_row.type
                 else:
+                    print("skip because type not in OTP or SC, %s" % program_row)
                     continue
 
                 program_in_db.age_group = program_row.age_group
 
-                def clean(value_to_clean):
-                    try:
-                        return int(float(value_to_clean))
-                    except ValueError:
-                        print("Fail to convert '%s' as a number" % (value_to_clean))
-                        return None
 
                 # Data cleaning for inpatients and outpatients
                 program_in_db.weeknum = clean(program_row.weeknum)
@@ -227,11 +233,12 @@ class Command(BaseCommand):
 
                 # if we don't have the site in the database, skip for now
                 if not Site.objects.filter(siteid=program_in_db.siteid).exists():
+                    print("skip because siteid doesn't exists, %s" % program_row)
                     continue
 
                 site = Site.objects.get(siteid=program_in_db.siteid)
 
-                print("count %s" % counter)
+                print("count %s - %s" % (counter, program_in_db.last_seen))
                 program_in_db.save()
 
                 if program_in_db.type == "OTP":

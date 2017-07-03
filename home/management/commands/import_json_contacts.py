@@ -1,7 +1,7 @@
 import json
 import requests
 from urllib import quote
-from datetime import datetime
+from home.utilities import exception_to_sentry
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -24,6 +24,7 @@ class Command(BaseCommand):
     #     )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         token = open('token').read().strip()
         api_base_url = "https://rapidpro.io"

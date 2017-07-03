@@ -7,6 +7,8 @@ from home.models import JsonStock, LastUpdatedAPICall
 from datetime import datetime
 from django.conf import settings
 
+from home.utilities import exception_to_sentry
+
 # Flow uuid from RapidPro
 # stock_uuid = "a678268d-0e42-43f1-82cd-aa12117d145d"
 
@@ -23,6 +25,7 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
 

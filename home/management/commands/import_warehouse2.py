@@ -5,14 +5,8 @@ from django.db import transaction
 from isoweek import Week
 from home.models import RawWarehouse, Warehouse, Site, LastUpdatedAPICall
 
-
-# This code is duplicated in from import_program2 and import_warehouse2
-def clean(value_to_clean):
-    try:
-        return int(float(value_to_clean))
-    except (ValueError, TypeError):
-        print("Fail to convert '%s' as a number" % (value_to_clean))
-        return None
+from home.utilities import clean
+from home.utilities import exception_to_sentry
 
 
 # imports data from Raw Warehouse, cleans data and saves to Postgres
@@ -30,10 +24,11 @@ class Command(BaseCommand):
         )
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
 
-            last_update_time = LastUpdatedAPICall.objects.filter(kind="warehouse").first()
+            last_update_time = LastUpdatedAPICall.objects.filter(kind="warehouse2").first()
 
             counter= RawWarehouse.objects.all().count()
 
@@ -45,7 +40,7 @@ class Command(BaseCommand):
             elif options['all'] and not last_update_time:
                 Warehouse.objects.all().delete()
                 data_to_process = RawWarehouse.objects.all()
-                last_update_time = LastUpdatedAPICall(kind="warehouse")
+                last_update_time = LastUpdatedAPICall(kind="warehouse2")
 
             elif not options['all'] and last_update_time:
                 # Start from end of attempt to load data: GET all data since timestamp of last time
@@ -56,7 +51,7 @@ class Command(BaseCommand):
             elif not options['all'] and not last_update_time:
                 Warehouse.objects.all().delete()
                 data_to_process = RawWarehouse.objects.all()
-                last_update_time = LastUpdatedAPICall(kind="warehouse")
+                last_update_time = LastUpdatedAPICall(kind="warehouse2")
             else:
                 raise Exception()
                 # This is unncessary in this context but good programming practice

@@ -1,7 +1,8 @@
-import json
 from home.models import RawRegistration, Registration
 from django.core.management.base import BaseCommand
 from django.db import transaction
+
+from home.utilities import exception_to_sentry
 
 # Import contacts from RawRegistration
 # NOTE
@@ -15,6 +16,7 @@ class Command(BaseCommand):
     help = 'Loads contact data to from raw contacts to clean contacts'
 
     # A command must define handle
+    @exception_to_sentry
     def handle(self, *args, **options):
         with transaction.atomic():
             Registration.objects.all().delete()
