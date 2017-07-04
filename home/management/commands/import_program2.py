@@ -22,6 +22,7 @@ from home.utilities import exception_to_sentry
 # Currently Data errors such as strings instead of integers are not available
 # Other data entry mistakes such as aberrant values are still visible.
 
+
 class Command(BaseCommand):
     help = 'Import Program data from RawProgram'
 
@@ -238,7 +239,7 @@ class Command(BaseCommand):
 
                 site = Site.objects.get(siteid=program_in_db.siteid)
 
-                print("count %s - %s" % (counter, program_in_db.last_seen))
+                print("Program count %s - %s" % (counter, program_in_db.last_seen))
                 program_in_db.save()
 
                 if program_in_db.type == "OTP":

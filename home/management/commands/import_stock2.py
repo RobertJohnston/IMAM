@@ -256,7 +256,7 @@ class Command(BaseCommand):
                 if not Site.objects.filter(siteid=stock_in_db.siteid).exists():
                     continue
 
-                print("count %s" % counter)
+                print("Stock count %s" % counter)
                 stock_in_db.save()
 
                 site = Site.objects.get(siteid=stock_in_db.siteid)
@@ -293,7 +293,7 @@ class Command(BaseCommand):
                     print("     Drop Duplicate")
                     oldest_stock_report.delete()
 
-        # last_update_time.save()
+            last_update_time.save()
 
 
 

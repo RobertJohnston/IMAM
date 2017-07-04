@@ -65,7 +65,8 @@ class Command(BaseCommand):
                 # Update stock if id exists in Warehouse.objects
                 if Warehouse.objects.filter(id=id):
                     warehouse_in_db = Warehouse.objects.get(id=id)
-                # Create contact if id does not exist already
+
+                # Create data entry if id does not exist already
                 else:
                     warehouse_in_db = Warehouse()
                     warehouse_in_db.id = id
@@ -202,7 +203,7 @@ class Command(BaseCommand):
                 # warehouse_in_db.since_x_weeks = current_week - iso_year_weeknum
 
 
-                print("count %s" % counter)
+                print("Warehouse count %s" % counter)
                 warehouse_in_db.save()
 
                 # Drop duplicates
@@ -215,7 +216,7 @@ class Command(BaseCommand):
                     oldest_report.delete()
 
 
-        last_update_time.save()
+            last_update_time.save()
 
 
 
