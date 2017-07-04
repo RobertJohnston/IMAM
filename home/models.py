@@ -12,7 +12,7 @@ class LastUpdatedAPICall(models.Model):
     timestamp = models.DateTimeField()
 
     def __unicode__(self):
-        return u"%s: %s" % (self.kind, self.timestamp  )
+        return u"%s: %s" % (self.kind, self.timestamp)
 
 # Import JSON data from API
 class JsonRegistration(models.Model):
@@ -90,6 +90,9 @@ class RawProgram(models.Model):
     dmed  = models.TextField(blank=True, null=True)
     tout  = models.TextField(blank=True, null=True)
     confirm = models.TextField(blank=True, null=True)
+
+    def __unicode__(self):
+        return u"%s - %s" % (self.id, self.last_seen)
 
 
 class RawStock(models.Model):
