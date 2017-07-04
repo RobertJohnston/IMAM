@@ -145,7 +145,7 @@ class Command(BaseCommand):
                     raw_stock.confirm = json_data['values']['confirm']['category']
 
                 raw_stock.save()
-                print("count %s " % counter)
+                print "Raw Stock count %s " % counter
 
              # bulk insert could be an option
 

@@ -92,11 +92,11 @@ class Command(BaseCommand):
                 # Data stitching to integrate SITEID is working in raw_program since 8th June 2017
                 if 'siteid' in json_data['values'] and isinstance(json_data['values']['siteid']['value'], (int, float)):
                     raw_warehouse.siteid = json_data['values']['siteid']['value']
-                    print(raw_warehouse.siteid, "SiteID from RapidPro")
+                    print "Raw Warehouse count %s SiteID from RapidPro %s" % (counter, raw_warehouse.siteid)
                 # code below brings siteid from contacts for old data entries before the corrections in RapidPro
                 elif contact.siteid: # if true / exists
                     raw_warehouse.siteid = contact.siteid
-                    print(raw_warehouse.siteid, "                     SiteID from Contacts")
+                    print "Raw Warehouse count %s           SiteID from Contacts %s" % (counter, raw_warehouse.siteid)
 
                 else:
                     raw_warehouse.siteid = None
@@ -121,8 +121,5 @@ class Command(BaseCommand):
                     raw_warehouse.confirm = json_data['values']['confirm']['category']
 
                 raw_warehouse.save()
-                print("count %s " % counter)
 
-             # bulk insert could be an option
-
-
+            last_update_time.save()

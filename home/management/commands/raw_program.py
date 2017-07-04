@@ -4,7 +4,6 @@ from home.models import Registration, JsonProgram, RawProgram, LastUpdatedAPICal
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from datetime import datetime
-# from isoweek import Week
 from home.utilities import exception_to_sentry
 
 
@@ -51,6 +50,7 @@ class Command(BaseCommand):
             # Change to countdown
             counter= JsonProgram.objects.all().count()
 
+            # FIXME  - change to django query to avoid problems with cache?
             contact_cache = {}
             for contact in Registration.objects.all():
                 contact_cache[contact.contact_uuid] = contact
@@ -122,18 +122,6 @@ class Command(BaseCommand):
                     raw_program.siteid = None
                     raw_program.type  = None
 
-                #FIXME - make more explicit
-                # def clean(value_to_clean):
-                #     try:
-                #         return int(float(value_to_clean))
-                #     except ValueError:
-                #         print("Fail to convert '%s' as a number" % (value_to_clean))
-                #         return None
-
-                # Data cleaning for inpatients and outpatients
-                # program_in_db.weeknum = clean(program_row.weeknum)
-
-
                 # OUTPATIENTS
                 if raw_program.type == "OTP" :
                     raw_program.age_group = "6-59m"
@@ -174,8 +162,8 @@ class Command(BaseCommand):
                 # iso_diff
                 # since_x_weeks = models.BigIntegerField(blank=True, null=True)
 
-                print("countdown-%s" % counter)
+                print "Raw Program countdown-%s" % counter
                 raw_program.save()
 
 
-        last_update_time.save()
+            last_update_time.save()
