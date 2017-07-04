@@ -50,7 +50,7 @@ class Command(BaseCommand):
             # Change to countdown
             counter= JsonProgram.objects.all().count()
 
-            # FIXME  - change to django query to avoid problems with cache?
+            # Do not need to change cache to django query to avoid caching problems unless we modify contact while running the code.
             contact_cache = {}
             for contact in Registration.objects.all():
                 contact_cache[contact.contact_uuid] = contact
