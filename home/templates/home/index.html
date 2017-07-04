@@ -96,6 +96,8 @@
     <script>
 
 {% verbatim %}
+Raven.config('https://c619cc9f1415472f9768d5594a67f8f6@sentry.io/186916').install()
+
 /* Start of workaround for fixing the tooltips to present results from only one column at a time*/
 
 var Pointer = Highcharts.Pointer.prototype;
@@ -447,7 +449,11 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         {{#.}}\
         <tr>\
             <td><a href="javascript:goToSite(\'{{ kind }}-{{ siteid }}\')">{{ site }}</a></td>\
-            <td>{{ weeknum }} / {{ year }}</td>\
+            {{#if weeknum}}\
+                <td>{{ weeknum }} / {{ year }}</td>\
+            {{else}}\
+                <td>No Data</td>\
+            {{/if}}\
             <td>{{ balance }}</td>\
         </tr>\
         {{/.}}\
