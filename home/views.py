@@ -246,7 +246,7 @@ def adm(request):
                 "site": row['state'],
                 "siteid": row['state_num'],
                 "kind": "state",
-                "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
+                "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else False,
                 "year": int(row['year']) if row['year'] == row['year'] else "",
                 "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
             })
@@ -279,7 +279,7 @@ def adm(request):
             # FIXME do data cleaning remove future reports
             # Double check that all future reporting is removed in data cleaning
             all_program_lgas = pd.read_sql_query("select * from registration;", con=engine)
-            lga_num_min = all_program_lgas['lga_num'].min(axis=0)
+            lga_num_min = all_program_lgas['lga_num'].min(axis=0)  # min and max of lga num are used to clean data
             lga_num_max = all_program_lgas['lga_num'].max(axis=0)
             all_program_lgas = all_program_lgas.query('state_num==%s & siteid>=@lga_num_min & siteid<=@lga_num_max' % num)
             all_program_lgas = all_program_lgas.sort_values(by=['lga_num', 'siteid'], ascending=[1, 1])\
@@ -300,8 +300,8 @@ def adm(request):
                     "site": row['lga'],
                     "siteid": row['lga_num'],
                     "kind": "lga",
-                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
-                    #int(row['year']) if row['year'] == row['year'] else "No Data",
+                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else False,
+                    "year": int(row['year']) if row['year'] == row['year'] else "",
                     "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
                 })
 
@@ -318,10 +318,13 @@ def adm(request):
             # Most recent stock report - LGA
             # select one LGA
             site_df = df_stock_filtered.query('lga_num==%s' % num)
+
             # FIXME don't hardcode week number and do data cleaning instead in the future
             site_df = site_df.query('siteid>201000000').query('weeknum<22 & year==2017')
+
             # FIXME Must add in most recent reports for stabilization centers also
             site_df = site_df.query('type=="OTP"')
+
             site_df = site_df.sort_values(by=['year', 'weeknum', 'type'], ascending=[0, 0, 0])
             site_df = site_df.drop_duplicates(subset=['siteid', 'type'])
             # Add site name from postgres
@@ -333,8 +336,10 @@ def adm(request):
                     "site": row['sitename'],
                     "siteid": row['siteid'],
                     "kind": "site",
-                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else "No Data",
-                    #"year": int(row['year']) if row['year'] == row['year'] else "No Data",
+                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else False,
+                    # try to add backslash to weeknum so that presentation on recent stock report is correct
+                    "year": int(row['year']) if row['year'] == row['year'] else "",
+                    # try to add year to recent stock report for LGA and Site level results
                     "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
                 })
 
