@@ -3,9 +3,9 @@ import requests
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.conf import settings
 from home.models import JsonProgram, LastUpdatedAPICall
 from datetime import datetime
-from django.conf import settings
 
 from home.utilities import exception_to_sentry
 
@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
             last_update_time.timestamp = datetime.now()
 
-            a = 0
+            counter = 0
 
             while page_url_to_process:
 
@@ -66,8 +66,8 @@ class Command(BaseCommand):
 
                 for api_program in response.json()['results']:
                     id = api_program['id']
-                    print("id %s  count %s" %(id, a))
-                    a +=1
+                    print("Json Program %s  id %s" %(counter, id))
+                    counter +=1
 
                     if JsonProgram.objects.filter(id=id):
                         in_db_program = JsonProgram.objects.get(id=id)
@@ -82,7 +82,6 @@ class Command(BaseCommand):
                     in_db_program.save()
 
                 page_url_to_process = response.json()['next']
-
 
         last_update_time.save()
 

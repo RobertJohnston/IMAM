@@ -70,7 +70,7 @@ class Command(BaseCommand):
 
                 for api_stock in response.json()['results']:
                     id = api_stock['id']
-                    print("id %s  count %s" % (id, a))
+                    print("Json Stock %s  id %s" % (a, id))
                     a += 1
 
                     if JsonStock.objects.filter(id=id):

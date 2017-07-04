@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
                 for api_warehouse in response.json()['results']:
                     id = api_warehouse['id']
-                    print("id %s  count %s" % (id, a))
+                    print "Json Warehouse %s  id %s" % (a, id)
                     a += 1
 
                     if JsonWarehouse.objects.filter(id=id):
