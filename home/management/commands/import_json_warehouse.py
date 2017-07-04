@@ -83,5 +83,5 @@ class Command(BaseCommand):
 
                 page_url_to_process = response.json()['next']
 
-        last_update_time.save()
+            last_update_time.save()
 
