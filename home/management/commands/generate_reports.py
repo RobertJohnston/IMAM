@@ -177,6 +177,8 @@ class Command(BaseCommand):
         # javascript highcharts export is run in the shell instead as python command
         os.system("highcharts-export-server -infile adm_chart.json -outfile adm_chart.png -width 2000 -type png")
 
+        # Warning: this is a beta version of this website, you can't consider the data here to be final
+
         def myFirstPage(canvas, doc):
             canvas.saveState()
 
