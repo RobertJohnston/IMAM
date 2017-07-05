@@ -68,7 +68,7 @@ def json_for_charts(year, site_level, siteid, site_type):
 
 
     # default or national level
-    if site_level == "Nationnal":
+    if site_level == "National":
         number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week,\
         defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
         stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered)
@@ -418,7 +418,7 @@ def adm(request):
     selected_year = int(request.GET.get("year", current_year))
 
     if "site_filter" not in request.GET or request.GET['site_filter'] in ("", "null"):
-        data_type, num = "Nationnal", None
+        data_type, num = "National", None
     else:
         data_type, num = request.GET['site_filter'].split('-', 1)
 
