@@ -21,7 +21,7 @@ class Command(BaseCommand):
     @exception_to_sentry
     def handle(self, *args, **options):
 
-        data = json_for_charts(2017, "Nationnal", None, "All")
+        data = json_for_charts(2017, "National", None, "All")
 
         adm_chart = {
             "title": {"text": data["title"] + "<br>Admissions and Exits"},
