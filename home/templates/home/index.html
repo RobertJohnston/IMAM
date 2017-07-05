@@ -372,7 +372,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
                 },
                 xAxis: [{
 
-                    // highcharts automatically knows the first of 2 # in series is x axis.
+                    // highcharts automatically knows the first of 2 numbers in series is x axis.
                     labels: {
                         formatter: function() {
                             var a = new Date(0);
@@ -444,7 +444,7 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
         <tr>\
             <th>Site</th>\
             <th>Week Number</th>\
-            <th>RUTF Balance</th>\
+            <th>Balance (Cartons)</th>\
         </tr>\
         {{#.}}\
         <tr>\
@@ -474,18 +474,20 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             $("#number_of_active_sites").html(data.number_of_active_sites);
             $("#number_of_inactive_sites").html(data.number_of_inactive_sites);
 
+            // print to console in development tools of browser
             console.log(data.management_level);
-            if (data.management_level === 'national' || data.management_level === 'null') {
+            // Hide stock graph if SC is selected - filter-by-site-type
+            if (data.management_level === 'National' || data.management_level === 'null' || data.site_type === 'SC') {
                 $('#stock-chart').hide();
             } else {
                 $('#stock-chart').show();
             }
 
-            if (data.management_level === 'site') {
-                $('#last-reports-table').hide();
-            } else {
-                $('#last-reports-table').show();
-            }
+            //if (data.management_level === 'site') {
+            //    $('#last-reports-table').hide();
+            //} else {
+            //    $('#last-reports-table').show();
+            //}
 
             $("#stock-reporting-rate").html(data.stock_report_rate);
 

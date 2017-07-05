@@ -251,11 +251,9 @@ class Stock(models.Model):
     rutf_out = models.DecimalField(max_digits=6, decimal_places=2,null=True, blank=True)
     rutf_bal = models.DecimalField(max_digits=6, decimal_places=2,null=True, blank=True)
 
-    # FIXME
-    f75_bal_carton   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    f75_bal_sachet   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    f100_bal_carton  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    f100_bal_sachet  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    # There are no entries for in and out for F100 and F75 - only balance
+    f75_bal   = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    f100_bal  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     state_num = models.BigIntegerField(blank=True, null=True)
     lga_num = models.BigIntegerField(blank=True, null=True)

@@ -14,21 +14,18 @@ from sqlalchemy import create_engine
 from models import First_admin, Second_admin, Site
 from utilities import iso_year_start, iso_to_gregorian, weeks_for_year
 
+
+
+
 def json_for_charts(year, site_level, siteid, site_type):
-    # Read data into dataframe - at each function call
+    # Read data into dataframe with sqlalchemy- at each function call
     engine = create_engine(
         'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
+
     # PROGRAM DATA
     df = pd.read_sql_query("select * from program;", con=engine)
     # STOCK DATA
     df_stock = pd.read_sql_query("select * from stock;", con=engine)
-
-    # REMOVE THIS WHEN DATA CLEANING IS DONE.
-    # F75 sachets per carton - 120
-    df_stock['f75_bal'] = df_stock['f75_bal_carton'] + (df_stock['f75_bal_sachet'] / 120.)
-    # F100 sachets per carton - 90
-    df_stock['f100_bal'] = df_stock['f100_bal_carton'] + (df_stock['f100_bal_sachet'] / 90.)
-
     # WAREHOUSE DATA
     df_warehouse = pd.read_sql_query("select * from warehouse;", con=engine)
 
@@ -53,7 +50,7 @@ def json_for_charts(year, site_level, siteid, site_type):
     elif site_type == "OTP":
         df_filtered = df_filtered.query('type=="OTP"')
         df_stock_filtered = df_stock_filtered.query('type=="OTP"')
-        # if var name type == string - must be within quotes
+        # The conditional var name type == string - must be within quotes
     elif site_type == "SC":
         df_filtered = df_filtered.query('type=="SC"')
         df_stock_filtered = df_stock_filtered.query('type=="SC"')
@@ -73,24 +70,53 @@ def json_for_charts(year, site_level, siteid, site_type):
         defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
         stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered)
 
-        title = "National Level"
-
-        # list of most recent stock reports from states
-        state_df = df_warehouse_filtered.sort_values(by=['year', 'weeknum'], ascending=[0, 0]).drop_duplicates(subset='siteid')
-        state_df = state_df.query('siteid<40').query('siteid>1')
-        all_states = pd.read_sql_query("select * from first_admin;", con=engine)
-        merge_states = pd.merge(left=all_states, right=state_df, left_on='state_num', right_on='siteid', how='outer')
-
         recent_stock_report = []
-        for index, row in merge_states.iterrows():
-            recent_stock_report.append({
-                "site": row['state'],
-                "siteid": row['state_num'],
-                "kind": "state",
-                "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else False,
-                "year": int(row['year']) if row['year'] == row['year'] else "",
-                "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
-            })
+
+        if site_type == "All" or site_type== "OTP":
+            title = "National" if site_type == "All" else "National (OTP)"
+
+            # list of most recent stock reports from states OTP
+            state_df = df_warehouse_filtered.sort_values(by=['year', 'weeknum'], ascending=[0, 0]).drop_duplicates(subset='siteid')
+            state_df = state_df.query('siteid<40').query('siteid>1')
+            all_states = pd.read_sql_query("select * from first_admin;", con=engine)
+            merge_states = pd.merge(left=all_states, right=state_df, left_on='state_num', right_on='siteid', how='outer')
+
+            for index, row in merge_states.iterrows():
+                recent_stock_report.append({
+                    "site": row['state'],
+                    "siteid": row['state_num'],
+                    "kind": "state",
+                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else False,
+                    "year": int(row['year']) if row['year'] == row['year'] else "",
+                    "balance": "RUTF {:,.0f}".format(row['rutf_bal']) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+                })
+
+        elif site_type == "SC":
+            title = "National (SC)"
+
+            for site in Site.objects.filter(sc=True).select_related('latest_stock_report_sc'):
+                if site.latest_stock_report_sc:
+                    balance = "%s F75    --    %s F100" % (
+                    # balance = "F75 %s CTN / F100 %s CTN" % (
+                        "{:,.1f}".format(site.latest_stock_report_sc.f75_bal),
+                        "{:,.1f}".format(site.latest_stock_report_sc.f100_bal)
+                    )
+                    lsr_weeknum = int(site.latest_stock_report_sc.weeknum)
+                    lsr_year = int(site.latest_stock_report_sc.year)
+                else:
+                    balance = "No Data"
+                    lsr_weeknum = False
+                    lsr_year = ""
+
+                recent_stock_report.append({
+                    "site": site.sitename,
+                    "siteid": site.siteid,
+                    "kind": "site",
+                    "weeknum": lsr_weeknum,
+                    "year": lsr_year,
+                    "balance": balance
+                })
+
 
     else:
         data_type, num = site_level, siteid
@@ -113,37 +139,69 @@ def json_for_charts(year, site_level, siteid, site_type):
             first_admin = First_admin.objects.get(state_num=num)
             title = "%s %s" % (first_admin.state, data_type.capitalize())
 
-            # Most recent stock reports
-            lga_df = df_warehouse_filtered.sort_values(by=['year', 'weeknum'], ascending=[0,0]).drop_duplicates(subset='siteid')
-            # FIXME do data cleaning remove future reports
-            # Double check that all future reporting is removed in data cleaning
-            all_program_lgas = pd.read_sql_query("select * from registration;", con=engine)
-            lga_num_min = all_program_lgas['lga_num'].min(axis=0)  # min and max of lga num are used to clean data
-            lga_num_max = all_program_lgas['lga_num'].max(axis=0)
-            all_program_lgas = all_program_lgas.query('state_num==%s & siteid>=@lga_num_min & siteid<=@lga_num_max' % num)
-            all_program_lgas = all_program_lgas.sort_values(by=['lga_num', 'siteid'], ascending=[1, 1])\
-                .drop_duplicates(subset='lga_num')
-            merge_lga = pd.merge(left=all_program_lgas, right=lga_df, left_on='lga_num', right_on='siteid',
-                                 how='outer', sort = False)
-            merge_lga['lga_num'] = pd.to_numeric(merge_lga['lga_num'], errors='coerce')
-            merge_lga = merge_lga.query('lga_num==lga_num') # remove all cases of NaN
-            merge_lga['lga_num'] = merge_lga['lga_num'].astype('int')
-            # Add site name from postgres
-            merge_lga.loc[:, 'lga'] = merge_lga['lga_num'].map(lambda x: Second_admin.objects.get(lga_num=x)
-                    .lga.strip() + " LGA" if Second_admin.objects.filter(lga_num=x) else "")
-            # Query one state - query is completed above on the registration date - so all sites are included
-            # merge_lga = merge_lga.query('state_num==%s' % num)
+            if site_type == "OTP" or site_type == "All":
+                # Most recent stock reports
+                lga_df = df_warehouse_filtered.sort_values(by=['year', 'weeknum'], ascending=[0,0]).drop_duplicates(subset='siteid')
 
-            for index, row in merge_lga.iterrows():
-                recent_stock_report.append({
-                    "site": row['lga'],
-                    "siteid": row['lga_num'],
-                    "kind": "lga",
-                    "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else False,
-                    "year": int(row['year']) if row['year'] == row['year'] else "",
-                    "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
-                })
+                # Double check that all future reporting is removed in data cleaning
+                all_program_lgas = pd.read_sql_query("select * from registration;", con=engine)
 
+                lga_num_min = all_program_lgas['lga_num'].min(axis=0)  # min and max of lga num are used to clean data
+                lga_num_max = all_program_lgas['lga_num'].max(axis=0)
+                # The @ are used by pandas to reference variables in the environment
+                all_program_lgas = all_program_lgas.query('state_num==%s & siteid>=@lga_num_min & siteid<=@lga_num_max' % num)
+                all_program_lgas = all_program_lgas.sort_values(by=['lga_num', 'siteid'], ascending=[1, 1])\
+                    .drop_duplicates(subset='lga_num')
+                merge_lga = pd.merge(left=all_program_lgas, right=lga_df, left_on='lga_num', right_on='siteid',
+                                     how='outer', sort = False)
+                merge_lga['lga_num'] = pd.to_numeric(merge_lga['lga_num'], errors='coerce')
+                merge_lga = merge_lga.query('lga_num==lga_num') # remove all cases of NaN
+                merge_lga['lga_num'] = merge_lga['lga_num'].astype('int')
+                # Add site name from postgres
+                merge_lga.loc[:, 'lga'] = merge_lga['lga_num'].map(lambda x: Second_admin.objects.get(lga_num=x)
+                        .lga.strip() + " LGA" if Second_admin.objects.filter(lga_num=x) else "")
+                # Query one state - query is completed above on the registration date - so all sites are included
+                # merge_lga = merge_lga.query('state_num==%s' % num)
+
+
+
+                for index, row in merge_lga.iterrows():
+                    recent_stock_report.append({
+                        "site": row['lga'],
+                        "siteid": row['lga_num'],
+                        "kind": "lga",
+                        "weeknum": int(row['weeknum']) if row['weeknum'] == row['weeknum'] else False,
+                        "year": int(row['year']) if row['year'] == row['year'] else "",
+                        "balance": "RUTF {:,.0f}".format(row['rutf_bal']) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+
+                    })
+
+            elif site_type == "SC":
+                for site in Site.objects.filter(state_num=first_admin, sc=True).select_related('latest_stock_report_sc'):
+                    if site.latest_stock_report_sc:
+                        balance = "%s F75    --    %s F100" % (
+                        # balance = "F75 %s CTN / F100 %s CTN" % (
+                            "{:,.1f}".format(site.latest_stock_report_sc.f75_bal),
+                            "{:,.1f}".format(site.latest_stock_report_sc.f100_bal)
+                        )
+                        lsr_weeknum = int(site.latest_stock_report_sc.weeknum)
+                        lsr_year = int(site.latest_stock_report_sc.year)
+                    else:
+                        balance = "No Data"
+                        lsr_weeknum = False
+                        lsr_year = ""
+
+                    recent_stock_report.append({
+                        "site": site.sitename,
+                        "siteid": site.siteid,
+                        "kind": "site",
+                        "weeknum": lsr_weeknum,
+                        "year": lsr_year,
+                        "balance": balance
+                    })
+
+
+        # Reports for LGA
         elif data_type == "lga":
             kind = "lga_num"
             number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
@@ -161,8 +219,12 @@ def json_for_charts(year, site_level, siteid, site_type):
             # FIXME don't hardcode week number and do data cleaning instead in the future
             site_df = site_df.query('siteid>201000000').query('year >= 2017 | (weeknum < 22 & year == 2016)')
 
-            # FIXME Must add in most recent reports for stabilization centers also
-            site_df = site_df.query('type=="OTP"')
+            if site_type == "OTP" or site_type == "All":
+                site_df = site_df.query('type=="OTP"')
+            elif site_type == "SC":
+                site_df = site_df.query('type =="SC"')
+            else:
+                raise Exception()
 
             site_df = site_df.sort_values(by=['year', 'weeknum', 'type'], ascending=[0, 0, 0])
             site_df = site_df.drop_duplicates(subset=['siteid', 'type'])
@@ -171,6 +233,16 @@ def json_for_charts(year, site_level, siteid, site_type):
                                     .sitename.strip() if Site.objects.filter(siteid=x) else "")
 
             for index, row in site_df.iterrows():
+
+                if site_type == "OTP" or site_type == "All":
+                    balance = "RUTF {:.1f}".format(row['rutf_bal']) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+                elif site_type == "SC":
+                    f100 = "{:.1f}".format(int(row['f100_bal'])) if row['f100_bal'] == row['f100_bal'] else "No Data"
+                    f75 = "{:.1f}".format(int(row['f75_bal'])) if row['f75_bal'] == row['f75_bal'] else "No Data"
+                    balance = "%s F75    --    %s F100" % (f75, f100)
+                else:
+                    balance = "No Data"
+
                 recent_stock_report.append({
                     "site": row['sitename'],
                     "siteid": row['siteid'],
@@ -179,13 +251,13 @@ def json_for_charts(year, site_level, siteid, site_type):
                     # try to add backslash to weeknum so that presentation on recent stock report is correct
                     "year": int(row['year']) if row['year'] == row['year'] else "",
                     # try to add year to recent stock report for LGA and Site level results
-                    "balance": "{:,}".format(int(row['rutf_bal'])) if row['rutf_bal'] == row['rutf_bal'] else "No Data"
+                    "balance": balance
                 })
 
 
         elif data_type == "site":
             # result = rate_by_week(result, df_filtered, 'siteid')
-            kind = "siteid"
+            kind = "siteid"  # This is site_type
             number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
             dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
             stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
@@ -194,6 +266,36 @@ def json_for_charts(year, site_level, siteid, site_type):
             title = "%s,  %s-LGA %s " % (level.sitename,
                                          level.lga_num.lga.title(),
                                          level.state_num.state)
+
+            # select one site
+            site_df = df_stock_filtered.query('siteid==%s' % siteid)
+            # select most recent data entry
+            site_df = site_df.sort_values(by=['year', 'weeknum', 'type'], ascending=[0, 0, 0])
+            site_df = site_df.drop_duplicates(subset=['siteid', 'type'])
+            # Add site name from postgres
+            site_df.loc[:, 'sitename'] = site_df['siteid'].map(lambda x: Site.objects.get(siteid=x)
+                                    .sitename.strip() if Site.objects.filter(siteid=x) else "")
+
+            if site_type == "OTP" or site_type == "All":
+                balance = "RUTF {:.1f}".format(site_df['rutf_bal']) if site_df['rutf_bal'] == site_df['rutf_bal'] else "No Data"
+            elif site_type == "SC":
+                f100 = "{:.1f}".format(site_df['f100_bal']) if site_df['f100_bal'] == site_df['f100_bal'] else "No Data"
+                f75 = "{:.1f}".format(site_df['f75_bal']) if site_df['f75_bal'] == site_df['f75_bal'] else "No Data"
+                balance = "%s F75    --    %s F100" % (f75, f100)
+            else:
+                balance = "No Data"
+
+            recent_stock_report.append({
+                "site": site_df.sitename,
+                "siteid": site_df['siteid'],
+                "kind": "site",  # This is "Level"
+                "weeknum": site_df['weeknum'],
+                # try to add backslash to weeknum so that presentation on recent stock report is correct
+                "year": site_df['year'],
+                # try to add year to recent stock report for LGA and Site level results
+                "balance": balance
+            })
+
         else:
             raise Exception("We have encountered a datatype that we don't know how to handle: %s" % data_type)
 
@@ -238,6 +340,7 @@ def json_for_charts(year, site_level, siteid, site_type):
         "categories": categories,
         "adm_by_week": adm_by_week,
         "management_level": site_level,
+        "site_type": site_type,
         "dead_rate_by_week": dead_rate_by_week,
         "defu_rate_by_week": defu_rate_by_week,
         "dmed_rate_by_week": dmed_rate_by_week,
@@ -438,6 +541,11 @@ def adm(request):
     return HttpResponse(json.dumps(data))
 
 
+def format_balance_rutf(rutf_bal):
+    if data.data_type == "National" or data.data_type == "State":
+        return "RUTF {:,}".format(rutf_bal) if rutf_bal == rutf_bal else "No Data"
+    elif data.data_type == "LGA" or data.data_type == "Site":
+        return "RUTF {:.1f}".format(rutf_bal) if rutf_bal == rutf_bal else "No Data"
 
 
 def index(request):

@@ -119,13 +119,13 @@ class Command(BaseCommand):
                     stock_in_db.rutf_out  = round(clean(row.rutf_used_carton) + clean(row.rutf_used_sachet) / 150., 2)
                     stock_in_db.rutf_bal   = round(clean(row.rutf_bal_carton) + clean(row.rutf_bal_sachet) / 150., 2)
 
-                #FIXME
                 # INPATIENTS
                 elif stock_in_db.type == "SC":
-                    stock_in_db.f75_bal_carton    = clean(row.f75_bal_carton)
-                    stock_in_db.f75_bal_sachet    = clean(row.f75_bal_sachet)
-                    stock_in_db.f100_bal_carton   = clean(row.f100_bal_carton)
-                    stock_in_db.f100_bal_sachet   = clean(row.f100_bal_sachet)
+
+                    # F75 sachets per carton - 120
+                    stock_in_db.f75_bal = clean(row.f75_bal_carton) + (clean(row.f75_bal_carton) / 120.)
+                    # F100 sachets per carton - 90
+                    stock_in_db.f100_bal = clean(row.f100_bal_carton) + (clean(row.f100_bal_sachet) / 90.)
 
                 # Data errors to correct of delete
 
@@ -175,6 +175,7 @@ class Command(BaseCommand):
                 stock_in_db.weeknum = clean(row.weeknum)
 
                 # Double check
+                # Change 53 to max week number for year
                 if stock_in_db.weeknum < 1 or stock_in_db.weeknum > 53:
                     print('     WEEKNUM < 1 or > 53 (%s), skip' % (stock_in_db.weeknum))
                     continue
