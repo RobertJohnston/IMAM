@@ -8,6 +8,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.rl_config import defaultPageSize
 from reportlab.lib.units import inch
+from django.core.mail import EmailMessage
+
 
 PAGE_HEIGHT = defaultPageSize[1]
 PAGE_WIDTH = defaultPageSize[0]
@@ -179,12 +181,39 @@ class Command(BaseCommand):
 
         # Warning: this is a beta version of this website, you can't consider the data here to be final
 
+        def warning(c, doc):  # c is for canvas
+            c.saveState()
+            x, y = doc.pagesize
+
+            # choose some colors
+            c.setStrokeColorRGB(138/255., 0, 0)
+            c.setFillColorRGB(1, 0, 0)
+
+            # draw a rectangle
+            # c.rect(0, y, x, (y - 200), fill=1)
+            c.rect(0, PAGE_HEIGHT - 65, PAGE_WIDTH, 65, fill=1)
+            # canvas.rect(x, y, width, height, stroke=1, fill=0)
+
+            # change color
+            c.setFillColorRGB(138/255., 0, 0)
+
+            # define a large font
+            c.setFont("Helvetica", 22)
+
+            # c.drawString(0.3, 0, "BETA")
+            c.drawCentredString(PAGE_WIDTH / 2.0, PAGE_HEIGHT - 30, "Warning: this is a beta version of this website")
+            c.drawCentredString(PAGE_WIDTH / 2.0, PAGE_HEIGHT - 52, "You can't consider the data here to be final")
+
+            c.restoreState()
+
         def myFirstPage(canvas, doc):
             canvas.saveState()
 
+            warning(canvas, doc)
+
             # write title using absolute position
             canvas.setFont('Times-Bold', 16)
-            canvas.drawCentredString(PAGE_WIDTH / 2.0, PAGE_HEIGHT - 108, "Hello world")
+            canvas.drawCentredString(PAGE_WIDTH / 2.0, PAGE_HEIGHT - 108, "IMAM Weekly Report")
 
             # write page number bellow
             canvas.setFont('Times-Roman', 9)
@@ -194,6 +223,8 @@ class Command(BaseCommand):
 
         def myLaterPages(canvas, doc):
             canvas.saveState()
+
+            warning(canvas, doc)
 
             canvas.setFont('Times-Roman', 9)
             canvas.drawString(inch, 0.75 * inch, "Page %d platypus example" % doc.page)
@@ -215,9 +246,13 @@ class Command(BaseCommand):
 
         # 2000 -> 400
 
-
-
         story.append(Image("adm_chart.png", width=400, height=266.6))
+        story.append(Image("adm_chart.png", width=400, height=266.6))
+        story.append(Image("adm_chart.png", width=400, height=266.6))
+        story.append(Image("adm_chart.png", width=400, height=266.6))
+        story.append(Image("adm_chart.png", width=400, height=266.6))
+        story.append(Image("adm_chart.png", width=400, height=266.6))
+
 
         table = [["Site", "Week Number", "RUTF Balance"]]
 
@@ -232,3 +267,17 @@ class Command(BaseCommand):
 
         # Create a document starting with the list story, then on first page add Title and footer, following pages add footer.
         doc.build(story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
+
+        # in for loop - Make National, State and LGA level reports
+        # after story.build for each report - send to all contacts based at that Site/Level
+
+
+        email = EmailMessage(
+            'this is the subject',
+            'Body goes here',
+            'imam_nigeria@gmail.com',
+            ['assaye']
+        )
+
+        # email.attach_file("phello.pdf")
+        email.send()
