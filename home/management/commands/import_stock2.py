@@ -253,7 +253,7 @@ class Command(BaseCommand):
 
                 # Variables to accelerate analysis
 
-                # if we don't have the site in the database, skip for now
+                # if we don't have the site in the database, skip entry
                 if not Site.objects.filter(siteid=stock_in_db.siteid).exists():
                     continue
 
@@ -262,8 +262,11 @@ class Command(BaseCommand):
 
                 site = Site.objects.get(siteid=stock_in_db.siteid)
 
+                # Latest stock reports for OTP and SC
                 if stock_in_db.type == "OTP":
+                    # if site.otp is Null or False
                     if not site.otp:
+                        # set site.otp to True
                         site.otp = True
                         site.save()
 
