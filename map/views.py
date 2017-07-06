@@ -41,6 +41,7 @@ def sites_gps_data(request):
     group by
         site.siteid;""")}
 
+    # connection from - from django.db import connection
     with connection.cursor() as cursor:
         cursor.execute("""
         select
