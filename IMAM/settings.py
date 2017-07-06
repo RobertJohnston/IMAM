@@ -134,6 +134,8 @@ LEAFLET_CONFIG = {
     'RESET_VIEW': False,
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 try:
     from local_settings import *
 except ImportError:
