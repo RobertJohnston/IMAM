@@ -281,24 +281,27 @@ def json_for_charts(year, site_level, siteid, site_type):
                 dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
                 stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
-            elif row.latest_stock_report_otp:
+            # If OTP is chosen and OTP exists - present OTP clearly marked
+            elif site_type =="OTP" and row.latest_stock_report_otp:
                 balance = format_balance_rutf(row.latest_stock_report_otp.rutf_bal, site_level)
                 lsr_weeknum = row.latest_stock_report_otp.weeknum
                 lsr_year = row.latest_stock_report_otp.year
                 title = "%s,  %s-LGA %s (OTP)" % (row.sitename, row.lga_num.lga.title(), row.state_num.state)
 
-                # If OTP is chosen - present OTP clearly marked
-                # site_type = "OTP"
                 number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
                 dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
                 stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             elif site_type =="All":
+                balance = format_balance_rutf(row.latest_stock_report_otp.rutf_bal, site_level)
+                lsr_weeknum = row.latest_stock_report_otp.weeknum
+                lsr_year = row.latest_stock_report_otp.year
+                title = "%s,  %s-LGA %s" % (row.sitename, row.lga_num.lga.title(), row.state_num.state)
+
                 number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, \
                 dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate, \
                 stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered,
                                                                kind, num)
-
 
             else:
                 balance = "No Data"
