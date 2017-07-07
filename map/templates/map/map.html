@@ -61,7 +61,6 @@
     });
 
     var activeMarker = L.icon({
-        // iconUrl: 'http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-1-Left-Pink-icon.png',
         iconUrl:    'http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-5-Chartreuse-icon.png',
         iconSize:     [38, 35], // size of the icon
         iconAnchor:   [38, 35], // point of the icon which will correspond to marker's location
@@ -79,11 +78,18 @@
     });
 
     var stockOutMarker = L.icon({
-        iconUrl: 'https://image.ibb.co/dbbekv/red_splash_vs.png',
-        //iconUrl: ('static/map/img/red-splash-small.png'),
+        iconUrl: ('/static/map/img/red-splash-small.png'),
+        //iconUrl: 'https://image.ibb.co/dbbekv/red_splash_vs.png',
         iconSize:     [25, 27], // size of the icon
-        iconAnchor:   [25, 27], // point of the icon which will correspond to marker's location
+        //iconAnchor:   [25, 27], // point of the icon which will correspond to marker's location
     });
+
+    //var stockOutMarker = L.AwesomeMarkers.icon({
+    //    icon: 'exclamation-triangle',
+    //    markerColor: 'red',
+    //    prefix: 'fa',
+    //    iconColor: 'white'
+    //});
 
     var lowStockMarker = L.AwesomeMarkers.icon({
         icon: 'exclamation-triangle',
@@ -93,18 +99,24 @@
     });
 
     var nullStockMarker = L.AwesomeMarkers.icon({
-        icon: 'question-circle-o',
+        icon: 'question-circle',
         markerColor: 'gray',
         prefix: 'fa',
         iconColor: 'white'
     });
 
-    var repleteMarker = L.AwesomeMarkers.icon({
-        icon: 'thumbs-up',
-        markerColor: 'green',
-        prefix: 'fa',
-        iconColor: 'white'
+    var repleteMarker = L.icon({
+        iconUrl: ('/static/map/img/green-circle-border.png'),
+        iconSize:     [18, 18], // size of the icon
+        //iconAnchor:   [16, 16], // point of the icon which will correspond to marker's location
     });
+
+    //var repleteMarker = L.AwesomeMarkers.icon({
+    //    icon: 'thumbs-up',
+    //    markerColor: 'green',
+    //    prefix: 'fa',
+    //    iconColor: 'white'
+    //});
 
     function map_init_basic (map, options) {
         var sitesType = L.layerGroup();
@@ -182,9 +194,3 @@
 
 </script>
 {% endblock %}
-
-
-
-
-
-
