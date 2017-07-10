@@ -62,11 +62,11 @@ class Command(BaseCommand):
 
                 # Update contact
                 if RawRegistration.objects.filter(uuid=uuid):
-                    print("Raw Contacts countdown %s UPDATING a contact for %s with uuid %s" % (counter, json_data['name'].encode("utf-8"), uuid))
+                    print(u"Raw Contacts countdown %s UPDATING a contact for %s with uuid %s" % (counter, json_data['name'], uuid)).encode("utf-8")
                     raw_contacts = RawRegistration.objects.get(uuid=uuid)
                 # Create contact
                 else:
-                    print("Raw Contacts countdown %s    CREATING a contact for %s with uuid %s" % (counter, json_data['name'].encode("utf-8"), uuid))
+                    print(u"Raw Contacts countdown %s    CREATING a contact for %s with uuid %s" % (counter, json_data['name'], uuid)).encode("utf-8")
                     raw_contacts = RawRegistration()
                     raw_contacts.uuid = uuid
 
