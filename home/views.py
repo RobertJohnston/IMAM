@@ -79,6 +79,7 @@ def json_for_charts(year, site_level, siteid, site_type):
             all_states = pd.read_sql_query("select * from first_admin;", con=engine)
             merge_states = pd.merge(left=all_states, right=state_df, left_on='state_num', right_on='siteid', how='outer')
 
+            # Iterate over rows of dataframe
             for index, row in merge_states.iterrows():
                 recent_stock_report.append({
                     "site": row['state'],
@@ -575,8 +576,13 @@ def format_balance_rutf(rutf_bal, site_level):
         return "RUTF {:.1f}".format(rutf_bal) if rutf_bal == rutf_bal else "No Data"
     raise Exception("Don't know how to format this site level: %s" % site_level)
 
+
 def format_balance_f75(f75, f100):
-    return "%s F75 -- %s F100" % ("{:,.1f}".format(f75), "{:,.1f}".format(f100))
+    return "%s F75 -- %s F100" % (
+        "{:,.1f}".format(f75) if f75 is not None else "No Data",
+        "{:,.1f}".format(f100)  if f100 is not None else "No Data",
+    )
+
 
 def index(request):
     state_list = First_admin.objects.all().order_by('state_num')
