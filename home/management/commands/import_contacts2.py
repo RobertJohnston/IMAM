@@ -131,7 +131,7 @@ class Command(BaseCommand):
                     print(" SiteID ERROR-%s  UUID-%s  skipped" % (row.siteid, row.uuid))
                     continue
 
-                print("Contacts count-%s  Name-%s" %(counter, contact_in_db.name))
+                print("Contacts count-%s  Name-%s" %(counter, contact_in_db.name.encode("utf-8")))
                 contact_in_db.save()
 
             last_update_time.save()
