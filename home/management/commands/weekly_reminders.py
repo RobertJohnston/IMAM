@@ -19,10 +19,7 @@ class Command(BaseCommand):
     # A command must define handle
     @exception_to_sentry
     def handle(self, *args, **options):
-        management.call_command('import_contacts')
-        management.call_command('import_program')
-        management.call_command('import_stock')
-        management.call_command('import_warehouse')
+        management.call_command('import_all')
 
         client = TembaClient('rapidpro.io', open('token').read().strip())
 
