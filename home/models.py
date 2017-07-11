@@ -340,6 +340,8 @@ class Site(models.Model):
     latest_stock_report_otp = models.ForeignKey(Stock, on_delete=models.SET_NULL, null=True, related_name="site_otp_set")
     latest_stock_report_sc = models.ForeignKey(Stock, on_delete=models.SET_NULL, null=True, related_name="site_sc_set")
 
+    latest_communication_datetime = models.DateTimeField(null=True, blank=True)
+
     otp = models.BooleanField(default=False)
     sc = models.BooleanField(default=False)
 
