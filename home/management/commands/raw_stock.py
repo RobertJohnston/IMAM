@@ -1,10 +1,11 @@
 import json
 
-from home.models import Registration, JsonStock, RawStock, LastUpdatedAPICall
+from home.models import Registration, JsonStock, RawStock, LastUpdatedAPICall, Site
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from datetime import datetime
-from home.utilities import exception_to_sentry
+from home.utilities import exception_to_sentry, clean
+from django.utils.dateparse import parse_datetime
 
 
 class Command(BaseCommand):
@@ -146,6 +147,15 @@ class Command(BaseCommand):
 
                 raw_stock.save()
                 print "Raw Stock count %s " % counter
+
+                # fill latest_communication_datetime field of Site to determine active/inactive sites
+                if clean(raw_stock.siteid) and Site.objects.filter(siteid=clean(raw_stock.siteid)).exists():
+                    site = Site.objects.get(siteid=clean(raw_stock.siteid))
+                    if site.latest_communication_datetime is None or (parse_datetime(raw_stock.last_seen) is not None and site.latest_communication_datetime < parse_datetime(raw_stock.last_seen)):
+                        print("[%s] site.last_communication_datetime %s -> %s" % (site.siteid, site.latest_communication_datetime, parse_datetime(raw_stock.last_seen)))
+                        site.latest_communication_datetime = parse_datetime(raw_stock.last_seen)
+                        site.save()
+
 
              # bulk insert could be an option
 

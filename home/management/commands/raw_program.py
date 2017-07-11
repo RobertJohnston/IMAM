@@ -1,10 +1,12 @@
 import json
 from django import db
-from home.models import Registration, JsonProgram, RawProgram, LastUpdatedAPICall
+from home.models import Registration, JsonProgram, RawProgram, LastUpdatedAPICall, Site
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from datetime import datetime
-from home.utilities import exception_to_sentry
+from home.utilities import exception_to_sentry, clean
+
+from django.utils.dateparse import parse_datetime
 
 
 class Command(BaseCommand):
@@ -25,6 +27,8 @@ class Command(BaseCommand):
         with transaction.atomic():
 
             last_update_time = LastUpdatedAPICall.objects.filter(kind="raw_program").first()
+
+            # options['all'] = True
 
             # Code below is explicitly describing all possible four conditions of two booleans
             if options['all'] and last_update_time:
@@ -122,6 +126,7 @@ class Command(BaseCommand):
                     raw_program.siteid = None
                     raw_program.type  = None
 
+
                 # OUTPATIENTS
                 if raw_program.type == "OTP" :
                     raw_program.age_group = "6-59m"
@@ -164,6 +169,14 @@ class Command(BaseCommand):
 
                 print "Raw Program countdown-%s" % counter
                 raw_program.save()
+
+                # fill latest_communication_datetime field of Site to determine active/inactive sites
+                if clean(raw_program.siteid) and Site.objects.filter(siteid=clean(raw_program.siteid)).exists():
+                    site = Site.objects.get(siteid=clean(raw_program.siteid))
+                    if site.latest_communication_datetime is None or (parse_datetime(raw_program.last_seen) is not None and site.latest_communication_datetime < parse_datetime(raw_program.last_seen)):
+                        print("[%s] site.last_communication_datetime %s -> %s" % (site.siteid, site.latest_communication_datetime, parse_datetime(raw_program.last_seen)))
+                        site.latest_communication_datetime = parse_datetime(raw_program.last_seen)
+                        site.save()
 
 
             last_update_time.save()
