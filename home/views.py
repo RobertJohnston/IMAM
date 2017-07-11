@@ -2,6 +2,9 @@ import json
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
+# from django.db import connection
+from django.db.models import Q
+
 import pandas as pd
 import numpy as np
 
@@ -15,17 +18,40 @@ from models import First_admin, Second_admin, Site
 from utilities import iso_year_start, iso_to_gregorian, weeks_for_year
 
 
+def line_profiler(view=None, extra_view=None):
+    import line_profiler
+
+    def wrapper(view):
+        def wrapped(*args, **kwargs):
+            prof = line_profiler.LineProfiler()
+            prof.add_function(view)
+            if extra_view:
+                [prof.add_function(v) for v in extra_view]
+            with prof:
+                resp = view(*args, **kwargs)
+            prof.print_stats()
+            return resp
+        return wrapped
+    if view:
+        return wrapper(view)
+    return wrapper
+
+
+# @line_profiler
 def json_for_charts(year, site_level, siteid, site_type):
     # Read data into dataframe with sqlalchemy- at each function call
     engine = create_engine(
         'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
 
     # PROGRAM DATA
-    df = pd.read_sql_query("select * from program;", con=engine)
+    df = pd.read_sql_query("""select id, siteid, last_seen, weeknum, type,
+                           amar, dcur, dead, defu, dmed, tout, state_num, lga_num, year
+                           from program;""", con=engine)
     # STOCK DATA
-    df_stock = pd.read_sql_query("select * from stock;", con=engine)
+    df_stock = pd.read_sql_query("""select id, siteid, type, last_seen, weeknum, year, rutf_out, rutf_bal, f75_bal,
+        f100_bal, state_num, lga_num from stock;""", con=engine)
     # WAREHOUSE DATA
-    df_warehouse = pd.read_sql_query("select * from warehouse;", con=engine)
+    df_warehouse = pd.read_sql_query("select id, siteid, weeknum, year, rutf_out, rutf_bal from warehouse;", con=engine)
 
     df_filtered = df
     df_stock_filtered = df_stock
@@ -45,13 +71,16 @@ def json_for_charts(year, site_level, siteid, site_type):
     if site_type == "All":
         df_filtered = df_filtered
         df_stock_filtered = df_stock_filtered
+        number_of_sites_in_program = Site.objects.filter(Q(otp=True) | Q(sc=True))
     elif site_type == "OTP":
         df_filtered = df_filtered.query('type=="OTP"')
         df_stock_filtered = df_stock_filtered.query('type=="OTP"')
         # The conditional var name type == string - must be within quotes
+        number_of_sites_in_program = Site.objects.filter(otp=True)
     elif site_type == "SC":
         df_filtered = df_filtered.query('type=="SC"')
         df_stock_filtered = df_stock_filtered.query('type=="SC"')
+        number_of_sites_in_program = Site.objects.filter(sc=True)
     else:
         raise Exception("This site_type value is not permitted: %s" % site_type)
 
@@ -61,10 +90,9 @@ def json_for_charts(year, site_level, siteid, site_type):
     # Total Exits from implementation site - Cout (Mike Golden term) includes the internal transfers - Tout
     df_filtered['cout'] = df_filtered.total_discharges + df_filtered.tout
 
-
     # default or national level
     if site_level == "National":
-        number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week,\
+        adm_by_week, dead_rate_by_week,\
         defu_rate_by_week, dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
         stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered)
 
@@ -127,12 +155,14 @@ def json_for_charts(year, site_level, siteid, site_type):
 
         if site_level == "state":
             kind = "state_num"
-            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
+            adm_by_week, dead_rate_by_week, defu_rate_by_week,\
             dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
             stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             # in line below, django expects only one equal sign to compare value.
             first_admin = First_admin.objects.get(state_num=num)
+            number_of_sites_in_program = number_of_sites_in_program.filter(state_num=first_admin)
+
             # Admissions Graph Title
             if site_type == "All":
                 title = "%s %s" % (first_admin.state, site_level.capitalize())
@@ -201,11 +231,12 @@ def json_for_charts(year, site_level, siteid, site_type):
         # Reports for LGA
         elif site_level == "lga":
             kind = "lga_num"
-            number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
+            adm_by_week, dead_rate_by_week, defu_rate_by_week,\
             dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
             stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             second_admin = Second_admin.objects.get(lga_num=num)
+            number_of_sites_in_program = number_of_sites_in_program.filter(lga_num=second_admin)
             # Admissions Graph Title
             if site_type == "All":
                 title = "%s-LGA %s" % (second_admin.lga.title(),
@@ -267,6 +298,11 @@ def json_for_charts(year, site_level, siteid, site_type):
             # stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             row = Site.objects.get(siteid=num)
+            number_of_sites_in_program = number_of_sites_in_program.filter(siteid=row.siteid)
+
+            print "row.latest_stock_report_sc", row.latest_stock_report_sc
+            print "row.latest_stock_report_otp", row.latest_stock_report_otp
+            print "site_type", repr(site_type )
 
             # If user selects ALL or OTP and only SC exists then present the data of SC.
             if row.latest_stock_report_sc and (site_type =="SC" or not row.latest_stock_report_otp):
@@ -277,11 +313,6 @@ def json_for_charts(year, site_level, siteid, site_type):
                 lsr_year = row.latest_stock_report_sc.year
                 title = "%s,  %s-LGA %s (SC)" % (row.sitename, row.lga_num.lga.title(), row.state_num.state)
 
-                # If OTP is chosen where only SC exists - present SC clearly marked
-                number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
-                dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
-                stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
-
             # If OTP is chosen and OTP exists - present OTP clearly marked
             elif site_type =="OTP" and row.latest_stock_report_otp:
                 balance = format_balance_rutf(row.latest_stock_report_otp.rutf_bal, site_level)
@@ -289,26 +320,21 @@ def json_for_charts(year, site_level, siteid, site_type):
                 lsr_year = row.latest_stock_report_otp.year
                 title = "%s,  %s-LGA %s (OTP)" % (row.sitename, row.lga_num.lga.title(), row.state_num.state)
 
-                number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
-                dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate,\
-                stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
-
             elif site_type =="All":
                 balance = format_balance_rutf(row.latest_stock_report_otp.rutf_bal, site_level)
                 lsr_weeknum = row.latest_stock_report_otp.weeknum
                 lsr_year = row.latest_stock_report_otp.year
                 title = "%s,  %s-LGA %s" % (row.sitename, row.lga_num.lga.title(), row.state_num.state)
 
-                number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week, \
-                dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate, \
-                stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered,
-                                                               kind, num)
-
             else:
                 balance = "No Data"
                 lsr_weeknum = "No Data"
                 lsr_year = "No Data"
                 title = "No IMAM services provided -- %s" % row.sitename
+
+            adm_by_week, dead_rate_by_week, defu_rate_by_week, \
+            dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate, \
+            stock_by_week, two_weeks_margin = rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind, num)
 
             recent_stock_report = [{
                 "site": row.sitename,
@@ -359,6 +385,15 @@ def json_for_charts(year, site_level, siteid, site_type):
     dmed_rate_by_week = fill_empty_entries(dmed_rate_by_week)
     tout_rate_by_week = fill_empty_entries(tout_rate_by_week)
 
+    today_year, today_week, _ = date.today().isocalendar()
+
+
+    _8_weeks_ago = Week(today_year, today_week) - 8
+    year_start = iso_year_start(_8_weeks_ago.year)
+    _8_weeks_ago = year_start + timedelta(days=0, weeks=_8_weeks_ago.week - 1)
+
+    number_of_active_sites = number_of_sites_in_program.filter(latest_communication_datetime__gte=_8_weeks_ago).count()
+    number_of_inactive_sites = number_of_sites_in_program.count() - number_of_active_sites
 
     # return HttpResponse(json.dumps(result)
     return {
@@ -434,34 +469,76 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
     stock_report_rate = 0 if np.isnan(stock_report_rate) else stock_report_rate
 
 
-    #FIXME use raw_program and raw_stock reports to algorithm to determine active sites.
     # Current calculation drops all sites that have not reported during current year.
     # Last_seen should go in the site database - then query site database if last_seen < 8 weeks = Active
     # State and LGA are always considered active, should always receive reports, but are not reported as active or inactive
-    active_sites = df_queried.query('since_x_weeks<=8')\
-                             .query('siteid>101110001')\
-                             .groupby(['siteid', 'type'])\
-                             ['siteid'].unique()\
-                             .to_frame()\
-                             .drop('siteid', axis=1)\
-                             .reset_index()
+    # active_sites = df_queried.query('since_x_weeks<=8')\
+    #                          .query('siteid>101110001')\
+    #                          .groupby(['siteid', 'type'])\
+    #                          ['siteid'].unique()\
+    #                          .to_frame()\
+    #                          .drop('siteid', axis=1)\
+    #                          .reset_index()
+    #
+    # all_sites = df_queried.query('siteid>101110001')\
+    #                       .groupby(['siteid', 'type'])\
+    #                       ['siteid'].unique()\
+    #                       .to_frame()\
+    #                       .drop('siteid', axis=1)\
+    #                       .reset_index()
 
-    all_sites = df_queried.query('siteid>101110001')\
-                          .groupby(['siteid', 'type'])\
-                          ['siteid'].unique()\
-                          .to_frame()\
-                          .drop('siteid', axis=1)\
-                          .reset_index()
+    # with connection.cursor() as cursor:
+    #     cursor.execute("""
+    #     select count(*)
+    #     from (
+    #         select
+    #             distinct home_rawprogram.siteid::float::bigint
+    #         from
+    #             home_rawprogram,
+    #             site
+    #         where
+    #             home_rawprogram.siteid similar to '[0-9]+.?[0-9]*'
+    #             and
+    #             site.siteid = home_rawprogram.siteid::float::bigint;
+    #         ) as query
+    #     """)
+    #
+    #     number_of_sites = cursor.fetchone()[0]
+    #
+    # with connection.cursor() as cursor:
+    #     cursor.execute("""
+    #     select count(*)
+    #     from (
+    #         select
+    #             home_rawprogram.siteid::float::bigint as siteid,
+    #             extract('day' from (now() - max(home_rawprogram.last_seen))) as last_report
+    #         from
+    #             home_rawprogram,
+    #             site
+    #         where
+    #             home_rawprogram.siteid similar to '[0-9]+.?[0-9]*'
+    #             and
+    #             site.siteid = home_rawprogram.siteid::float::bigint
+    #         group by
+    #             home_rawprogram.siteid::float::bigint
+    #     ) as stuff
+    #     where
+    #     	last_report >= (8 * 7)
+    #     """)
+    #
+    #     number_of_active_sites = cursor.fetchone()[0]
+    #
+    # number_of_inactive_sites = number_of_sites - number_of_active_sites
 
-    # Calculation uses set operations
-    if len(active_sites) > 0:
-        number_of_inactive_sites = len(set(zip(all_sites['siteid'],\
-                                               all_sites['type'])) - set(zip(active_sites['siteid'],\
-                                               active_sites['type'])))
-        number_of_active_sites = len(active_sites)
-    else:
-        number_of_inactive_sites = None
-        number_of_active_sites = None
+    # # Calculation uses set operations
+    # if len(active_sites) > 0:
+    #     number_of_inactive_sites = len(set(zip(all_sites['siteid'],\
+    #                                            all_sites['type'])) - set(zip(active_sites['siteid'],\
+    #                                            active_sites['type'])))
+    #     number_of_active_sites = len(active_sites)
+    # else:
+    #     number_of_inactive_sites = None
+    #     number_of_active_sites = None
 
     # Admissions and stock balance by week
     adm_by_week = df_queried['amar'].groupby([df_queried['year'], df_queried['weeknum']]).sum()
@@ -486,8 +563,16 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
             if i > max_since_x_weeks:
                 break
 
-            isoweek = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i)).groupby('siteid')['iso_year_weeknum'].max().max()
-            rutf_out = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i)).groupby('siteid')['rutf_out'].median().sum()
+            # isoweek = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))\
+            #                  .groupby('siteid')['iso_year_weeknum']\
+            #                  .max().max()
+
+            today_year, today_week, _ = date.today().isocalendar()
+            isoweek = Week(today_year, today_week) - i
+
+            rutf_out = site_df.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))\
+                              .groupby('siteid')['rutf_out']\
+                              .median().sum()
 
             isoweek = iso_to_gregorian(isoweek.year, isoweek.week)
 
@@ -537,11 +622,12 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
     tout_rate_by_week = df_queried['tout'].groupby([df_filtered['year'], df_filtered['weeknum']]).sum() / filter_cout * 100
 
     #FIXME change report_rate to program_rate_rate
-    return number_of_inactive_sites, number_of_active_sites, adm_by_week, dead_rate_by_week, defu_rate_by_week,\
+    return adm_by_week, dead_rate_by_week, defu_rate_by_week,\
            dmed_rate_by_week, tout_rate_by_week, program_report_rate, stock_report_rate, stock_by_week, two_weeks_margin
 
 
 # Query database and create data for admissions graph
+@line_profiler(extra_view=[json_for_charts, rate_by_week])
 def adm(request):
     current_year, current_week, _ = date.today().isocalendar()
 
