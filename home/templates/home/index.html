@@ -463,7 +463,12 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             updateGraph({fromLink: true, siteFilter: target});
         }
 
-        renderPageData = function(data) {
+        renderPageData = function(data, this_graph) {
+            if (this_graph != current_loading_graph) {
+                console.log("another graph has been requested after this one so we abort to avoid overwritting it");
+                return;
+            }
+
             amarChart = new Highcharts.Chart(format_data(data));
             stockChart = new Highcharts.Chart(format_stock_data(data));
 
@@ -495,14 +500,28 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             $('#page-data').show();
         }
 
+        // unique reference updated to avoid race condition on graph loading
+        // we modify it every time the users plays with select2
+        current_loading_graph = Date();
+
+        // we copy it to give it to the first loading graph and avoid conflict
+        // because this variable could be updated later one if the users plays with select2
+        at_start_current_loaded_graph = current_loading_graph;
+
         // initialization of the page
-        $.getJSON("/adm/").success(renderPageData).error(function() {
-            console.log("Error while fetching chart data:");
-            console.log(arguments);
+        $.getJSON("/adm/").success(function(data) {
+                renderPageData(data, at_start_current_loaded_graph);
+            }).error(function() {
+                console.log("Error while fetching chart data:");
+                console.log(arguments);
         });
 
         // on select event - run code in {} below
         updateGraph = function (event) {
+            // update unique reference to ensure that this is the latest user selection that is going to be rendered
+            current_loading_graph = Date();
+            var this_graph = current_loading_graph;
+
             if (event.fromLink) {
                 var siteFilter = event.siteFilter;
             } else {
@@ -517,8 +536,9 @@ Pointer.getHoverData = function(existingHoverPoint, existingHoverSeries, series,
             $('.loader-wrapper').show();
 
             $.getJSON("/adm/?site_filter=" + siteFilter + "&site_type=" + site_typeFilter + "&year=" + yearFilter)
-                .success(renderPageData)
-                .error(function() {
+                .success(function(data) {
+                    renderPageData(data, this_graph);
+                }).error(function() {
                     console.log("Error while fetching chart data:");
                     console.log(arguments);
             });
