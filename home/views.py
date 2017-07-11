@@ -37,7 +37,6 @@ def line_profiler(view=None, extra_view=None):
     return wrapper
 
 
-# @line_profiler
 def json_for_charts(year, site_level, siteid, site_type):
     # Read data into dataframe with sqlalchemy- at each function call
     engine = create_engine(
@@ -468,78 +467,6 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
     program_report_rate = 0 if np.isnan(program_report_rate) else program_report_rate
     stock_report_rate = 0 if np.isnan(stock_report_rate) else stock_report_rate
 
-
-    # Current calculation drops all sites that have not reported during current year.
-    # Last_seen should go in the site database - then query site database if last_seen < 8 weeks = Active
-    # State and LGA are always considered active, should always receive reports, but are not reported as active or inactive
-    # active_sites = df_queried.query('since_x_weeks<=8')\
-    #                          .query('siteid>101110001')\
-    #                          .groupby(['siteid', 'type'])\
-    #                          ['siteid'].unique()\
-    #                          .to_frame()\
-    #                          .drop('siteid', axis=1)\
-    #                          .reset_index()
-    #
-    # all_sites = df_queried.query('siteid>101110001')\
-    #                       .groupby(['siteid', 'type'])\
-    #                       ['siteid'].unique()\
-    #                       .to_frame()\
-    #                       .drop('siteid', axis=1)\
-    #                       .reset_index()
-
-    # with connection.cursor() as cursor:
-    #     cursor.execute("""
-    #     select count(*)
-    #     from (
-    #         select
-    #             distinct home_rawprogram.siteid::float::bigint
-    #         from
-    #             home_rawprogram,
-    #             site
-    #         where
-    #             home_rawprogram.siteid similar to '[0-9]+.?[0-9]*'
-    #             and
-    #             site.siteid = home_rawprogram.siteid::float::bigint;
-    #         ) as query
-    #     """)
-    #
-    #     number_of_sites = cursor.fetchone()[0]
-    #
-    # with connection.cursor() as cursor:
-    #     cursor.execute("""
-    #     select count(*)
-    #     from (
-    #         select
-    #             home_rawprogram.siteid::float::bigint as siteid,
-    #             extract('day' from (now() - max(home_rawprogram.last_seen))) as last_report
-    #         from
-    #             home_rawprogram,
-    #             site
-    #         where
-    #             home_rawprogram.siteid similar to '[0-9]+.?[0-9]*'
-    #             and
-    #             site.siteid = home_rawprogram.siteid::float::bigint
-    #         group by
-    #             home_rawprogram.siteid::float::bigint
-    #     ) as stuff
-    #     where
-    #     	last_report >= (8 * 7)
-    #     """)
-    #
-    #     number_of_active_sites = cursor.fetchone()[0]
-    #
-    # number_of_inactive_sites = number_of_sites - number_of_active_sites
-
-    # # Calculation uses set operations
-    # if len(active_sites) > 0:
-    #     number_of_inactive_sites = len(set(zip(all_sites['siteid'],\
-    #                                            all_sites['type'])) - set(zip(active_sites['siteid'],\
-    #                                            active_sites['type'])))
-    #     number_of_active_sites = len(active_sites)
-    # else:
-    #     number_of_inactive_sites = None
-    #     number_of_active_sites = None
-
     # Admissions and stock balance by week
     adm_by_week = df_queried['amar'].groupby([df_queried['year'], df_queried['weeknum']]).sum()
 
@@ -627,7 +554,7 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
 
 
 # Query database and create data for admissions graph
-@line_profiler(extra_view=[json_for_charts, rate_by_week])
+# @line_profiler(extra_view=[json_for_charts, rate_by_week])
 def adm(request):
     current_year, current_week, _ = date.today().isocalendar()
 
