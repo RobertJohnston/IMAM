@@ -43,7 +43,8 @@
 <script>
 
     var otpMarker = L.icon({
-        iconUrl: "https://image.ibb.co/izhTCk/healthcenter.png",
+        iconUrl:    '/static/map/img/healthcenter.png',
+        //iconUrl: "https://image.ibb.co/izhTCk/healthcenter.png",
         iconSize:     [25, 22], // size of the icon
         // iconAnchor:   [25, 22], // point of the icon which will correspond to marker's location
         // icon: 'plus-square',
@@ -60,7 +61,7 @@
     });
 
     var activeMarker = L.icon({
-        iconUrl:    '/static/map/img/green-flag.png',
+        iconUrl: '/static/map/img/green-flag.png',
         iconSize:     [38, 35], // size of the icon
         iconAnchor:   [18, 20], // point of the icon which will correspond to marker's location
         // icon: '',
@@ -77,18 +78,10 @@
     });
 
     var stockOutMarker = L.icon({
-        //iconUrl: ('/static/map/img/red-splash-small.png'),
-        iconUrl: 'https://image.ibb.co/dbbekv/red_splash_vs.png',
+        iconUrl: '/static/map/img/red-splash-small.png',
+        //iconUrl: 'https://image.ibb.co/dbbekv/red_splash_vs.png',
         iconSize:     [25, 27], // size of the icon
-        //iconAnchor:   [25, 27], // point of the icon which will correspond to marker's location
     });
-
-    //var stockOutMarker = L.AwesomeMarkers.icon({
-    //    icon: 'exclamation-triangle',
-    //    markerColor: 'red',
-    //    prefix: 'fa',
-    //    iconColor: 'white'
-    //});
 
     var lowStockMarker = L.AwesomeMarkers.icon({
         icon: 'exclamation-triangle',
@@ -106,8 +99,8 @@
     //});
 
     var repleteMarker = L.icon({
-        iconUrl: 'https://image.ibb.co/cCXsua/green_circle_border.png',
-        //iconUrl: ('/static/map/img/green-circle-border.png'),
+        iconUrl: ('/static/map/img/green-circle-border.png'),
+        //iconUrl: 'https://image.ibb.co/cCXsua/green_circle_border.png',
         iconSize:     [18, 18], // size of the icon
         //iconAnchor:   [16, 16], // point of the icon which will correspond to marker's location
     });
