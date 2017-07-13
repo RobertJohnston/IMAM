@@ -104,10 +104,13 @@ class Command(BaseCommand):
                 if not row.mail or '@' not in row.mail:
                     mail = None
                 else:
-                    mail = row.mail.lower().rstrip('.').replace(' ', '').replace(',', '.')
+                    mail = row.mail.lower().rstrip('.').replace(' ', '').replace(',', '.').replace("'", "").replace("..", ".")
                     # Data cleaning for email addresses - Change .con to .com
                     if mail.endswith('.con'):
                         mail = mail[:-1] + 'm'
+
+                    if mail.startswith("www."):
+                        mail = mail.replace("www.", "", 1)
                 contact_in_db.mail = mail
                 # contact_in_db.mail = row.mail
 
