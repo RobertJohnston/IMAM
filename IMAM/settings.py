@@ -135,6 +135,7 @@ LEAFLET_CONFIG = {
     'RESET_VIEW': False,
 }
 
+# This will not send emails because the mails are sent to console instead of mail handler
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 try:
