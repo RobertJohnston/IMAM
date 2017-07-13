@@ -152,25 +152,10 @@ class Command(BaseCommand):
 
                 raw_program.confirm = json_data['values']['confirm']['category']  if 'confirm' in json_data['values'] else None
 
-                # state_num
-                # lga_num
-                # year
-
-                # last_seen_weeknum
-                # rep_year_wn
-                # rep_weeknum
-                # last_seen_dotw
-                # last_seen_hour
-                # year_weeknum
-                # iso_rep_year_wn
-                # iso_year_weeknum
-                # iso_diff
-                # since_x_weeks = models.BigIntegerField(blank=True, null=True)
-
                 print "Raw Program countdown-%s" % counter
                 raw_program.save()
 
-                # fill latest_communication_datetime field of Site to determine active/inactive sites
+                # fill last_communication_datetime field of Site to determine active/inactive sites
                 if clean(raw_program.siteid) and Site.objects.filter(siteid=clean(raw_program.siteid)).exists():
                     site = Site.objects.get(siteid=clean(raw_program.siteid))
                     if site.latest_communication_datetime is None or (parse_datetime(raw_program.last_seen) is not None and site.latest_communication_datetime < parse_datetime(raw_program.last_seen)):
