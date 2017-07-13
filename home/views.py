@@ -18,6 +18,8 @@ from models import First_admin, Second_admin, Site
 from utilities import iso_year_start, iso_to_gregorian, weeks_for_year
 
 
+# code to ensure that line_profiler is handled correctly
+# line_profiler is not needed on the server / production version of the code
 def line_profiler(view=None, extra_view=None):
     import line_profiler
 
@@ -386,7 +388,7 @@ def json_for_charts(year, site_level, siteid, site_type):
 
     today_year, today_week, _ = date.today().isocalendar()
 
-
+    # Move code to utilities
     _8_weeks_ago = Week(today_year, today_week) - 8
     year_start = iso_year_start(_8_weeks_ago.year)
     _8_weeks_ago = year_start + timedelta(days=0, weeks=_8_weeks_ago.week - 1)
@@ -504,9 +506,9 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
             isoweek = iso_to_gregorian(isoweek.year, isoweek.week)
 
             if isoweek not in two_weeks_margin:
-                two_weeks_margin[isoweek] = rutf_out if rutf_out == rutf_out else 0
+                two_weeks_margin[isoweek] = rutf_out * 2 if rutf_out == rutf_out else 0
             else:
-                two_weeks_margin[isoweek] = two_weeks_margin[isoweek] + (rutf_out if rutf_out == rutf_out else 0)
+                two_weeks_margin[isoweek] = two_weeks_margin[isoweek] + (rutf_out * 2 if rutf_out == rutf_out else 0)
 
 
     else:  # site level
@@ -531,7 +533,7 @@ def rate_by_week(df_filtered, df_stock_filtered, df_warehouse_filtered, kind=Non
 
             iso_year_weeknum = df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['iso_year_weeknum'].max()
             margin = df_stock_queried.query('since_x_weeks >= %s & since_x_weeks < (%s + 8)' % (i, i))['rutf_out'].median()
-            two_weeks_margin[iso_to_gregorian(iso_year_weeknum.year, iso_year_weeknum.week)] = margin if margin == margin else None
+            two_weeks_margin[iso_to_gregorian(iso_year_weeknum.year, iso_year_weeknum.week)] = margin * 2 if margin == margin else None
 
 
     # filter by one site
@@ -584,9 +586,11 @@ def adm(request):
 
 def format_balance_rutf(rutf_bal, site_level):
     if site_level == "National" or site_level == "state":
-        return "RUTF {:,.0f}".format(rutf_bal) if rutf_bal == rutf_bal else "No Data"
+        return "RUTF {:,.0f}".format(rutf_bal) if rutf_bal is not None and rutf_bal == rutf_bal else "No Data"
+        # not None addresses none as data
+        # rutf_bal = rutf_bal address issue of NaN in pandas DF
     elif site_level == "lga" or site_level == "site":
-        return "RUTF {:.1f}".format(rutf_bal) if rutf_bal == rutf_bal else "No Data"
+        return "RUTF {:.1f}".format(rutf_bal) if rutf_bal is not None and rutf_bal == rutf_bal else "No Data"
     raise Exception("Don't know how to format this site level: %s" % site_level)
 
 
