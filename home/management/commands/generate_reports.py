@@ -469,8 +469,15 @@ class Command(BaseCommand):
             story.append(Table(table))
 
             variables_to_tests = [
-                ["Program", [("amar", "Admissions"), ("beg", "Begigigi"), ("dcur", "Curred people"), ("dead", "Dead")]],
-                ["Stock", [("rutf_out", "Consumed cartons"), ("rutf_in", "Received cartons"), ("rutf_bal", "Balance of cartons")]],
+                ["Program", [("amar", "Admissions"),
+                             ("beg", "Number of cases in program"),
+                             ("dcur", "Cures"),
+                             ("dead", "Deaths")]],
+                ["Stock", [("rutf_out", "RUTF Used (cartons)"),
+                           ("rutf_in", "RUTF Received (cartons)"),
+                           ("rutf_bal", "RUTF Balance (cartons)")]],
+                           # ("f75_bal", "F75 Balance (cartons)")
+                           # ("f100_bal", "F100 Balance (cartons)")     # Cannot run on OTPS
             ]
 
             # duplicate from views.py
@@ -478,6 +485,15 @@ class Command(BaseCommand):
             _8_weeks_ago = Week(today_year, today_week) - 8
             year_start = iso_year_start(_8_weeks_ago.year)
             _8_weeks_ago = year_start + timedelta(days=0, weeks=_8_weeks_ago.week - 1)
+
+            # Test for common data entry problems
+            # Stock-outs
+            # Double reporting of stock
+            # Errors in stock calculations
+            # Excess AMAR, BEG, RUTF and other vars
+            # Errors in calculations of BEG
+            # Excess stock utilisation
+            # Admissions and Beg with no stock
 
             # PRESENT ACTIONABLE INFORMATION
             # loop over sites in LGA
