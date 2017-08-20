@@ -79,8 +79,9 @@ class Command(BaseCommand):
                 contact_in_db.groups = row.groups
 
                 # if there is no siteid of contact then skip to next contact in contact_batch
+
                 if not row.siteid:
-                    print("No siteid for %s (%s), skip" % (row.name, repr(row.siteid)))
+                    print("No siteid for %s (%s), skip to next contact" % (row.name, repr(row.siteid)))
                     continue
 
                 # CHECK TYPE OF VARIABLE siteid HERE.
@@ -94,7 +95,11 @@ class Command(BaseCommand):
                 else:
                     strip_siteid = filter(lambda x: x.isdigit(),
                                           row.siteid.replace('O', '0').replace('o', '0'))
+                    if not strip_siteid:
+                        print "SiteID included only letters and no numbers"
+                        continue
                     contact_in_db.siteid = int(strip_siteid)
+
 
                 contact_in_db.type = row.type
                 contact_in_db.first_seen = row.first_seen
@@ -112,29 +117,27 @@ class Command(BaseCommand):
                     if mail.startswith("www."):
                         mail = mail.replace("www.", "", 1)
                 contact_in_db.mail = mail
-                # contact_in_db.mail = row.mail
 
-                # Assign these from SiteID - do not import from RawRegistration.
                 # state_num and lga_num
+                # Assign these from contact_in_db.siteid - do not import state_num and lga_num from RawRegistration.
+                if len(str(contact_in_db.siteid )) == 9 or len(str(contact_in_db.siteid )) == 3:
+                    contact_in_db.state_num = int(str(contact_in_db.siteid )[:1])
+                    contact_in_db.lga_num = int(str(contact_in_db.siteid )[:3])
 
-                if len(str(row.siteid)) == 9 or len(str(row.siteid)) == 3:
-                    contact_in_db.state_num = int(str(row.siteid)[:1])
-                    contact_in_db.lga_num = int(str(row.siteid)[:3])
-
-                elif len(str(row.siteid)) == 10 or len(str(row.siteid)) == 4:
-                    contact_in_db.state_num = int(str(row.siteid)[:2])
-                    contact_in_db.lga_num = int(str(row.siteid)[:4])
+                elif len(str(contact_in_db.siteid )) == 10 or len(str(contact_in_db.siteid )) == 4:
+                    contact_in_db.state_num = int(str(contact_in_db.siteid )[:2])
+                    contact_in_db.lga_num = int(str(contact_in_db.siteid )[:4])
 
                 # State level
-                elif len(str(row.siteid)) == 1 or len(str(row.siteid)) == 2:
-                    contact_in_db.state_num = int(row.siteid)
+                elif len(str(contact_in_db.siteid )) == 1 or len(str(contact_in_db.siteid )) == 2:
+                    contact_in_db.state_num = int(contact_in_db.siteid )
                     contact_in_db.lga_num = None
 
                 else:
-                    print(" SiteID ERROR-%s  UUID-%s  skipped" % (row.siteid, row.uuid))
+                    print("ERROR in SiteID -%s  UUID-%s  skipped" % (row.siteid, row.uuid))
                     continue
 
-                print("Contacts count-%s  Name-%s" %(counter, contact_in_db.name.encode("utf-8")))
+                print("SUCCESS Contacts count-%s  Name-%s" %(counter, contact_in_db.name.encode("utf-8")))
                 contact_in_db.save()
 
             last_update_time.save()
