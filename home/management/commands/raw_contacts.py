@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
             last_update_time = LastUpdatedAPICall.objects.filter(kind="raw_contacts").first()
 
-            # Code below is explicitly describing all possible four conditions of two booleans
+            # Code below is explicitly describing all possible four conditions of two booleans (option and last_update_time)
             if options['all'] and last_update_time:
                 RawRegistration.objects.all().delete()
                 data_to_process = JsonRegistration.objects.all()
