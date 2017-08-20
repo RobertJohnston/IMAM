@@ -96,7 +96,7 @@ class Command(BaseCommand):
                     strip_siteid = filter(lambda x: x.isdigit(),
                                           row.siteid.replace('O', '0').replace('o', '0'))
                     if not strip_siteid:
-                        print "SiteID included only letters and no numbers"
+                        print "                                             SiteID included only letters and no numbers"
                         continue
                     contact_in_db.siteid = int(strip_siteid)
 
