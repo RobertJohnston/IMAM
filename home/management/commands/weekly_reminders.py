@@ -250,7 +250,7 @@ class Command(BaseCommand):
         }
 
         # Send reminders to API for implementation sites
-        #reminders_sites.apply(send_reminders, axis=1)
+        reminders_sites.apply(send_reminders, axis=1)
 
 
         loop_informations["remaining"] = len(warehouse_reminders)
