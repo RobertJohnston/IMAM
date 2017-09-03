@@ -258,6 +258,6 @@ class Command(BaseCommand):
         loop_informations["current"] = "warehouse"
 
         # Send reminders to API for warehouses
-        #warehouse_reminders.apply(send_reminders, axis=1)
+        warehouse_reminders.apply(send_reminders, axis=1)
 
         print datetime.now().strftime('Weekly reminders sent at %d %b %Y %-H:%M:%S'), 'Took %s time to talk to the API' % (datetime.now() - reminders_timer)
