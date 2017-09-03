@@ -19,6 +19,8 @@ class Command(BaseCommand):
     # A command must define handle
     @exception_to_sentry
     def handle(self, *args, **options):
+
+        # first update database with most recent reports.
         management.call_command('import_all')
 
         client = TembaClient('rapidpro.io', open('token').read().strip())
@@ -28,6 +30,7 @@ class Command(BaseCommand):
             'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**settings.DATABASES['default']))
         df = pd.read_sql_query("select * from program;", con=engine)
 
+        # try to find a way to replace sqlachemy with django engine
 
         df['year_weeknum'] = zip(df['year'].map(int), df['weeknum'].map(int))
         df['iso_year_weeknum'] = df['year_weeknum'].map(lambda x: Week(x[0], x[1]))
@@ -38,10 +41,13 @@ class Command(BaseCommand):
         # since how many week this report is about
         df['since_x_weeks'] = df['iso_year_weeknum'].map(lambda x: current_week - x)
 
-        # .query('siteid>101110001')\
+        # TO TEST WITH ONLY ONE REPORT
+        # .query('siteid=201110009')\
+        # remove this when done testing
+
         # Calculate missing reports
         promiss = df.query('since_x_weeks>0')\
-                .query('since_x_weeks<=8')\
+                .query('since_x_weeks<=8') \
                 .groupby(['siteid', 'type'])['weeknum']\
                 .unique()\
                 .map(lambda x: list(sorted(set(range(week - 8, week)) - set(x))))\
@@ -60,9 +66,13 @@ class Command(BaseCommand):
         # since how many week this report is about
         stock['since_x_weeks'] = stock['iso_year_weeknum'].map(lambda x: current_week - x)
 
+        # TO TEST WITH ONLY ONE REPORT
+        # .query('siteid=201110009')\
+        # remove this when done testing
+
         # stock missing reports
         stomiss = stock.query('since_x_weeks>0')\
-                       .query('since_x_weeks<=8')\
+                       .query('since_x_weeks<=8') \
                        .groupby(['siteid', 'type'])['weeknum']\
                        .unique()\
                        .map(lambda x: list(sorted(set(range(week - 8, week)) - set(x))))\
@@ -89,7 +99,7 @@ class Command(BaseCommand):
         reminders_sites = pd.merge(reminders, sites, on=['siteid'])
 
         # pandas as some bug and doesn't managed to convert datetime that has timezone
-        # to some internal format when we do the apply bellow
+        # to some internal format when we do the apply below
         reminders_sites['first_seen'] = reminders_sites['first_seen'].map(lambda x: x.replace(tzinfo=None))
         reminders_sites['last_seen'] = reminders_sites['last_seen'].map(lambda x: x.replace(tzinfo=None))
 
@@ -240,13 +250,14 @@ class Command(BaseCommand):
         }
 
         # Send reminders to API for implementation sites
-        reminders_sites.apply(send_reminders, axis=1)
-        # Send reminders to API for warehouses
+        #reminders_sites.apply(send_reminders, axis=1)
+
 
         loop_informations["remaining"] = len(warehouse_reminders)
         loop_informations["total_number"] = len(warehouse_reminders)
         loop_informations["current"] = "warehouse"
 
-        warehouse_reminders.apply(send_reminders, axis=1)
+        # Send reminders to API for warehouses
+        #warehouse_reminders.apply(send_reminders, axis=1)
 
         print datetime.now().strftime('Weekly reminders sent at %d %b %Y %-H:%M:%S'), 'Took %s time to talk to the API' % (datetime.now() - reminders_timer)
