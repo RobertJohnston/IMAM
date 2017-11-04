@@ -14,10 +14,11 @@ from home.utilities import exception_to_sentry
 
 
 class Command(BaseCommand):
-    help = 'Imports program data to SQL through API'
+    help = 'Sends weekly reminders to personnel at sites through API'
 
-    # A command must define handle
+    # sent failure note to sentry
     @exception_to_sentry
+    # A command must define handle
     def handle(self, *args, **options):
 
         # first update database with most recent reports.
@@ -42,6 +43,7 @@ class Command(BaseCommand):
         df['since_x_weeks'] = df['iso_year_weeknum'].map(lambda x: current_week - x)
 
         # TO TEST WITH ONLY ONE REPORT
+        # Add line to promiss definition below
         # .query('siteid=201110009')\
         # remove this when done testing
 
@@ -67,6 +69,7 @@ class Command(BaseCommand):
         stock['since_x_weeks'] = stock['iso_year_weeknum'].map(lambda x: current_week - x)
 
         # TO TEST WITH ONLY ONE REPORT
+        # Add line to stomiss definition below
         # .query('siteid=201110009')\
         # remove this when done testing
 
@@ -98,7 +101,7 @@ class Command(BaseCommand):
 
         reminders_sites = pd.merge(reminders, sites, on=['siteid'])
 
-        # pandas as some bug and doesn't managed to convert datetime that has timezone
+        # pandas has a bug and doesn't convert datetime that has timezone
         # to some internal format when we do the apply below
         reminders_sites['first_seen'] = reminders_sites['first_seen'].map(lambda x: x.replace(tzinfo=None))
         reminders_sites['last_seen'] = reminders_sites['last_seen'].map(lambda x: x.replace(tzinfo=None))
@@ -172,7 +175,7 @@ class Command(BaseCommand):
         warehouse_stomiss = warehouse_stomiss.reset_index()
         warehouse_stomiss = warehouse_stomiss.rename(index=str, columns={"weeknum": "missing_stock"})
 
-        # Need to add first and second
+        # Need to add first and second admin
         first = pd.read_sql_query("select * from First_admin;", con=engine)
         first['siteid'] = first.state_num
         first['sitename'] = first.state
@@ -237,7 +240,7 @@ class Command(BaseCommand):
                 row_in_df['contact_uuid'].encode('UTF-8')
             )
             # API CALL - send_reminders
-            # Uncomment to activate the API
+            # Comment / Uncomment to run the API
             client.create_broadcast(row_in_df['message'], contacts=[row_in_df['contact_uuid']])
             loop_informations["remaining"] -= 1
 
