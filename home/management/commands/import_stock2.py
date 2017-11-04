@@ -64,6 +64,7 @@ class Command(BaseCommand):
 
             last_update_time.timestamp = datetime.now()
 
+            # Create a cache - is this still used?
             # site_cache = {x.siteid: x for x in Site.objects.all()}
 
             for row in data_to_process.iterator():
@@ -80,7 +81,7 @@ class Command(BaseCommand):
 
                 # If not confirmed, skip row data, do not add to database
                 if row.confirm != "Yes":
-                    print  "             unconfirmed"
+                    print "             unconfirmed"
                     continue
 
                 # SiteID
@@ -93,8 +94,9 @@ class Command(BaseCommand):
                 # If SiteID was training data entry or is invalid - skip entire row
                 # No siteids exist between 3699 and 101110001
                 # SiteIDs in Abia state - 101110001 to <200000000
-                if stock_in_db.siteid < 200000000:
-                    print '             too big siteid: %s' % stock_in_db.siteid
+                # SiteIDS in Zamfara state from 3901110001 to 3901110999
+                if stock_in_db.siteid < 200000000 or stock_in_db.siteid > 3999999999:
+                    print '             Incorrect siteid: %s' % stock_in_db.siteid
                     continue
 
                 stock_in_db.contact_uuid = row.contact_uuid
@@ -108,26 +110,35 @@ class Command(BaseCommand):
                 if row.type in ("OTP", "SC"):
                     stock_in_db.type = row.type
                 else:
-                    print '             bad type %s' % row.type
+                    print '             bad type (OTP or SC) %s' % row.type
                     continue
 
 
                 # Data cleaning for stock
                 # OUTPATIENTS
                 if  stock_in_db.type == "OTP" :
-                    stock_in_db.rutf_in    = clean(row.rutf_in)
+                    stock_in_db.rutf_in   = clean(row.rutf_in)
                     stock_in_db.rutf_out  = round(clean(row.rutf_used_carton) + clean(row.rutf_used_sachet) / 150., 2)
-                    stock_in_db.rutf_bal   = round(clean(row.rutf_bal_carton) + clean(row.rutf_bal_sachet) / 150., 2)
+                    stock_in_db.rutf_bal  = round(clean(row.rutf_bal_carton) + clean(row.rutf_bal_sachet) / 150., 2)
 
                 # INPATIENTS
                 elif stock_in_db.type == "SC":
 
                     # F75 sachets per carton - 120
-                    stock_in_db.f75_bal = clean(row.f75_bal_carton) + (clean(row.f75_bal_carton) / 120.)
+                    stock_in_db.f75_bal = round(clean(row.f75_bal_carton) + clean(row.f75_bal_sachet) / 120., 2)
                     # F100 sachets per carton - 90
-                    stock_in_db.f100_bal = clean(row.f100_bal_carton) + (clean(row.f100_bal_sachet) / 90.)
+                    stock_in_db.f100_bal = round(clean(row.f100_bal_carton) + clean(row.f100_bal_sachet) / 90., 2)
+                    # print(' F75 BAL=%s F100 BAL=%s' % (stock_in_db.f75_bal, stock_in_db.f100_bal))
 
-                # Data errors to correct of delete
+                # Entry of confirmed excessive reported stock of f75 and f100
+                if stock_in_db.f75_bal > 9999:
+                    print('     Excess number cartons for f75 %s, skip' % stock_in_db.f75_bal)
+                    continue
+
+                if stock_in_db.f100_bal > 9999:
+                    print('    Excess number cartons for f75 %s, skip' % stock_in_db.f100_bal)
+                    continue
+
 
                 # Double counting
                 # If cartons>1 and cartons *150  = sachets +/- 150 then cartons = sachets/150
@@ -135,12 +146,15 @@ class Command(BaseCommand):
                 if clean(row.rutf_used_carton) is not None and clean(row.rutf_used_sachet) is not None:
                     if float(row.rutf_used_carton) > 1 and (-150 < (float(row.rutf_used_carton) * 150 - float(row.rutf_used_sachet)) < 150):
                         stock_in_db.rutf_out = round(float(row.rutf_used_sachet) / 150., 2)
+                        # print("RUTF Used Carton=% RUTF Used Sachet=%  DOUBLE counting RUTF Used" % (row.rutf_used_carton, row.rutf_used_sachet))
                     # RUTF_BAL
                     if float(row.rutf_bal_carton) > 1 and (-150 < (float(row.rutf_bal_carton) * 150 - float(row.rutf_bal_sachet)) < 150):
                         stock_in_db.rutf_bal = round(float(row.rutf_bal_sachet) / 150., 2)
+                        # print("RUTF Bal Carton=% RUTF Bal Sachet=%  DOUBLE counting RUTF Bal" % (row.rutf_bal_carton, row.rutf_bal_sachet))
 
 
                 # Entry of decimal points
+                # print(' RUTF IN=%s RUTF OUT=%s RUTF BAL=%s' % (stock_in_db.rutf_in, stock_in_db.rutf_out, stock_in_db.rutf_bal))
 
                 # Entry of confirmed excessive numbers
                 if stock_in_db.rutf_in > 9999:
